@@ -9,14 +9,21 @@ const EXTENSION = '.excalidraw'
 
 const API = 'https://www.googleapis.com/drive/v3'
 const UPLOAD = 'https://www.googleapis.com/upload/drive/v3'
-const META_FIELDS = 'id,name,version,modifiedTime,parents'
+const META_FIELDS = 'id,name,version,headRevisionId,modifiedTime,parents'
 
 export interface DriveFileMeta {
   id: string
   name: string
   version: string
+  /** Changes only when the content changes (unlike `version`, which moves on any metadata change). */
+  headRevisionId?: string
   modifiedTime: string
   parents?: string[]
+}
+
+/** The token used to detect edits made elsewhere: the content revision, falling back to `version`. */
+export function contentRevision(meta: DriveFileMeta): string {
+  return meta.headRevisionId ?? `v${meta.version}`
 }
 
 export interface DriveThumbnail {

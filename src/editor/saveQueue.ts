@@ -24,8 +24,6 @@ export interface SaveQueue {
   acceptRemote(version: string, json: string): void
   /** After "Reconnect" or "Try again". */
   retryNow(): void
-  /** Updates the known version after a change the app itself made (e.g. rename). */
-  setKnownVersion(version: string): void
   isDirty(): boolean
   dispose(): void
 }
@@ -128,9 +126,6 @@ export function createSaveQueue(initial: { json: string; version: string }, deps
     retryNow() {
       blocked = null
       void flush()
-    },
-    setKnownVersion(version) {
-      knownVersion = version
     },
     isDirty: () => latestJson !== savedJson,
     dispose() {

@@ -14,8 +14,10 @@ export function memoryDrive(initial: Array<{ id: string; name: string; content: 
   let clock = Date.parse('2026-10-09T12:00:00Z')
   const tick = () => new Date((clock += 1000)).toISOString()
 
+  let revision = 1
+  const nextRevision = () => `rev-${revision++}`
   const put = (id: string, name: string, content: string, version = '1', parents = ['folder-1']) => {
-    files.set(id, { meta: { id, name, version, modifiedTime: tick(), parents }, content })
+    files.set(id, { meta: { id, name, version, headRevisionId: nextRevision(), modifiedTime: tick(), parents }, content })
   }
   initial.forEach((file) => put(file.id, file.name, file.content))
 
@@ -24,8 +26,14 @@ export function memoryDrive(initial: Array<{ id: string; name: string; content: 
     if (!file) throw new DriveError('notFound', 'File not found', 404)
     return file
   }
-  const bump = (file: StoredFile) => {
-    file.meta = { ...file.meta, version: String(Number(file.meta.version) + 1), modifiedTime: tick() }
+  // Drive bumps `version` on any change (metadata included) but `headRevisionId` only on content.
+  const bump = (file: StoredFile, contentChanged: boolean) => {
+    file.meta = {
+      ...file.meta,
+      version: String(Number(file.meta.version) + 1),
+      modifiedTime: tick(),
+      ...(contentChanged ? { headRevisionId: nextRevision() } : {}),
+    }
   }
 
   const client = {
@@ -47,13 +55,13 @@ export function memoryDrive(initial: Array<{ id: string; name: string; content: 
       const file = find(id)
       file.content = content
       file.thumbnail = thumbnail
-      bump(file)
+      bump(file, true)
       return { ...file.meta }
     }),
     rename: vi.fn(async (id: string, name: string) => {
       const file = find(id)
       file.meta = { ...file.meta, name: name.endsWith('.excalidraw') ? name : `${name}.excalidraw` }
-      bump(file)
+      bump(file, false)
       return { ...file.meta }
     }),
     createSibling: vi.fn(async (name: string, content: string, _mime: string, nearFileId: string) => {
@@ -71,7 +79,11 @@ export function memoryDrive(initial: Array<{ id: string; name: string; content: 
     editExternally(id: string, content: string) {
       const file = find(id)
       file.content = content
-      bump(file)
+      bump(file, true)
+    },
+    /** Simulates Drive changing metadata on its own (e.g. processing the thumbnail). */
+    touchMetadata(id: string) {
+      bump(find(id), false)
     },
     remove(id: string) {
       files.delete(id)

@@ -29,7 +29,7 @@ function memoryCache(initial: string | null = null) {
   return { get: () => value, set: (id: string) => void (value = id) }
 }
 
-const FIELDS = 'fields=id%2Cname%2Cversion%2CmodifiedTime%2Cparents'
+const FIELDS = 'fields=id%2Cname%2Cversion%2CheadRevisionId%2CmodifiedTime%2Cparents'
 
 describe('ensureFolder', () => {
   it('reuses a cached folder that still exists', async () => {

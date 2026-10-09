@@ -150,6 +150,30 @@ describe('drafts', () => {
     expect(screen.getByText('Alterações pendentes')).toBeInTheDocument()
   })
 
+  it('restoring a draft made on an older revision raises a conflict instead of overwriting', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const draftJson = fixture.replace('Ideia principal', 'Feito offline no notebook')
+    await putDraft({ fileId: 'f1', json: draftJson, baseVersion: 'rev-old', updatedAt: Date.now() })
+    const drive = open()
+    await userEvent.click(await screen.findByRole('button', { name: 'Restaurar' }))
+    await canvas()
+    await act(() => vi.advanceTimersByTimeAsync(2000))
+    expect(await screen.findByRole('dialog', { name: 'Este desenho mudou em outro lugar' })).toBeInTheDocument()
+    expect(drive.client.save).not.toHaveBeenCalled()
+  })
+
+  it('restoring a draft made on the current revision saves it', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const draftJson = fixture.replace('Ideia principal', 'Feito offline no notebook')
+    await putDraft({ fileId: 'f1', json: draftJson, baseVersion: 'rev-1', updatedAt: Date.now() })
+    const drive = open()
+    await userEvent.click(await screen.findByRole('button', { name: 'Restaurar' }))
+    await canvas()
+    await act(() => vi.advanceTimersByTimeAsync(2000))
+    await waitFor(() => expect(drive.client.save).toHaveBeenCalledTimes(1))
+    expect(drive.files.get('f1')!.content).toContain('Feito offline no notebook')
+  })
+
   it('discarding a draft opens the Drive version and forgets the draft', async () => {
     await putDraft({ fileId: 'f1', json: fixture.replace('Ideia principal', 'Velha'), baseVersion: '1', updatedAt: Date.now() })
     open()
@@ -251,6 +275,32 @@ describe('saving', () => {
     await act(() => vi.advanceTimersByTimeAsync(2000))
     await waitFor(() => expect(drive.client.save).toHaveBeenCalledTimes(1))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('ignores metadata-only changes on Drive (no false conflict)', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const drive = open()
+    await canvas()
+    drive.touchMetadata('f1')
+    await userEvent.click(screen.getByRole('button', { name: 'simulate edit' }))
+    await act(() => vi.advanceTimersByTimeAsync(2000))
+    await waitFor(() => expect(drive.client.save).toHaveBeenCalledTimes(1))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('renaming does not hide an edit made elsewhere', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const drive = open()
+    await canvas()
+    drive.editExternally('f1', fixture.replace('Ideia principal', 'Editado no tablet'))
+    const title = screen.getByRole('textbox', { name: 'Nome do desenho' })
+    await userEvent.clear(title)
+    await userEvent.type(title, 'Plano{Enter}')
+    await waitFor(() => expect(drive.client.rename).toHaveBeenCalled())
+    await userEvent.click(screen.getByRole('button', { name: 'simulate edit' }))
+    await act(() => vi.advanceTimersByTimeAsync(2000))
+    expect(await screen.findByRole('dialog', { name: 'Este desenho mudou em outro lugar' })).toBeInTheDocument()
+    expect(drive.client.save).not.toHaveBeenCalled()
   })
 
   it('asks the browser to confirm leaving only while there are unsaved changes', async () => {

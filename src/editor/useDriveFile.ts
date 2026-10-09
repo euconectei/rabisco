@@ -2,7 +2,7 @@ import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import type { AppState, BinaryFiles } from '@excalidraw/excalidraw/types'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/useAuth'
-import type { DriveFileMeta } from '../drive/client'
+import { contentRevision, type DriveFileMeta } from '../drive/client'
 import { DriveError } from '../drive/errors'
 import { useDrive } from '../drive/useDrive'
 import { deleteDraft, getDraft, putDraft } from './drafts'
@@ -35,6 +35,8 @@ function parseOrNull(json: string): SceneData | null {
 
 interface PendingDraft {
   draftJson: string
+  /** Revision the draft was edited on; restoring starts from it so edits made elsewhere conflict. */
+  draftBaseVersion: string
   remoteJson: string
   remoteScene: SceneData
   version: string
@@ -72,14 +74,14 @@ export function useDriveFile(fileId: string) {
       queue.current = createSaveQueue(
         { json, version },
         {
-          getRemoteVersion: () => remember(async () => (await drive.getMeta(fileId)).version),
+          getRemoteVersion: () => remember(async () => contentRevision(await drive.getMeta(fileId))),
           upload: (uploadJson) =>
             remember(async () => {
               const current = latest.current?.json === uploadJson ? latest.current.scene : parseScene(uploadJson)
               const thumbnail = (await renderThumbnail(current).catch(() => null)) ?? undefined
               const saved = await drive.save(fileId, uploadJson, thumbnail)
               setMeta(saved)
-              return { version: saved.version }
+              return { version: contentRevision(saved) }
             }),
           putDraft: (draftJson, baseVersion) => putDraft({ fileId, json: draftJson, baseVersion, updatedAt: Date.now() }),
           deleteDraft: () => deleteDraft(fileId),
@@ -123,12 +125,18 @@ export function useDriveFile(fileId: string) {
         setMeta(fileMeta)
         const draftScene = draft ? parseOrNull(draft.json) : null
         if (draft && draftScene && sceneSignature(draftScene) !== sceneSignature(remoteScene)) {
-          pendingDraft.current = { draftJson: serializeScene(draftScene), remoteJson, remoteScene, version: fileMeta.version }
+          pendingDraft.current = {
+            draftJson: serializeScene(draftScene),
+            draftBaseVersion: draft.baseVersion,
+            remoteJson,
+            remoteScene,
+            version: contentRevision(fileMeta),
+          }
           setLoad({ kind: 'draft' })
           return
         }
         if (draft) void deleteDraft(fileId)
-        becomeReady(remoteScene, remoteJson, fileMeta.version)
+        becomeReady(remoteScene, remoteJson, contentRevision(fileMeta))
       } catch (error) {
         if (!cancelled) setLoad({ kind: 'error', reason: reasonOf(error) })
       }
@@ -161,7 +169,7 @@ export function useDriveFile(fileId: string) {
     const pending = pendingDraft.current
     if (!pending) return
     pendingDraft.current = null
-    becomeReady(parseScene(pending.draftJson), pending.remoteJson, pending.version)
+    becomeReady(parseScene(pending.draftJson), pending.remoteJson, pending.draftBaseVersion)
     showScene(parseScene(pending.draftJson), pending.draftJson)
     queue.current?.change(pending.draftJson)
   }, [becomeReady, showScene])
@@ -188,7 +196,7 @@ export function useDriveFile(fileId: string) {
     const [fileMeta, text] = await Promise.all([drive.getMeta(fileId), drive.download(fileId)])
     const remoteScene = parseScene(text)
     const remoteJson = serializeScene(remoteScene)
-    queue.current?.acceptRemote(fileMeta.version, remoteJson)
+    queue.current?.acceptRemote(contentRevision(fileMeta), remoteJson)
     setMeta(fileMeta)
     showScene(remoteScene, remoteJson)
   }, [drive, fileId, showScene])
@@ -199,9 +207,8 @@ export function useDriveFile(fileId: string) {
       const currentName = meta?.name.replace(/\.excalidraw$/i, '')
       if (!trimmed || trimmed === currentName) return
       try {
-        const renamed = await drive.rename(fileId, trimmed)
-        queue.current?.setKnownVersion(renamed.version)
-        setMeta(renamed)
+        // Renaming does not touch the content revision, so the conflict check is unaffected.
+        setMeta(await drive.rename(fileId, trimmed))
       } catch {
         // Keep the old name; the title field resets from meta.
       }
