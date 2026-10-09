@@ -15,6 +15,6 @@ export interface WhatsNewEntry {
   sections: WhatsNewSection[]
 }
 
-export const whatsNewEntries: WhatsNewEntry[] = [{ date: '2026-10-09', sections: ['launch'] }]
+export const whatsNewEntries: WhatsNewEntry[] = [{ date: '2026-10-09', sections: ['drive', 'launch'] }]
 
 export const latestWhatsNewDate: string | undefined = whatsNewEntries[0]?.date

@@ -21,7 +21,7 @@ it('landing shows the name, tagline and leads to the files page', async () => {
 
 it('files page shows the empty state and opens a new drawing', async () => {
   renderWithProviders(<AppRoutes />, { route: '/app' })
-  expect(screen.getByText('Nenhum arquivo ainda.')).toBeInTheDocument()
+  expect(await screen.findByText('Nenhum arquivo ainda.')).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Novo' }))
   expect(await screen.findByTestId('editor-page', {}, { timeout: 10_000 })).toBeInTheDocument()
 })

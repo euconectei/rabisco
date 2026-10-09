@@ -4,7 +4,18 @@ export const ptBR = {
     tagline: 'Mapas mentais e fluxos à mão no mesmo canvas, salvos no seu Google Drive.',
   },
   landing: { start: 'Começar' },
-  files: { title: 'Meus arquivos', empty: 'Nenhum arquivo ainda.', new: 'Novo', untitled: 'Sem título' },
+  files: {
+    title: 'Meus arquivos',
+    empty: 'Nenhum arquivo ainda.',
+    new: 'Novo',
+    untitled: 'Sem título',
+    listLabel: 'Seus desenhos',
+    openFromDrive: 'Abrir do Drive',
+    loading: 'Carregando seus arquivos…',
+    loadFailed: 'Não foi possível carregar seus arquivos.',
+    retry: 'Tentar de novo',
+    edited: 'editado {time}',
+  },
   editor: {
     backToFiles: 'Meus arquivos',
     loading: 'Carregando o editor…',
@@ -58,6 +69,8 @@ export const ptBR = {
     reconnect: 'Reconectar',
     signOut: 'Sair',
   },
+  account: { label: 'Conta: {name}' },
+  open: { failed: 'Não conseguimos abrir este arquivo pelo Drive.' },
   whatsNew: {
     title: 'Novidades',
     intro: 'O que mudou no Rabisco recentemente, em linguagem simples.',
@@ -66,12 +79,20 @@ export const ptBR = {
     linkUnseen: 'Novidades (há novidades)',
     menuItem: 'Novidades ({version})',
     sections: {
+      drive: {
+        title: 'Seus desenhos no seu Google Drive',
+        items: [
+          'Entre com sua conta Google: cada desenho vira um arquivo numa pasta "Rabisco" do seu Drive.',
+          'Tudo é salvo sozinho enquanto você desenha, sem precisar clicar em salvar.',
+          'Se a internet cair, nada se perde: o Rabisco guarda as alterações no navegador e envia quando a conexão voltar.',
+          'Abra desenhos do seu Drive, inclusive arquivos criados no excalidraw.com, e renomeie pelo título no topo.',
+        ],
+      },
       launch: {
         title: 'O Rabisco chegou',
         items: [
           'Desenhe fluxos e ideias com traço à mão, num quadro sem limites.',
           'Use em português ou em inglês: o Rabisco segue o idioma do seu navegador, e você pode trocar quando quiser.',
-          'Em breve: entrar com sua conta Google e guardar seus desenhos no seu Google Drive.',
         ],
       },
     },

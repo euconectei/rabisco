@@ -5,6 +5,7 @@ import { useI18n } from './i18n/useI18n'
 import { FilesPage } from './pages/FilesPage'
 import { LandingPage } from './pages/LandingPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { OpenFromDrivePage } from './pages/OpenFromDrivePage'
 import { WhatsNewPage } from './pages/WhatsNewPage'
 
 const EditorPage = lazy(() => import('./editor/EditorPage'))
@@ -28,6 +29,14 @@ export function AppRoutes() {
         }
       />
       <Route path="/whats-new" element={<WhatsNewPage />} />
+      <Route
+        path="/open"
+        element={
+          <RequireAuth>
+            <OpenFromDrivePage />
+          </RequireAuth>
+        }
+      />
       <Route
         path="/edit/new"
         element={

@@ -6,7 +6,18 @@ export const en: Messages = {
     tagline: 'Mind maps and hand-drawn flows on one canvas, saved to your Google Drive.',
   },
   landing: { start: 'Get started' },
-  files: { title: 'My files', empty: 'No files yet.', new: 'New', untitled: 'Untitled' },
+  files: {
+    title: 'My files',
+    empty: 'No files yet.',
+    new: 'New',
+    untitled: 'Untitled',
+    listLabel: 'Your drawings',
+    openFromDrive: 'Open from Drive',
+    loading: 'Loading your files…',
+    loadFailed: 'Could not load your files.',
+    retry: 'Try again',
+    edited: 'edited {time}',
+  },
   editor: {
     backToFiles: 'My files',
     loading: 'Loading the editor…',
@@ -60,6 +71,8 @@ export const en: Messages = {
     reconnect: 'Reconnect',
     signOut: 'Sign out',
   },
+  account: { label: 'Account: {name}' },
+  open: { failed: 'We could not open this file from Drive.' },
   whatsNew: {
     title: 'News',
     intro: "What changed in Rabisco lately, in plain words.",
@@ -68,12 +81,20 @@ export const en: Messages = {
     linkUnseen: 'News (something new)',
     menuItem: 'News ({version})',
     sections: {
+      drive: {
+        title: 'Your drawings in your Google Drive',
+        items: [
+          'Sign in with your Google account: each drawing becomes a file in a "Rabisco" folder in your Drive.',
+          'Everything saves by itself while you draw; no save button needed.',
+          'If the internet drops, nothing is lost: Rabisco keeps your changes in the browser and sends them when you are back online.',
+          'Open drawings from your Drive, including files made on excalidraw.com, and rename them from the title at the top.',
+        ],
+      },
       launch: {
         title: 'Rabisco is here',
         items: [
           'Sketch flows and ideas with a hand-drawn look, on a board with no edges.',
           'Use it in Portuguese or English: Rabisco follows your browser language, and you can switch anytime.',
-          'Coming soon: sign in with your Google account and keep your drawings in your Google Drive.',
         ],
       },
     },
