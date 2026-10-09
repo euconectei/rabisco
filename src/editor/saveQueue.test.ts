@@ -106,12 +106,17 @@ it('3. coalesces quick changes into one upload of the latest scene', async () =>
   expect(s.deps.upload).toHaveBeenCalledExactlyOnceWith('J3')
 })
 
-it('4. writes a draft for every change with the known base version', async () => {
+it('4. writes the draft at most every 500 ms, with the latest scene and the known base version', async () => {
   const s = setup()
   s.queue.change('J1')
   s.queue.change('J2')
-  expect(s.deps.putDraft).toHaveBeenNthCalledWith(1, 'J1', 'v1')
-  expect(s.deps.putDraft).toHaveBeenNthCalledWith(2, 'J2', 'v1')
+  expect(s.deps.putDraft).not.toHaveBeenCalled()
+  await wait(500)
+  expect(s.deps.putDraft).toHaveBeenCalledExactlyOnceWith('J2', 'v1')
+  s.queue.change('J3')
+  await wait(500)
+  expect(s.deps.putDraft).toHaveBeenLastCalledWith('J3', 'v1')
+  expect(s.deps.putDraft).toHaveBeenCalledTimes(2)
 })
 
 it('5. saves a change made during an upload right after it, never in parallel', async () => {
@@ -234,12 +239,14 @@ it('11. is dirty from the change until the upload finishes', async () => {
   expect(s.queue.isDirty()).toBe(false)
 })
 
-it('12. dispose cancels a scheduled save', async () => {
+it('12. dispose cancels a scheduled save but keeps the pending change as a draft', async () => {
   const s = setup()
   s.queue.change('J1')
   s.queue.dispose()
+  expect(s.deps.putDraft).toHaveBeenCalledExactlyOnceWith('J1', 'v1')
   await wait(5000)
   expect(s.deps.upload).not.toHaveBeenCalled()
+  expect(s.deps.putDraft).toHaveBeenCalledTimes(1)
 })
 
 it('treats a failing version check like a failing upload', async () => {

@@ -1,3 +1,4 @@
+import { hashElementsVersion } from '@excalidraw/excalidraw'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import type { AppState, BinaryFiles } from '@excalidraw/excalidraw/types'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -21,6 +22,18 @@ export type LoadState =
 function reasonOf(error: unknown): OpenErrorReason {
   const kind = error instanceof DriveError ? error.kind : 'unknown'
   return kind === 'notFound' || kind === 'forbidden' || kind === 'invalidFile' || kind === 'network' ? kind : 'unknown'
+}
+
+/** Only what ends up in the saved file: element versions, file ids and the exported appState fields. */
+function changeKey(elements: readonly ExcalidrawElement[], appState: Partial<AppState>, files: BinaryFiles): string {
+  return JSON.stringify([
+    hashElementsVersion(elements),
+    Object.keys(files).sort(),
+    appState.viewBackgroundColor,
+    appState.gridSize,
+    appState.gridStep,
+    appState.gridModeEnabled,
+  ])
 }
 
 const isGone = (error: unknown) => error instanceof DriveError && (error.kind === 'notFound' || error.kind === 'forbidden')
@@ -57,6 +70,7 @@ export function useDriveFile(fileId: string) {
   const queue = useRef<SaveQueue | null>(null)
   const latest = useRef<{ json: string; scene: SceneData } | null>(null)
   const pendingDraft = useRef<PendingDraft | null>(null)
+  const lastChangeKey = useRef<string | null>(null)
 
   const startQueue = useCallback(
     (json: string, version: string) => {
@@ -99,6 +113,7 @@ export function useDriveFile(fileId: string) {
 
   const showScene = useCallback((next: SceneData, json: string) => {
     latest.current = { json, scene: next }
+    lastChangeKey.current = changeKey(next.elements, next.appState, next.files)
     setScene(next)
     setSceneKey((key) => key + 1)
   }, [])
@@ -184,6 +199,11 @@ export function useDriveFile(fileId: string) {
 
   const onSceneChange = useCallback(
     (elements: readonly ExcalidrawElement[], appState: AppState, files: BinaryFiles) => {
+      // Excalidraw calls onChange on every pointer move, hover and selection. Serializing the whole
+      // scene (images included) each time would stall drawing, so skip when nothing saved changed.
+      const key = changeKey(elements, appState, files)
+      if (key === lastChangeKey.current) return
+      lastChangeKey.current = key
       const next: SceneData = { elements, appState, files }
       const json = serializeScene(next)
       latest.current = { json, scene: next }

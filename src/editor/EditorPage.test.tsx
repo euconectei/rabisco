@@ -12,6 +12,7 @@ import { I18nProvider } from '../i18n/I18nProvider'
 import { AppRoutes } from '../routes'
 import { memoryDrive } from '../test/memoryDrive'
 import { renderWithProviders, signedInAuth } from '../test/renderWithProviders'
+import { serializeAsJSON } from '@excalidraw/excalidraw'
 import { deleteDraft, getDraft, putDraft } from './drafts'
 
 const mounts = vi.hoisted(() => ({ count: 0 }))
@@ -55,6 +56,7 @@ vi.mock('@excalidraw/excalidraw', async (importOriginal) => {
   const Footer = ({ children }: { children: ReactNode }) => <footer>{children}</footer>
   return {
     ...actual,
+    serializeAsJSON: vi.fn(actual.serializeAsJSON),
     Excalidraw,
     MainMenu,
     Footer,
@@ -208,6 +210,14 @@ describe('saving', () => {
     expect(json).toContain('Primeira edição')
     expect(thumbnail).toEqual({ image: 'AQID', mimeType: 'image/png' })
     expect(await screen.findByText('Salvo')).toBeInTheDocument()
+  })
+
+  it('does not re-serialize the scene for changes that never reach the file (pointer, scroll, selection)', async () => {
+    open()
+    await canvas()
+    const before = vi.mocked(serializeAsJSON).mock.calls.length
+    for (let i = 0; i < 5; i++) await userEvent.click(screen.getByRole('button', { name: 'simulate scroll' }))
+    expect(vi.mocked(serializeAsJSON).mock.calls.length).toBe(before)
   })
 
   it('shows the conflict and keeps the local version on request', async () => {

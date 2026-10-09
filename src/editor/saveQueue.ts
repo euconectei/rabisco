@@ -14,6 +14,8 @@ export interface SaveQueueDeps {
   onOnline(listener: () => void): () => void
   onStatus(status: SaveStatus): void
   debounceMs?: number
+  /** Drafts are written at most this often (default 500 ms), always with the latest scene. */
+  draftIntervalMs?: number
 }
 
 export interface SaveQueue {
@@ -36,6 +38,7 @@ export const OFFLINE_RETRY_MS = [5000, 10000, 20000, 30000] as const
 
 export function createSaveQueue(initial: { json: string; version: string }, deps: SaveQueueDeps): SaveQueue {
   const debounceMs = deps.debounceMs ?? 2000
+  const draftIntervalMs = deps.draftIntervalMs ?? 500
   let savedJson = initial.json
   let knownVersion = initial.version
   let latestJson = initial.json
@@ -44,6 +47,7 @@ export function createSaveQueue(initial: { json: string; version: string }, deps
   let blocked: Blocked | null = null
   let removeOnline: (() => void) | null = null
   let offlineTimer: ReturnType<typeof setTimeout> | null = null
+  let draftTimer: ReturnType<typeof setTimeout> | null = null
   let offlineAttempts = 0
 
   function schedule() {
@@ -52,6 +56,21 @@ export function createSaveQueue(initial: { json: string; version: string }, deps
       timer = null
       void flush()
     }, debounceMs)
+  }
+
+  function writeDraftNow() {
+    if (draftTimer) clearTimeout(draftTimer)
+    draftTimer = null
+    if (latestJson !== savedJson) void deps.putDraft(latestJson, knownVersion)
+  }
+
+  function scheduleDraft() {
+    draftTimer ??= setTimeout(writeDraftNow, draftIntervalMs)
+  }
+
+  function cancelDraft() {
+    if (draftTimer) clearTimeout(draftTimer)
+    draftTimer = null
   }
 
   function block(reason: Blocked) {
@@ -104,6 +123,7 @@ export function createSaveQueue(initial: { json: string; version: string }, deps
       blocked = null
       offlineAttempts = 0
       if (latestJson === savedJson) {
+        cancelDraft()
         await deps.deleteDraft()
         deps.onStatus('saved')
       } else {
@@ -121,7 +141,7 @@ export function createSaveQueue(initial: { json: string; version: string }, deps
     change(json) {
       if (json === latestJson) return
       latestJson = json
-      void deps.putDraft(json, knownVersion)
+      scheduleDraft()
       if (blocked) return deps.onStatus(blocked)
       deps.onStatus('pending')
       schedule()
@@ -137,6 +157,7 @@ export function createSaveQueue(initial: { json: string; version: string }, deps
       savedJson = json
       latestJson = json
       blocked = null
+      cancelDraft()
       void deps.deleteDraft()
       deps.onStatus('saved')
     },
@@ -150,6 +171,8 @@ export function createSaveQueue(initial: { json: string; version: string }, deps
       if (timer) clearTimeout(timer)
       timer = null
       stopWaitingForNetwork()
+      // Leaving the editor with unsaved changes: keep them as a draft, offered on the next open.
+      writeDraftNow()
     },
   }
 }
