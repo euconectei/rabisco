@@ -65,6 +65,7 @@ test.describe('English browser', () => {
   test('deep link to the editor loads directly', async ({ page }) => {
     await page.goto('/edit/new')
     await page.getByRole('button', { name: 'Sign in with Google' }).click()
+    await expect(page).toHaveURL(/\/edit\/fake-\d+$/)
     await expect(page.locator('.excalidraw')).toBeVisible()
   })
 
