@@ -1,4 +1,7 @@
-import { screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
+import { useEffect } from 'react'
+import { MemoryRouter } from 'react-router-dom'
+import { I18nProvider } from '../i18n/I18nProvider'
 import userEvent from '@testing-library/user-event'
 import { RequireAuth } from './RequireAuth'
 import { AuthContext, type AuthValue } from './context'
@@ -76,4 +79,29 @@ it('keeps the content and shows a reconnect banner when the session expired', as
   expect(screen.getByText(/Sua sessão com o Google expirou/)).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Reconectar' }))
   expect(auth.reconnect).toHaveBeenCalled()
+})
+
+it('does not remount the page when the reconnect banner appears and goes away', () => {
+  let mounts = 0
+  function Page() {
+    useEffect(() => {
+      mounts += 1
+    }, [])
+    return <p>page</p>
+  }
+  const tree = (auth: AuthValue) => (
+    <I18nProvider initialLanguage="pt-BR">
+      <AuthContext.Provider value={auth}>
+        <MemoryRouter>
+          <RequireAuth>
+            <Page />
+          </RequireAuth>
+        </MemoryRouter>
+      </AuthContext.Provider>
+    </I18nProvider>
+  )
+  const { rerender } = render(tree(value({ status: 'signed-in' })))
+  rerender(tree(value({ status: 'needs-reconnect' })))
+  rerender(tree(value({ status: 'signed-in' })))
+  expect(mounts).toBe(1)
 })

@@ -1,6 +1,6 @@
 import 'vitest-canvas-mock'
 import fixture from './fixtures/excalidraw-com.excalidraw?raw'
-import { emptySceneJson, parseScene, serializeScene } from './scene'
+import { emptySceneJson, parseScene, sceneSignature, serializeScene } from './scene'
 
 it('opens a file exported by excalidraw.com', () => {
   const scene = parseScene(fixture)
@@ -32,4 +32,16 @@ it.each([
   ['null', 'null'],
 ])('rejects %s as an invalid file', (_label, text) => {
   expect(() => parseScene(text)).toThrow(expect.objectContaining({ kind: 'invalidFile' }))
+})
+
+describe('sceneSignature', () => {
+  it('is the same for the same content, even though restore re-rolls version nonces', () => {
+    expect(sceneSignature(parseScene(fixture))).toBe(sceneSignature(parseScene(fixture)))
+    expect(sceneSignature(parseScene(serializeScene(parseScene(fixture))))).toBe(sceneSignature(parseScene(fixture)))
+  })
+
+  it('changes when the drawing changes', () => {
+    const edited = fixture.replace('Ideia principal', 'Outra ideia')
+    expect(sceneSignature(parseScene(edited))).not.toBe(sceneSignature(parseScene(fixture)))
+  })
 })

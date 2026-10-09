@@ -2,9 +2,12 @@ import { render } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { AuthContext, type AuthValue } from '../auth/context'
+import type { DriveClient } from '../drive/client'
+import { DriveContext } from '../drive/context'
 import { I18nProvider } from '../i18n/I18nProvider'
 import type { Language } from '../i18n/languages'
 import { tester } from './fakeAuth'
+import { memoryDrive } from './memoryDrive'
 
 export function signedInAuth(overrides: Partial<AuthValue> = {}): AuthValue {
   return {
@@ -24,12 +27,19 @@ export function signedInAuth(overrides: Partial<AuthValue> = {}): AuthValue {
 
 export function renderWithProviders(
   ui: ReactElement,
-  { route = '/', lang = 'pt-BR', auth = signedInAuth() }: { route?: string; lang?: Language; auth?: AuthValue } = {},
+  {
+    route = '/',
+    lang = 'pt-BR',
+    auth = signedInAuth(),
+    drive = memoryDrive().client,
+  }: { route?: string; lang?: Language; auth?: AuthValue; drive?: DriveClient } = {},
 ) {
   return render(
     <I18nProvider initialLanguage={lang}>
       <AuthContext.Provider value={auth}>
-        <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+        <DriveContext.Provider value={drive}>
+          <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+        </DriveContext.Provider>
       </AuthContext.Provider>
     </I18nProvider>,
   )

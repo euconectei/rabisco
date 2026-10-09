@@ -36,3 +36,16 @@ export function parseScene(text: string): SceneData {
   )
   return { elements: restored.elements, appState: restored.appState, files: restored.files }
 }
+
+// Fields that change without the drawing changing: restore() re-rolls versionNonce, and version /
+// updated move with every internal touch. Comparing scenes must ignore them.
+const VOLATILE_ELEMENT_FIELDS = new Set(['version', 'versionNonce', 'updated'])
+
+/** A content fingerprint for comparing two scenes (e.g. a local draft against the Drive file). */
+export function sceneSignature(scene: SceneData): string {
+  const parsed = JSON.parse(serializeScene(scene)) as { elements: Array<Record<string, unknown>>; appState: unknown; files: unknown }
+  const elements = parsed.elements.map((element) =>
+    Object.fromEntries(Object.entries(element).filter(([key]) => !VOLATILE_ELEMENT_FIELDS.has(key))),
+  )
+  return JSON.stringify({ elements, appState: parsed.appState, files: parsed.files })
+}

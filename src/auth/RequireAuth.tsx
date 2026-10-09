@@ -12,16 +12,19 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     if (status === 'signed-out') prepare()
   }, [status, prepare])
 
-  if (status === 'signed-in') return <>{children}</>
-  if (status === 'needs-reconnect') {
+  if (status === 'signed-in' || status === 'needs-reconnect') {
+    // Same element structure in both states: toggling the banner must never remount the page
+    // below it (the editor would lose its unsaved state).
     return (
       <>
-        <div className="reconnect-banner" role="status">
-          <span>{t.auth.reconnectBanner}</span>
-          <button type="button" className="button" onClick={() => void auth.reconnect()}>
-            {t.auth.reconnect}
-          </button>
-        </div>
+        {status === 'needs-reconnect' ? (
+          <div className="reconnect-banner" role="status">
+            <span>{t.auth.reconnectBanner}</span>
+            <button type="button" className="button" onClick={() => void auth.reconnect()}>
+              {t.auth.reconnect}
+            </button>
+          </div>
+        ) : null}
         {children}
       </>
     )

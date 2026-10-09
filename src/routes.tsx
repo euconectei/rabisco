@@ -8,6 +8,7 @@ import { NotFoundPage } from './pages/NotFoundPage'
 import { WhatsNewPage } from './pages/WhatsNewPage'
 
 const EditorPage = lazy(() => import('./editor/EditorPage'))
+const NewFileRedirect = lazy(() => import('./editor/NewFileRedirect'))
 
 function EditorFallback() {
   const { t } = useI18n()
@@ -27,6 +28,16 @@ export function AppRoutes() {
         }
       />
       <Route path="/whats-new" element={<WhatsNewPage />} />
+      <Route
+        path="/edit/new"
+        element={
+          <RequireAuth>
+            <Suspense fallback={<EditorFallback />}>
+              <NewFileRedirect />
+            </Suspense>
+          </RequireAuth>
+        }
+      />
       <Route
         path="/edit/:fileId"
         element={
