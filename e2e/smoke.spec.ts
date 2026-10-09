@@ -34,6 +34,10 @@ test.describe('pt-BR browser', () => {
     await page.getByText('English').click()
     await page.getByTestId('main-menu-trigger').click()
     await expect(page.getByText('My files')).toBeVisible()
+    await page.keyboard.press('Escape')
+
+    // The text typed before the switch is still on the canvas: Excalidraw was not remounted.
+    await expect(page.getByTestId('button-undo')).toBeEnabled()
 
     await page.waitForLoadState('networkidle')
     expect(external).toEqual([])
