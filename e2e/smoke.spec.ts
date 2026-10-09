@@ -34,6 +34,10 @@ test.describe('pt-BR browser', () => {
     await page.getByText('English').click()
     await page.getByTestId('main-menu-trigger').click()
     await expect(page.getByText('My files')).toBeVisible()
+    await page.keyboard.press('Escape')
+
+    // The text typed before the switch is still on the canvas: Excalidraw was not remounted.
+    await expect(page.getByTestId('button-undo')).toBeEnabled()
 
     await page.waitForLoadState('networkidle')
     expect(external).toEqual([])
@@ -46,6 +50,12 @@ test.describe('English browser', () => {
   test('deep link to the editor loads directly', async ({ page }) => {
     await page.goto('/edit/new')
     await expect(page.locator('.excalidraw')).toBeVisible()
+  })
+
+  test('sets <html lang> before the app bundle runs', async ({ page }) => {
+    await page.route(/\/assets\/index-.*\.js$/, (route) => route.abort())
+    await page.goto('/')
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en')
   })
 
   test('landing is in English', async ({ page }) => {

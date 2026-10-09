@@ -5,6 +5,19 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rabisco</title>
+    <script>
+      // Sets <html lang> before the bundle loads, mirroring src/i18n/storage.ts and languages.ts.
+      (function () {
+        var lang = null
+        try {
+          lang = localStorage.getItem('rabisco.lang')
+        } catch (e) {}
+        if (lang !== 'pt-BR' && lang !== 'en') {
+          lang = (navigator.language || '').toLowerCase().indexOf('pt') === 0 ? 'pt-BR' : 'en'
+        }
+        document.documentElement.lang = lang
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
