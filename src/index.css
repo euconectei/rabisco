@@ -3,3 +3,13 @@
   color-scheme: light dark;
 }
 html, body, #root { height: 100%; margin: 0; }
+.page { max-width: 40rem; margin: 0 auto; padding: 2rem 1rem; }
+.page-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.landing h1 { font-size: 3rem; margin-bottom: 0.5rem; }
+.button {
+  display: inline-block; padding: 0.6rem 1.2rem; border: 0; border-radius: 0.5rem;
+  background: #6965db; color: #fff; font: inherit; text-decoration: none; cursor: pointer;
+}
+.language-switcher { display: inline-flex; gap: 0.5rem; align-items: center; margin-top: 1.5rem; }
+.page-header .language-switcher { margin-top: 0; }
+.editor { height: 100vh; height: 100dvh; }
