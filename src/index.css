@@ -12,3 +12,4 @@ html, body, #root { height: 100%; margin: 0; }
 }
 .language-switcher { display: inline-flex; gap: 0.5rem; align-items: center; margin-top: 1.5rem; }
 .page-header .language-switcher { margin-top: 0; }
+.editor { height: 100vh; height: 100dvh; }
