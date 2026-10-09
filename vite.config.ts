@@ -17,6 +17,8 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
+    // Excalidraw imports JSON without import attributes; let Vite transform it instead of Node.
+    server: { deps: { inline: ['@excalidraw/excalidraw'] } },
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],
