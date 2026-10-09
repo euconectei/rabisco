@@ -14,4 +14,8 @@ pnpm run ci     # lint + testes com cobertura + build
 pnpm test:e2e   # Playwright
 ```
 
+## Deploy
+
+Cada push na `main` publica no Cloudflare Pages (`https://rabisco.euconectei.com.br`) depois do CI, se os segredos `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID` estiverem configurados no repositório. Sem eles, o job de deploy só registra um aviso e não faz nada.
+
 Licença: MIT.
