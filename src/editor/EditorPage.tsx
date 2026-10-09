@@ -1,6 +1,7 @@
 import { Excalidraw, MainMenu } from '@excalidraw/excalidraw'
 import '@excalidraw/excalidraw/index.css'
 import { useNavigate } from 'react-router-dom'
+import { format } from '../i18n/format'
 import { LANGUAGES } from '../i18n/languages'
 import { useI18n } from '../i18n/useI18n'
 
@@ -13,6 +14,9 @@ export default function EditorPage() {
       <Excalidraw langCode={lang}>
         <MainMenu>
           <MainMenu.Item onSelect={() => navigate('/app')}>{t.editor.backToFiles}</MainMenu.Item>
+          <MainMenu.Item onSelect={() => navigate('/whats-new')}>
+            {format(t.whatsNew.menuItem, { version: `v${__APP_VERSION__}` })}
+          </MainMenu.Item>
           <MainMenu.Separator />
           <MainMenu.DefaultItems.ToggleTheme />
           <MainMenu.DefaultItems.ChangeCanvasBackground />

@@ -52,3 +52,9 @@ it('goes back to the files page from the menu', async () => {
   await userEvent.click(await screen.findByRole('button', { name: 'Meus arquivos' }))
   expect(screen.getByRole('heading', { name: 'Meus arquivos' })).toBeInTheDocument()
 })
+
+it('opens the news page from the menu, showing the version', async () => {
+  renderWithProviders(<AppRoutes />, { route: '/edit/new', lang: 'pt-BR' })
+  await userEvent.click(await screen.findByRole('button', { name: `Novidades (v${__APP_VERSION__})` }))
+  expect(screen.getByRole('heading', { level: 1, name: 'Novidades' })).toBeInTheDocument()
+})
