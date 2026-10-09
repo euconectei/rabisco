@@ -14,7 +14,8 @@ export interface AuthValue {
   status: AuthStatus
   user: AuthUser | null
   hint: AccountHint | null
-  error: 'failed' | null
+  /** 'missingDrive': signed in, but the Drive permission was unticked on Google's consent screen. */
+  error: 'failed' | 'missingDrive' | null
   /** Must run from a click: Google only opens its window on a user gesture. */
   signIn(): Promise<void>
   reconnect(): Promise<void>

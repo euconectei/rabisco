@@ -4,7 +4,7 @@ import { DriveError } from '../drive/errors'
 import type { TokenSource } from '../drive/http'
 import { clearAccountHint, readAccountHint, writeAccountHint, type AccountHint } from './accountHint'
 import { AuthContext, type AuthStatus, type AuthUser, type AuthValue } from './context'
-import { loadIdentityClient, type IdentityClient, type TokenResponse } from './googleIdentity'
+import { DRIVE_SCOPE, loadIdentityClient, type IdentityClient, type TokenResponse } from './googleIdentity'
 import { fetchGoogleUserInfo } from './userInfo'
 
 const RENEW_BEFORE_SEC = 300
@@ -26,7 +26,9 @@ export function AuthProvider({ config, children, identity, fetchUserInfo = fetch
   const [status, setStatus] = useState<AuthStatus>(config ? 'signed-out' : 'unavailable')
   const [user, setUser] = useState<AuthUser | null>(null)
   const [hint, setHint] = useState<AccountHint | null>(() => readAccountHint())
-  const [error, setError] = useState<'failed' | null>(null)
+  const [error, setError] = useState<AuthValue['error']>(null)
+  // After Drive access was refused, the next sign-in must show the consent screen again.
+  const needsConsent = useRef(false)
   const session = useRef<Session | null>(null)
   const renewTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const clientPromise = useRef<Promise<IdentityClient> | null>(identity ? Promise.resolve(identity) : null)
@@ -63,6 +65,7 @@ export function AuthProvider({ config, children, identity, fetchUserInfo = fetch
     try {
       const client = await getClient()
       const token = await client.requestToken({ prompt: '', loginHint: hintRef.current?.email })
+      if (!token.grantedScopes.includes(DRIVE_SCOPE)) throw new Error('missing_drive_scope')
       storeToken(token)
       return token.accessToken
     } catch {
@@ -81,9 +84,18 @@ export function AuthProvider({ config, children, identity, fetchUserInfo = fetch
     try {
       const client = await getClient()
       const remembered = hintRef.current
-      const token = await client.requestToken(
-        remembered ? { prompt: '', loginHint: remembered.email } : { prompt: 'consent', loginHint: undefined },
-      )
+      const token = await client.requestToken({
+        prompt: remembered && !needsConsent.current ? '' : 'consent',
+        loginHint: remembered?.email,
+      })
+      if (!token.grantedScopes.includes(DRIVE_SCOPE)) {
+        needsConsent.current = true
+        clearSession()
+        setError('missingDrive')
+        setStatus('signed-out')
+        return
+      }
+      needsConsent.current = false
       const profile = await fetchUserInfo(token.accessToken)
       storeToken(token)
       setUser(profile)

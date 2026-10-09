@@ -25,7 +25,9 @@ afterEach(() => {
 })
 
 it('injects the Google script once and requests a token with the right scopes', async () => {
-  const gis = installFakeGis((callback) => callback({ access_token: 'tok', expires_in: '3599' }))
+  const gis = installFakeGis((callback) =>
+    callback({ access_token: 'tok', expires_in: '3599', scope: 'openid https://www.googleapis.com/auth/drive.file email' }),
+  )
   const first = loadIdentityClient('client-1')
   const second = loadIdentityClient('client-1')
   finishScriptLoad()
@@ -35,6 +37,7 @@ it('injects the Google script once and requests a token with the right scopes', 
   await expect(client.requestToken({ prompt: '', loginHint: 'ana@example.com' })).resolves.toEqual({
     accessToken: 'tok',
     expiresInSec: 3599,
+    grantedScopes: ['openid', 'https://www.googleapis.com/auth/drive.file', 'email'],
   })
   expect(gis.initTokenClient).toHaveBeenCalledWith(expect.objectContaining({ client_id: 'client-1', scope: SCOPES }))
   const tokenClient = gis.initTokenClient.mock.results[0].value

@@ -65,6 +65,7 @@ export const ptBR = {
     signingIn: 'Entrando…',
     unavailable: 'Login indisponível neste ambiente.',
     failed: 'Não foi possível entrar. Tente de novo.',
+    missingDrive: 'Para guardar seus desenhos, o Rabisco precisa de acesso ao seu Google Drive. Entre de novo e deixe marcada a permissão do Drive.',
     reconnectBanner: 'Sua sessão com o Google expirou. Suas alterações estão guardadas neste navegador.',
     reconnect: 'Reconectar',
     signOut: 'Sair',

@@ -1,9 +1,12 @@
 export const GIS_SCRIPT_URL = 'https://accounts.google.com/gsi/client'
-export const SCOPES = 'https://www.googleapis.com/auth/drive.file openid email profile'
+export const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
+export const SCOPES = `${DRIVE_SCOPE} openid email profile`
 
 export interface TokenResponse {
   accessToken: string
   expiresInSec: number
+  /** What the person actually granted: Google's consent screen lets them untick scopes. */
+  grantedScopes: string[]
 }
 
 export interface IdentityClient {
@@ -14,6 +17,7 @@ export interface IdentityClient {
 interface GisTokenResponse {
   access_token?: string
   expires_in?: number | string
+  scope?: string
   error?: string
 }
 
@@ -68,7 +72,11 @@ export async function loadIdentityClient(clientId: string): Promise<IdentityClie
               reject(new Error(response.error ?? 'no_token'))
               return
             }
-            resolve({ accessToken: response.access_token, expiresInSec: Number(response.expires_in ?? 3600) })
+            resolve({
+              accessToken: response.access_token,
+              expiresInSec: Number(response.expires_in ?? 3600),
+              grantedScopes: (response.scope ?? SCOPES).split(' ').filter(Boolean),
+            })
           },
           error_callback: (error) => reject(new Error(error.type)),
         })

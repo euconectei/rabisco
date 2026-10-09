@@ -12,7 +12,7 @@ window.google.accounts = {
     initTokenClient: function (config) {
       return {
         requestAccessToken: function () {
-          setTimeout(function () { config.callback({ access_token: '${FAKE_TOKEN}', expires_in: 3600 }) }, 0)
+          setTimeout(function () { config.callback({ access_token: '${FAKE_TOKEN}', expires_in: 3600, scope: 'https://www.googleapis.com/auth/drive.file openid email profile' }) }, 0)
         },
       }
     },

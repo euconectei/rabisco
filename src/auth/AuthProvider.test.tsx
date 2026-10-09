@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import userEvent from '@testing-library/user-event'
 import { AuthProvider } from './AuthProvider'
 import { useAuth } from './useAuth'
-import { fakeIdentity, tester } from '../test/fakeAuth'
+import { ALL_SCOPES, fakeIdentity, tester } from '../test/fakeAuth'
 import type { GoogleConfig } from '../config'
 
 const config: GoogleConfig = { clientId: 'cid', apiKey: 'key', appId: '1' }
@@ -82,7 +82,7 @@ it('hands out the token and refuses before sign-in', async () => {
 
 it('renews silently five minutes before expiry', async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
-  const { identity } = setup(fakeIdentity([{ accessToken: 't1', expiresInSec: 3600 }, { accessToken: 't2', expiresInSec: 3600 }]).identity)
+  const { identity } = setup(fakeIdentity([{ accessToken: 't1', expiresInSec: 3600, grantedScopes: ALL_SCOPES }, { accessToken: 't2', expiresInSec: 3600, grantedScopes: ALL_SCOPES }]).identity)
   await act(async () => latest.signIn())
   await act(async () => vi.advanceTimersByTimeAsync(3300 * 1000))
   expect(identity.requestToken).toHaveBeenLastCalledWith({ prompt: '', loginHint: 'ana@example.com' })
@@ -91,7 +91,7 @@ it('renews silently five minutes before expiry', async () => {
 
 it('needs a reconnect when silent renewal fails', async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
-  setup(fakeIdentity([{ accessToken: 't1', expiresInSec: 3600 }, new Error('interaction_required')]).identity)
+  setup(fakeIdentity([{ accessToken: 't1', expiresInSec: 3600, grantedScopes: ALL_SCOPES }, new Error('interaction_required')]).identity)
   await act(async () => latest.signIn())
   await act(async () => vi.advanceTimersByTimeAsync(3300 * 1000))
   expect(screen.getByTestId('status')).toHaveTextContent('needs-reconnect')
@@ -99,7 +99,7 @@ it('needs a reconnect when silent renewal fails', async () => {
 })
 
 it('refreshToken (used on 401) renews or fails with an auth error', async () => {
-  setup(fakeIdentity([{ accessToken: 't1', expiresInSec: 3600 }, { accessToken: 't2', expiresInSec: 3600 }, new Error('nope')]).identity)
+  setup(fakeIdentity([{ accessToken: 't1', expiresInSec: 3600, grantedScopes: ALL_SCOPES }, { accessToken: 't2', expiresInSec: 3600, grantedScopes: ALL_SCOPES }, new Error('nope')]).identity)
   await act(async () => latest.signIn())
   await expect(act(async () => latest.tokens.refreshToken())).resolves.toBe('t2')
   await act(async () => {
@@ -116,4 +116,18 @@ it('signs out: revokes, forgets the user and the remembered account', async () =
   expect(screen.getByTestId('status')).toHaveTextContent('signed-out')
   expect(screen.getByTestId('user')).toHaveTextContent('-')
   expect(localStorage.getItem('rabisco.account')).toBeNull()
+})
+
+it('explains when Drive access was not granted, then asks for consent again', async () => {
+  localStorage.setItem('rabisco.account', JSON.stringify({ email: 'ana@example.com', name: 'Ana Souza' }))
+  const { identity } = setup(
+    fakeIdentity([{ accessToken: 'partial', expiresInSec: 3600, grantedScopes: ['openid', 'email', 'profile'] }]).identity,
+  )
+  await userEvent.click(screen.getByRole('button', { name: 'sign in' }))
+  expect(screen.getByTestId('status')).toHaveTextContent('signed-out')
+  expect(latest.error).toBe('missingDrive')
+  await expect(latest.tokens.getToken()).rejects.toMatchObject({ kind: 'auth' })
+  await userEvent.click(screen.getByRole('button', { name: 'sign in' }))
+  expect(identity.requestToken).toHaveBeenLastCalledWith({ prompt: 'consent', loginHint: 'ana@example.com' })
+  expect(screen.getByTestId('status')).toHaveTextContent('signed-in')
 })

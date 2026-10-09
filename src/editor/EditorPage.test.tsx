@@ -34,7 +34,7 @@ vi.mock('@excalidraw/excalidraw', async (importOriginal) => {
     // Like the real component, onChange always carries the full appState.
     const appState = initialData?.appState ?? {}
     const edit = (text: string) => {
-      const element = { id: `added-${text}`, type: 'text', text, originalText: text, x: 0, y: 0, width: 10, height: 10, isDeleted: false, version: 1, versionNonce: 1 }
+      const element = { id: `added-${text}`, type: 'text', text, originalText: text, x: 0, y: 0, width: 10, height: 10, isDeleted: false, version: 1, versionNonce: text.length * 7919 }
       onChange?.([...elements, element], appState, {})
     }
     return (

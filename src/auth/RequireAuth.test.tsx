@@ -67,6 +67,12 @@ it('shows the failure message after a refused sign-in', () => {
   expect(screen.getByText('Não foi possível entrar. Tente de novo.')).toBeInTheDocument()
 })
 
+it('explains that Drive access is required when it was not granted', () => {
+  setup(value({ error: 'missingDrive' }))
+  expect(screen.getByRole('alert')).toHaveTextContent('o Rabisco precisa de acesso ao seu Google Drive')
+  expect(screen.getByRole('button', { name: 'Entrar com Google' })).toBeInTheDocument()
+})
+
 it('renders the private content when signed in', () => {
   setup(value({ status: 'signed-in' }))
   expect(screen.getByText('private stuff')).toBeInTheDocument()

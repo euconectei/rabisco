@@ -37,7 +37,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
       {status === 'signing-in' && <p>{t.auth.signingIn}</p>}
       {status === 'signed-out' && (
         <>
-          {error && <p role="alert">{t.auth.failed}</p>}
+          {error && <p role="alert">{error === 'missingDrive' ? t.auth.missingDrive : t.auth.failed}</p>}
           {hint ? (
             <>
               <button type="button" className="button" onClick={() => void auth.signIn()}>
