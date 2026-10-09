@@ -52,6 +52,12 @@ test.describe('English browser', () => {
     await expect(page.locator('.excalidraw')).toBeVisible()
   })
 
+  test('sets <html lang> before the app bundle runs', async ({ page }) => {
+    await page.route(/\/assets\/index-.*\.js$/, (route) => route.abort())
+    await page.goto('/')
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+  })
+
   test('landing is in English', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByRole('link', { name: 'Get started' })).toBeVisible()
