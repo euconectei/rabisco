@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
+import { RequireAuth } from './auth/RequireAuth'
 import { useI18n } from './i18n/useI18n'
 import { FilesPage } from './pages/FilesPage'
 import { LandingPage } from './pages/LandingPage'
@@ -17,14 +18,23 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/app" element={<FilesPage />} />
+      <Route
+        path="/app"
+        element={
+          <RequireAuth>
+            <FilesPage />
+          </RequireAuth>
+        }
+      />
       <Route path="/whats-new" element={<WhatsNewPage />} />
       <Route
         path="/edit/:fileId"
         element={
-          <Suspense fallback={<EditorFallback />}>
-            <EditorPage />
-          </Suspense>
+          <RequireAuth>
+            <Suspense fallback={<EditorFallback />}>
+              <EditorPage />
+            </Suspense>
+          </RequireAuth>
         }
       />
       <Route path="*" element={<NotFoundPage />} />

@@ -8,6 +8,17 @@ export const ptBR = {
   editor: { backToFiles: 'Meus arquivos', loading: 'Carregando o editor…' },
   notFound: { title: 'Página não encontrada', backHome: 'Voltar ao início' },
   language: { label: 'Idioma', 'pt-BR': 'Português', en: 'English' },
+  auth: {
+    signIn: 'Entrar com Google',
+    continueAs: 'Continuar como {name}',
+    otherAccount: 'Usar outra conta',
+    signingIn: 'Entrando…',
+    unavailable: 'Login indisponível neste ambiente.',
+    failed: 'Não foi possível entrar. Tente de novo.',
+    reconnectBanner: 'Sua sessão com o Google expirou. Suas alterações estão guardadas neste navegador.',
+    reconnect: 'Reconectar',
+    signOut: 'Sair',
+  },
   whatsNew: {
     title: 'Novidades',
     intro: 'O que mudou no Rabisco recentemente, em linguagem simples.',

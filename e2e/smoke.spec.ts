@@ -1,7 +1,17 @@
 import { expect, test, type Page } from '@playwright/test'
+import { installFakeGoogle } from './fakes/google'
 
 // Cloudflare Web Analytics, injected by the proxy in production (accepted: cookieless page views).
-const ALLOWED_THIRD_PARTY_HOSTS = ['static.cloudflareinsights.com', 'cloudflareinsights.com']
+// Google sign-in and APIs (answered by fakes in this suite).
+const ALLOWED_THIRD_PARTY_HOSTS = [
+  'static.cloudflareinsights.com',
+  'cloudflareinsights.com',
+  'accounts.google.com',
+  'apis.google.com',
+  'www.googleapis.com',
+  'content.googleapis.com',
+  'docs.google.com',
+]
 
 function trackThirdPartyRequests(page: Page, baseURL: string): string[] {
   const ownHost = new URL(baseURL).host
@@ -15,6 +25,10 @@ function trackThirdPartyRequests(page: Page, baseURL: string): string[] {
   return external
 }
 
+test.beforeEach(async ({ page }) => {
+  await installFakeGoogle(page)
+})
+
 test.describe('pt-BR browser', () => {
   test.use({ locale: 'pt-BR' })
 
@@ -22,6 +36,7 @@ test.describe('pt-BR browser', () => {
     const external = trackThirdPartyRequests(page, baseURL!)
     await page.goto('/')
     await page.getByRole('link', { name: 'Começar' }).click()
+    await page.getByRole('button', { name: 'Entrar com Google' }).click()
     await page.getByRole('button', { name: 'Novo' }).click()
     await expect(page.locator('.excalidraw')).toBeVisible()
 
@@ -49,6 +64,7 @@ test.describe('English browser', () => {
 
   test('deep link to the editor loads directly', async ({ page }) => {
     await page.goto('/edit/new')
+    await page.getByRole('button', { name: 'Sign in with Google' }).click()
     await expect(page.locator('.excalidraw')).toBeVisible()
   })
 

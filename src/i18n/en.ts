@@ -10,6 +10,17 @@ export const en: Messages = {
   editor: { backToFiles: 'My files', loading: 'Loading the editor…' },
   notFound: { title: 'Page not found', backHome: 'Back to home' },
   language: { label: 'Language', 'pt-BR': 'Português', en: 'English' },
+  auth: {
+    signIn: 'Sign in with Google',
+    continueAs: 'Continue as {name}',
+    otherAccount: 'Use another account',
+    signingIn: 'Signing in…',
+    unavailable: 'Sign-in is unavailable here.',
+    failed: 'Could not sign in. Please try again.',
+    reconnectBanner: 'Your Google session expired. Your changes are kept in this browser.',
+    reconnect: 'Reconnect',
+    signOut: 'Sign out',
+  },
   whatsNew: {
     title: 'News',
     intro: "What changed in Rabisco lately, in plain words.",
