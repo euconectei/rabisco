@@ -1,4 +1,5 @@
 import { act, render, screen } from '@testing-library/react'
+import { useEffect } from 'react'
 import userEvent from '@testing-library/user-event'
 import { AuthProvider } from './AuthProvider'
 import { useAuth } from './useAuth'
@@ -9,13 +10,16 @@ const config: GoogleConfig = { clientId: 'cid', apiKey: 'key', appId: '1' }
 
 let latest: ReturnType<typeof useAuth>
 function Probe() {
-  latest = useAuth()
+  const auth = useAuth()
+  useEffect(() => {
+    latest = auth
+  })
   return (
     <div>
-      <p data-testid="status">{latest.status}</p>
-      <p data-testid="user">{latest.user?.email ?? '-'}</p>
-      <button type="button" onClick={() => void latest.signIn()}>sign in</button>
-      <button type="button" onClick={() => void latest.signOut()}>sign out</button>
+      <p data-testid="status">{auth.status}</p>
+      <p data-testid="user">{auth.user?.email ?? '-'}</p>
+      <button type="button" onClick={() => void auth.signIn()}>sign in</button>
+      <button type="button" onClick={() => void auth.signOut()}>sign out</button>
     </div>
   )
 }

@@ -31,7 +31,9 @@ export function AuthProvider({ config, children, identity, fetchUserInfo = fetch
   const renewTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const clientPromise = useRef<Promise<IdentityClient> | null>(identity ? Promise.resolve(identity) : null)
   const hintRef = useRef(hint)
-  hintRef.current = hint
+  useEffect(() => {
+    hintRef.current = hint
+  }, [hint])
 
   const getClient = useCallback((): Promise<IdentityClient> => {
     if (!config) return Promise.reject(new DriveError('auth', 'Sign-in unavailable'))
@@ -69,7 +71,9 @@ export function AuthProvider({ config, children, identity, fetchUserInfo = fetch
       throw new DriveError('auth', 'Session expired')
     }
   }, [clearSession, getClient, storeToken])
-  refreshRef.current = refreshToken
+  useEffect(() => {
+    refreshRef.current = refreshToken
+  }, [refreshToken])
 
   const signIn = useCallback(async () => {
     setError(null)
