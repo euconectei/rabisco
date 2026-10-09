@@ -58,6 +58,15 @@ test.describe('English browser', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'en')
   })
 
+  test('footer shows the version and opens the news page', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.getByText(/^v\d+\.\d+\.\d+$/)).toBeVisible()
+    await page.getByRole('link', { name: 'News (something new)' }).click()
+    await expect(page.getByRole('heading', { level: 2, name: 'Rabisco is here' })).toBeVisible()
+    await page.getByRole('button', { name: 'Back' }).click()
+    await expect(page.getByRole('link', { name: 'News', exact: true })).toBeVisible()
+  })
+
   test('landing is in English', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByRole('link', { name: 'Get started' })).toBeVisible()

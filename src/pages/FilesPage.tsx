@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
+import { AppFooter } from '../components/AppFooter'
 import { useI18n } from '../i18n/useI18n'
 
 export function FilesPage() {
@@ -15,6 +16,7 @@ export function FilesPage() {
         {t.files.new}
       </button>
       <p>{t.files.empty}</p>
+      <AppFooter />
     </main>
   )
 }

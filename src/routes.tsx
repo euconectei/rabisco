@@ -4,6 +4,7 @@ import { useI18n } from './i18n/useI18n'
 import { FilesPage } from './pages/FilesPage'
 import { LandingPage } from './pages/LandingPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { WhatsNewPage } from './pages/WhatsNewPage'
 
 const EditorPage = lazy(() => import('./editor/EditorPage'))
 
@@ -17,6 +18,7 @@ export function AppRoutes() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/app" element={<FilesPage />} />
+      <Route path="/whats-new" element={<WhatsNewPage />} />
       <Route
         path="/edit/:fileId"
         element={
