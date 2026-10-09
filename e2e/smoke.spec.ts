@@ -1,11 +1,16 @@
 import { expect, test, type Page } from '@playwright/test'
 
+// Cloudflare Web Analytics, injected by the proxy in production (accepted: cookieless page views).
+const ALLOWED_THIRD_PARTY_HOSTS = ['static.cloudflareinsights.com', 'cloudflareinsights.com']
+
 function trackThirdPartyRequests(page: Page, baseURL: string): string[] {
   const ownHost = new URL(baseURL).host
   const external: string[] = []
   page.on('request', (request) => {
     const url = new URL(request.url())
-    if (url.protocol.startsWith('http') && url.host !== ownHost) external.push(request.url())
+    if (!url.protocol.startsWith('http') || url.host === ownHost) return
+    if (ALLOWED_THIRD_PARTY_HOSTS.includes(url.host)) return
+    external.push(request.url())
   })
   return external
 }
