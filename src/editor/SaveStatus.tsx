@@ -20,10 +20,10 @@ export function SaveStatus({ status, lost, onRetry, onSaveAsNew }: Props) {
       </p>
     )
   }
-  if (status === 'error') {
+  if (status === 'error' || status === 'offline') {
     return (
       <p className="save-status save-status-error" role="status">
-        {t.editor.status.error}{' '}
+        {status === 'offline' ? t.editor.status.offline : t.editor.status.error}{' '}
         <button type="button" className="button-link" onClick={onRetry}>
           {t.editor.retry}
         </button>

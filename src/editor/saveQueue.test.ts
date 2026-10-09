@@ -250,3 +250,41 @@ it('treats a failing version check like a failing upload', async () => {
   expect(s.last()).toBe('error')
   expect(s.deps.upload).not.toHaveBeenCalled()
 })
+
+it('keeps retrying while offline even if the online event never fires (Wi-Fi without internet)', async () => {
+  const s = setup()
+  s.failNextUpload(new DriveError('network', 'offline'))
+  s.queue.change('J1')
+  await wait(2000)
+  expect(s.last()).toBe('offline')
+  await wait(5000)
+  expect(s.deps.upload).toHaveBeenCalledTimes(2)
+  expect(s.last()).toBe('saved')
+  expect(s.listenerCount()).toBe(0)
+})
+
+it('backs off between offline retries', async () => {
+  const s = setup({ online: false })
+  s.queue.change('J1')
+  await wait(2000)
+  expect(s.last()).toBe('offline')
+  await wait(5000) // first retry: still offline, nothing sent
+  expect(s.deps.upload).not.toHaveBeenCalled()
+  s.setOnline(true)
+  await wait(9000) // the second retry waits 10 s
+  expect(s.deps.upload).not.toHaveBeenCalled()
+  await wait(1000)
+  expect(s.deps.upload).toHaveBeenCalledExactlyOnceWith('J1')
+})
+
+it('retries on demand while offline', async () => {
+  const s = setup()
+  s.failNextUpload(new DriveError('network', 'offline'))
+  s.queue.change('J1')
+  await wait(2000)
+  s.queue.retryNow()
+  await settle()
+  expect(s.last()).toBe('saved')
+  await wait(60_000)
+  expect(s.deps.upload).toHaveBeenCalledTimes(2)
+})

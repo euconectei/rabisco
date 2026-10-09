@@ -30,6 +30,10 @@ export interface SaveQueue {
 
 type Blocked = 'conflict' | 'needs-auth' | 'offline' | 'error'
 
+// While offline, retry on these delays too: the browser's "online" event never fires when the
+// network is up but the internet is not (captive portal, Wi-Fi without internet).
+export const OFFLINE_RETRY_MS = [5000, 10000, 20000, 30000] as const
+
 export function createSaveQueue(initial: { json: string; version: string }, deps: SaveQueueDeps): SaveQueue {
   const debounceMs = deps.debounceMs ?? 2000
   let savedJson = initial.json
@@ -39,6 +43,8 @@ export function createSaveQueue(initial: { json: string; version: string }, deps
   let inFlight = false
   let blocked: Blocked | null = null
   let removeOnline: (() => void) | null = null
+  let offlineTimer: ReturnType<typeof setTimeout> | null = null
+  let offlineAttempts = 0
 
   function schedule() {
     if (timer) clearTimeout(timer)
@@ -53,15 +59,25 @@ export function createSaveQueue(initial: { json: string; version: string }, deps
     deps.onStatus(reason)
   }
 
+  function stopWaitingForNetwork() {
+    removeOnline?.()
+    removeOnline = null
+    if (offlineTimer) clearTimeout(offlineTimer)
+    offlineTimer = null
+  }
+
   function waitForNetwork() {
     block('offline')
-    removeOnline?.()
-    removeOnline = deps.onOnline(() => {
-      removeOnline?.()
-      removeOnline = null
+    stopWaitingForNetwork()
+    const tryAgain = () => {
+      stopWaitingForNetwork()
       blocked = null
       void flush()
-    })
+    }
+    removeOnline = deps.onOnline(tryAgain)
+    const delay = OFFLINE_RETRY_MS[Math.min(offlineAttempts, OFFLINE_RETRY_MS.length - 1)]
+    offlineAttempts += 1
+    offlineTimer = setTimeout(tryAgain, delay)
   }
 
   function handleError(error: unknown) {
@@ -86,6 +102,7 @@ export function createSaveQueue(initial: { json: string; version: string }, deps
       knownVersion = version
       savedJson = json
       blocked = null
+      offlineAttempts = 0
       if (latestJson === savedJson) {
         await deps.deleteDraft()
         deps.onStatus('saved')
@@ -124,6 +141,7 @@ export function createSaveQueue(initial: { json: string; version: string }, deps
       deps.onStatus('saved')
     },
     retryNow() {
+      stopWaitingForNetwork()
       blocked = null
       void flush()
     },
@@ -131,8 +149,7 @@ export function createSaveQueue(initial: { json: string; version: string }, deps
     dispose() {
       if (timer) clearTimeout(timer)
       timer = null
-      removeOnline?.()
-      removeOnline = null
+      stopWaitingForNetwork()
     },
   }
 }

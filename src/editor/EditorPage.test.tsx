@@ -250,6 +250,18 @@ describe('saving', () => {
     expect(await screen.findByText('Salvo')).toBeInTheDocument()
   })
 
+  it('offers a retry while offline', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const drive = open()
+    await canvas()
+    drive.client.save.mockRejectedValueOnce(new DriveError('network', 'offline'))
+    await userEvent.click(screen.getByRole('button', { name: 'simulate edit' }))
+    await act(() => vi.advanceTimersByTimeAsync(2000))
+    expect(await screen.findByText(/Sem conexão/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+    expect(await screen.findByText('Salvo')).toBeInTheDocument()
+  })
+
   it('offers to save as a new file when the file disappears from Drive', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     const drive = open()
