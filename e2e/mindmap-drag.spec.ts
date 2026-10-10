@@ -1,0 +1,121 @@
+import { expect, test, type Page } from '@playwright/test'
+import { installFakeGoogle, type FakeDrive } from './fakes/google'
+
+test.use({ locale: 'pt-BR' })
+
+// The live branch drag relies on `window.__rabiscoScene` and `window.__rabiscoFreeLayout`, which only
+// exist in the E2E build (VITE_E2E=1). Running against production (E2E_BASE_URL) skips this spec.
+test.skip(!!process.env.E2E_BASE_URL, 'the live branch drag runs against the E2E build only')
+
+interface LiveElement {
+  id: string
+  type: string
+  x: number
+  y: number
+  width: number
+  height: number
+  text?: string
+  containerId?: string | null
+  isDeleted?: boolean
+  customData?: { rabisco?: { kind: string; parentId?: string | null; order?: number } }
+}
+
+interface LiveScene {
+  elements: LiveElement[]
+  selection: string[]
+}
+
+async function openNewDrawing(page: Page): Promise<FakeDrive> {
+  const drive = await installFakeGoogle(page)
+  await page.goto('/app')
+  await page.getByRole('button', { name: 'Entrar com Google' }).click()
+  await page.getByRole('button', { name: 'Novo' }).click()
+  await expect(page.locator('.excalidraw')).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: 'Salvo' })).toBeVisible()
+  return drive
+}
+
+const editor = (page: Page) => page.locator('textarea.excalidraw-wysiwyg')
+
+async function typeNode(page: Page, text: string) {
+  await expect(editor(page)).toBeVisible()
+  await page.keyboard.type(text)
+  await page.keyboard.press('Escape')
+  await expect(editor(page)).toHaveCount(0)
+}
+
+async function createMap(page: Page) {
+  await page.getByRole('button', { name: 'Mapa mental' }).click()
+  await page.getByTestId('mindmap-placement').click({ position: { x: 640, y: 360 } })
+}
+
+/** Reads the live scene (elements + selection) via the E2E-only hook, without waiting for a save. */
+async function scene(page: Page): Promise<LiveScene> {
+  return page.evaluate(() => {
+    const hook = (window as unknown as { __rabiscoScene: () => LiveScene }).__rabiscoScene
+    return hook()
+  })
+}
+
+const nodes = (els: LiveElement[]) => els.filter((e) => e.customData?.rabisco?.kind === 'node')
+const textOf = (els: LiveElement[], id: string) => els.find((e) => e.containerId === id)?.text
+const byText = (els: LiveElement[], text: string) => nodes(els).find((n) => textOf(els, n.id) === text)
+const byId = (els: LiveElement[], id: string) => els.find((e) => e.id === id)
+const centerOf = (e: LiveElement) => ({ x: e.x + e.width / 2, y: e.y + e.height / 2 })
+
+const undoKey = process.platform === 'darwin' ? 'Meta+z' : 'Control+z'
+
+test('in free layout, dragging a node moves its whole branch live, undone in one shortcut', async ({ page }) => {
+  await openNewDrawing(page)
+  await createMap(page)
+  await typeNode(page, 'Raiz')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Filho')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Neto')
+  await page.keyboard.press('Escape')
+
+  // Turn on the spike's free-layout flag (Tarefa 4 swaps it for the real `layout` field).
+  await page.evaluate(() => {
+    ;(window as unknown as { __rabiscoFreeLayout?: boolean }).__rabiscoFreeLayout = true
+  })
+
+  const before = await scene(page)
+  const filho = byText(before.elements, 'Filho')!
+  const neto = byText(before.elements, 'Neto')!
+  const from = centerOf(filho)
+
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  await page.mouse.move(from.x + 160, from.y + 90, { steps: 12 })
+
+  // In the middle of the gesture, before mouse.up, the grandchild already moved with the node.
+  const mid = await scene(page)
+  const midFilho = byId(mid.elements, filho.id)!
+  const midNeto = byId(mid.elements, neto.id)!
+  expect(midFilho.x - filho.x).toBeGreaterThan(10)
+  expect(midFilho.y - filho.y).toBeGreaterThan(10)
+  expect(midNeto.x - neto.x).toBeCloseTo(midFilho.x - filho.x, 0)
+  expect(midNeto.y - neto.y).toBeCloseTo(midFilho.y - filho.y, 0)
+
+  await page.mouse.up()
+
+  // On release, the selection is just the dragged node (not the whole branch).
+  await expect.poll(async () => (await scene(page)).selection).toEqual([filho.id])
+
+  // A single undo puts the whole branch back where it was.
+  await page.keyboard.press(undoKey)
+  await expect
+    .poll(async () => {
+      const els = (await scene(page)).elements
+      const f = byId(els, filho.id)!
+      const n = byId(els, neto.id)!
+      return (
+        Math.abs(f.x - filho.x) < 1 &&
+        Math.abs(f.y - filho.y) < 1 &&
+        Math.abs(n.x - neto.x) < 1 &&
+        Math.abs(n.y - neto.y) < 1
+      )
+    })
+    .toBe(true)
+})
