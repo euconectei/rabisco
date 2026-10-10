@@ -1,5 +1,5 @@
-import { branchIds, readMaps, sideOf } from './model'
-import { node, plain } from './testElements'
+import { branchIds, layoutOf, metaOf, readMaps, sideOf, styleOf } from './model'
+import { node, plain, underline } from './testElements'
 
 it('reads a map with ordered children and depths', () => {
   const maps = readMaps([node('r', null), node('b', 'r', 2), node('a', 'r', 1), node('a1', 'a', 0), plain('free')])
@@ -46,4 +46,36 @@ it('lists a node and all its descendants', () => {
   const map = readMaps([node('r', null), node('a', 'r'), node('a1', 'a'), node('a2', 'a'), node('b', 'r', 1)]).get('m1')!
   expect(branchIds(map, 'a').sort()).toEqual(['a', 'a1', 'a2'])
   expect(branchIds(map, 'missing')).toEqual([])
+})
+
+it('recognizes lines-style decorations as Rabisco metadata', () => {
+  expect(metaOf(underline('u', 'a'))).toMatchObject({ kind: 'underline', mapId: 'm1', nodeId: 'a' })
+  const wrong = { ...underline('u', 'a'), customData: { rabisco: { kind: 'blob', mapId: 'm1', nodeId: 'a' } } } as never
+  expect(metaOf(wrong)).toBeNull()
+})
+
+it('defaults layout and style for maps without the fields, and for unknown maps', () => {
+  const elements = [node('r', null), node('a', 'r')]
+  expect(layoutOf(elements, 'm1')).toBe('both')
+  expect(styleOf(elements, 'm1')).toBe('boxes')
+  expect(layoutOf(elements, 'nope')).toBe('both')
+  expect(styleOf(elements, 'nope')).toBe('boxes')
+})
+
+it('reads layout and style stored on the root', () => {
+  const elements = [node('r', null, 0, { layout: 'right', style: 'lines' }), node('a', 'r')]
+  expect(layoutOf(elements, 'm1')).toBe('right')
+  expect(styleOf(elements, 'm1')).toBe('lines')
+})
+
+it('reads an old map without layout/style and does not change its customData', () => {
+  const root = node('r', null)
+  const elements = [root, node('a', 'r')]
+  const map = readMaps(elements).get('m1')!
+  expect(map.root.id).toBe('r')
+  expect(map.root.children.map((c) => c.id)).toEqual(['a'])
+  expect(elements[0]).toBe(root)
+  const rabisco = (root.customData as { rabisco: { layout?: unknown; style?: unknown } }).rabisco
+  expect(rabisco.layout).toBeUndefined()
+  expect(rabisco.style).toBeUndefined()
 })

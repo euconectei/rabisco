@@ -1,8 +1,8 @@
 import { convertToExcalidrawElements, newElementWith } from '@excalidraw/excalidraw'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
-import { byId, isLinkOf, mapOfNode, relayout, type CommandResult } from './commands'
+import { byId, isDecorationOf, isLinkOf, mapOfNode, relayout, type CommandResult } from './commands'
 import { newId } from './elements'
-import { branchIds, hiddenCount, metaOf, type BadgeMeta, type NodeMeta } from './model'
+import { branchIds, hiddenCount, metaOf, styleOf, type BadgeMeta, type NodeMeta } from './model'
 
 // Collapsing keeps everything: the descendants' elements (rectangles, texts, links, nested badges)
 // are deleted from the scene the way Excalidraw deletes, and full copies ride in the node's
@@ -57,6 +57,7 @@ export function collapse(elements: readonly ExcalidrawElement[], nodeId: string)
   if (!map || !treeNode || treeNode.children.length === 0) return { elements: [...elements], select: nodeId }
 
   const descendants = new Set(branchIds(map, nodeId).filter((id) => id !== nodeId))
+  const style = styleOf(elements, map.mapId)
   const hide = (e: ExcalidrawElement) => {
     if (e.isDeleted) return false
     const meta = metaOf(e)
@@ -64,7 +65,8 @@ export function collapse(elements: readonly ExcalidrawElement[], nodeId: string)
     return (
       descendants.has(e.id) ||
       (container != null && descendants.has(container)) ||
-      isLinkOf(e, descendants) !== null ||
+      isLinkOf(e, descendants, style) !== null ||
+      isDecorationOf(e, descendants) !== null ||
       (meta?.kind === 'badge' && descendants.has(meta.nodeId) && isOwnBadge(elements, e))
     )
   }

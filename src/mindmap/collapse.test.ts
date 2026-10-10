@@ -4,6 +4,7 @@ import { parseScene, serializeScene } from '../editor/scene'
 import { badgeOf, collapse, expand, toggleCollapse } from './collapse'
 import { addChild, branchElementIds, createMap, relayout } from './commands'
 import { metaOf, readMaps, type NodeMeta } from './model'
+import { edge, knob, node, underline } from './testElements'
 
 type El = ExcalidrawElement & { text?: string; containerId?: string | null }
 
@@ -163,5 +164,43 @@ describe('copies of a collapsed node (Ctrl+D, copy/paste keep customData with th
   it('deleting the original branch does not take the copied badge', () => {
     const { s, elements, copyBadgeId } = withCopy()
     expect(branchElementIds(elements, s.a)).not.toContain(copyBadgeId)
+  })
+})
+
+describe('lines-style branch decorations', () => {
+  /** r(lines) → a → a1, with a line link to each child and an underline + knob on a1. */
+  function linesMap() {
+    const r = node('r', null, 0, { style: 'lines' })
+    const a = node('a', 'r', 0)
+    const a1 = node('a1', 'a', 0)
+    const linkA = edge('la', 'a')
+    const linkA1 = edge('la1', 'a1')
+    const ua1 = underline('ua1', 'a1')
+    const ka1 = knob('ka1', 'a1')
+    return { elements: [r, a, a1, linkA, linkA1, ua1, ka1], a: 'a', a1: 'a1' }
+  }
+
+  it('branchElementIds includes the branch line link and decorations, not the root', () => {
+    const { elements, a } = linesMap()
+    const ids = new Set(branchElementIds(elements, a))
+    expect(ids.has('la')).toBe(true)
+    expect(ids.has('la1')).toBe(true)
+    expect(ids.has('ua1')).toBe(true)
+    expect(ids.has('ka1')).toBe(true)
+    expect(ids.has('r')).toBe(false)
+  })
+
+  it('collapse hides and expand restores the branch decorations', () => {
+    const { elements, a } = linesMap()
+    const collapsed = collapse(elements, a).elements
+    const hidden = nodeMeta(collapsed, a).hidden ?? []
+    expect(hidden.some((e) => e.id === 'ua1')).toBe(true)
+    expect(hidden.some((e) => e.id === 'ka1')).toBe(true)
+    expect(live(collapsed).some((e) => e.id === 'ua1')).toBe(false)
+    expect(live(collapsed).some((e) => e.id === 'ka1')).toBe(false)
+    const expanded = expand(collapsed, a).elements
+    expect(live(expanded).some((e) => e.id === 'ua1')).toBe(true)
+    expect(live(expanded).some((e) => e.id === 'ka1')).toBe(true)
+    expect(metaOf(live(expanded).find((e) => e.id === 'ua1')!)).toMatchObject({ kind: 'underline', nodeId: 'a1' })
   })
 })

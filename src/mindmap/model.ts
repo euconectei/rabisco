@@ -6,6 +6,9 @@ import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 
 export type Side = 'left' | 'right'
 
+export type MapLayout = 'both' | 'right' | 'free'
+export type MapStyle = 'boxes' | 'lines'
+
 export interface NodeMeta {
   kind: 'node'
   mapId: string
@@ -19,6 +22,12 @@ export interface NodeMeta {
   hidden?: ExcalidrawElement[]
   /** The id of this node's own "+N" badge: copies of a badge (Ctrl+D, paste) are plain texts. */
   badgeId?: string
+  /** Only with colorAuto: false, in lines style: the box colors to restore back in boxes style. */
+  boxColors?: { strokeColor: string; backgroundColor: string }
+  /** Root only; missing means the map predates the layouts revision (both). */
+  layout?: MapLayout
+  /** Root only; missing means boxes. */
+  style?: MapStyle
 }
 
 export interface EdgeMeta {
@@ -34,7 +43,21 @@ export interface BadgeMeta {
   nodeId: string
 }
 
-export type RabiscoMeta = NodeMeta | EdgeMeta | BadgeMeta
+/** A lines-style underline below a node. */
+export interface UnderlineMeta {
+  kind: 'underline'
+  mapId: string
+  nodeId: string
+}
+
+/** A lines-style knob at the tip of a node that has children. */
+export interface KnobMeta {
+  kind: 'knob'
+  mapId: string
+  nodeId: string
+}
+
+export type RabiscoMeta = NodeMeta | EdgeMeta | BadgeMeta | UnderlineMeta | KnobMeta
 
 export interface TreeNode {
   id: string
@@ -55,7 +78,8 @@ export function metaOf(element: ExcalidrawElement): RabiscoMeta | null {
   const meta = (element.customData as { rabisco?: unknown } | undefined)?.rabisco
   if (!meta || typeof meta !== 'object') return null
   const { kind, mapId } = meta as Record<string, unknown>
-  if (typeof mapId !== 'string' || (kind !== 'node' && kind !== 'edge' && kind !== 'badge')) return null
+  const known = kind === 'node' || kind === 'edge' || kind === 'badge' || kind === 'underline' || kind === 'knob'
+  if (typeof mapId !== 'string' || !known) return null
   return meta as RabiscoMeta
 }
 
@@ -137,4 +161,23 @@ export function hiddenCount(meta: NodeMeta): number {
     if (inner?.kind === 'node' && inner.nodeId === element.id) count += 1 + hiddenCount(inner)
   }
   return count
+}
+
+/** The root node's metadata for a map (read from the scene, so old files without the fields default). */
+function rootMetaOf(elements: readonly ExcalidrawElement[], mapId: string): NodeMeta | null {
+  const map = readMaps(elements).get(mapId)
+  if (!map) return null
+  const root = elements.find((e) => !e.isDeleted && e.id === map.root.id)
+  const meta = root ? metaOf(root) : null
+  return meta?.kind === 'node' ? meta : null
+}
+
+/** The map's organization: 'both' for maps saved before the layouts revision. */
+export function layoutOf(elements: readonly ExcalidrawElement[], mapId: string): MapLayout {
+  return rootMetaOf(elements, mapId)?.layout ?? 'both'
+}
+
+/** The map's style: 'boxes' for maps saved before the styles revision. */
+export function styleOf(elements: readonly ExcalidrawElement[], mapId: string): MapStyle {
+  return rootMetaOf(elements, mapId)?.style ?? 'boxes'
 }
