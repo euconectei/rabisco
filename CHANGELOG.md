@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/euconectei/rabisco/compare/v0.5.0...v0.6.0) (2026-10-10)
+
+
+### Features
+
+* a home page that shows Rabisco at work and where drawings live ([#14](https://github.com/euconectei/rabisco/issues/14)) ([6aebb17](https://github.com/euconectei/rabisco/commit/6aebb1770192234a78d91f8194698c3d1bf02fb0))
+
 ## [0.5.0](https://github.com/euconectei/rabisco/compare/v0.4.1...v0.5.0) (2026-10-10)
 
 
