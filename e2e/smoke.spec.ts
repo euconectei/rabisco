@@ -45,8 +45,7 @@ test.describe('pt-BR browser', () => {
     await page.keyboard.type('Rabisco à mão')
     await page.keyboard.press('Escape')
 
-    await page.getByTestId('main-menu-trigger').click()
-    await page.getByText('English').click()
+    await page.getByRole('button', { name: 'English' }).click()
     await page.getByTestId('main-menu-trigger').click()
     await expect(page.getByText('My files')).toBeVisible()
     await page.keyboard.press('Escape')

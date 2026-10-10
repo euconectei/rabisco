@@ -5,7 +5,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useDrive } from '../drive/useDrive'
 import { format } from '../i18n/format'
-import { LANGUAGES } from '../i18n/languages'
+import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
 import { useI18n } from '../i18n/useI18n'
 import { useMindmap, type MindmapApi } from '../mindmap/useMindmap'
 import { Dialog } from './Dialog'
@@ -21,7 +21,7 @@ export default function EditorPage() {
 }
 
 function EditorScreen({ fileId }: { fileId: string }) {
-  const { lang, t, setLang } = useI18n()
+  const { lang, t } = useI18n()
   const navigate = useNavigate()
   const drive = useDrive()
   const file = useDriveFile(fileId)
@@ -105,6 +105,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
               {t.mindmap.button}
             </button>
             <TitleField key={baseName} name={baseName} onRename={file.rename} />
+            <LanguageSwitcher />
           </div>
         )}
       >
@@ -116,12 +117,6 @@ function EditorScreen({ fileId }: { fileId: string }) {
           <MainMenu.Separator />
           <MainMenu.DefaultItems.ToggleTheme />
           <MainMenu.DefaultItems.ChangeCanvasBackground />
-          <MainMenu.Separator />
-          {LANGUAGES.filter((code) => code !== lang).map((code) => (
-            <MainMenu.Item key={code} onSelect={() => setLang(code)}>
-              {t.language[code]}
-            </MainMenu.Item>
-          ))}
         </MainMenu>
         <Footer>
           <SaveStatus status={file.status} lost={file.lost} onRetry={file.retry} onSaveAsNew={() => void attempt(saveAsNew)} />
