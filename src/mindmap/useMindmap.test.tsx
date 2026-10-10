@@ -417,3 +417,30 @@ it('perform does nothing without a selected node or while a text is edited', () 
   act(() => result.current.perform({ type: 'addChild' }))
   expect(api.updateScene).not.toHaveBeenCalled()
 })
+
+it('Tab on a collapsed node expands it and adds the child after the hidden ones', () => {
+  let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+  const root = r.select!
+  r = addChild(r.elements, root, 'A')
+  const a = r.select!
+  const { api, state } = fakeApi(r.elements, [root])
+  const { result } = renderHook(() => useMindmap(api, labels))
+  act(() => result.current.perform({ type: 'toggleCollapse' }))
+  act(() => result.current.perform({ type: 'addChild' }))
+  const tree = [...readMaps(state.elements).values()][0]
+  expect(tree.root.children.map((c) => c.id)[0]).toBe(a)
+  expect(tree.root.children).toHaveLength(2)
+  expect(new Set(tree.root.children.map((c) => c.order)).size).toBe(2)
+  expect((metaOf(state.elements.find((e) => e.id === root)!) as { collapsed?: boolean }).collapsed).toBeFalsy()
+})
+
+it('a pasted script with # comments stays text (strict outline rule)', () => {
+  const { api } = fakeApi([], [])
+  const { result } = renderHook(() => useMindmap(api, labels))
+  let taken = true
+  act(() => {
+    taken = result.current.pasteOutline('# install deps\nnpm i\n# run\nnpm start', { x: 0, y: 0 }, 'F')
+  })
+  expect(taken).toBe(false)
+  expect(api.updateScene).not.toHaveBeenCalled()
+})

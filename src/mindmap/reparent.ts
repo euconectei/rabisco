@@ -1,11 +1,17 @@
 import { newElementWith } from '@excalidraw/excalidraw'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
+import { expand } from './collapse'
 import { byId, isLinkOf, mapOfNode, relayout, type CommandResult } from './commands'
 import { withBoundEdge } from './elements'
 import { branchIds, metaOf, type NodeMeta, type Side } from './model'
 
 function update<T extends ExcalidrawElement>(element: T, changes: Record<string, unknown>): T {
   return newElementWith(element as never, changes as never) as unknown as T
+}
+
+const branchIdsOf = (elements: readonly ExcalidrawElement[], nodeId: string) => {
+  const map = mapOfNode(elements, nodeId)
+  return map ? branchIds(map, nodeId) : []
 }
 
 const center = (e: ExcalidrawElement) => ({ x: e.x + e.width / 2, y: e.y + e.height / 2 })
@@ -34,12 +40,18 @@ export function dropTarget(elements: readonly ExcalidrawElement[], draggedNodeId
 }
 
 /** Moves a node (with its branch, hidden parts included) under another node of the same map, as its last child. */
-export function reparent(elements: readonly ExcalidrawElement[], nodeId: string, newParentId: string): CommandResult {
+export function reparent(original: readonly ExcalidrawElement[], nodeId: string, newParentId: string): CommandResult {
+  // Dropped on a collapsed node: expand it, so the moved branch goes after the hidden children.
+  const target = byId(original, newParentId)
+  const targetMeta = target ? metaOf(target) : null
+  const elements = targetMeta?.kind === 'node' && targetMeta.collapsed && !branchIdsOf(original, nodeId).includes(newParentId)
+    ? expand(original, newParentId).elements
+    : original
   const map = mapOfNode(elements, nodeId)
   const current = map?.byId.get(nodeId)
   const parent = map?.byId.get(newParentId)
   if (!map || !current || !parent || current.parentId === null || branchIds(map, nodeId).includes(newParentId)) {
-    return { elements: [...elements], select: nodeId }
+    return { elements: [...original], select: nodeId }
   }
 
   const order = parent.children.filter((c) => c.id !== nodeId).reduce((max, c) => Math.max(max, c.order), -1) + 1

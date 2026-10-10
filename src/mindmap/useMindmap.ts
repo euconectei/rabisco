@@ -3,7 +3,7 @@ import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import type { AppState } from '@excalidraw/excalidraw/types'
 import { useCallback, useEffect, useRef } from 'react'
 import { addChild, addSibling, branchElementIds, createMap, findNodeOf, layoutDrift, navigate, relayout, type CommandResult } from './commands'
-import { toggleCollapse } from './collapse'
+import { expand, toggleCollapse } from './collapse'
 import { importOutline } from './importMap'
 import { actionForKey, type MindmapAction } from './keyboard'
 import type { Point } from './layout'
@@ -154,12 +154,16 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
       const target = findNodeOf(elements, selectedIds(appState))
       if (!target) return false
       const { nodeText } = labelsRef.current
+      // A new child of a collapsed node goes after the hidden ones: expand it first.
+      const expanded = () => expand(elements, target.nodeId).elements
+      const isRoot = readMaps(elements).get(target.mapId)?.root.id === target.nodeId
       switch (action.type) {
         case 'addChild':
-          apply(addChild(elements, target.nodeId, nodeText), true)
+          apply(addChild(expanded(), target.nodeId, nodeText), true)
           break
         case 'addSibling':
-          apply(addSibling(elements, target.nodeId, nodeText), true)
+          // On the root, Enter adds a child too.
+          apply(addSibling(isRoot ? expanded() : elements, target.nodeId, nodeText), true)
           break
         case 'delete': {
           // Excalidraw's own delete keeps undo whole (deleting through updateScene left the node's
@@ -309,7 +313,7 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
     (text: string, at: Point, fallbackRoot: string): boolean => {
       if (!api || api.getAppState().editingTextElement) return false
       if (text.split(/\r?\n/).filter((line) => line.trim()).length < 2) return false
-      const outline = parseMarkdownOutline(text, fallbackRoot)
+      const outline = parseMarkdownOutline(text, fallbackRoot, { strict: true })
       if (!outline) return false
       apply(importOutline(api.getSceneElements(), outline, at), false)
       return true

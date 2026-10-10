@@ -15,10 +15,20 @@ function update<T extends ExcalidrawElement>(element: T, changes: Record<string,
 }
 
 export function badgeOf(elements: readonly ExcalidrawElement[], nodeId: string): ExcalidrawElement | undefined {
-  return elements.find((e) => {
-    const meta = metaOf(e)
-    return !e.isDeleted && meta?.kind === 'badge' && meta.nodeId === nodeId
-  })
+  const node = byId(elements, nodeId)
+  const meta = node ? metaOf(node) : null
+  if (meta?.kind !== 'node' || !meta.badgeId) return undefined
+  const badge = byId(elements, meta.badgeId)
+  return badge && !badge.isDeleted ? badge : undefined
+}
+
+/** Whether a badge is the one its node points to (not a pasted copy). */
+export function isOwnBadge(elements: readonly ExcalidrawElement[], badge: ExcalidrawElement): boolean {
+  const meta = metaOf(badge)
+  if (meta?.kind !== 'badge') return false
+  const node = byId(elements, meta.nodeId)
+  const nodeMeta = node ? metaOf(node) : null
+  return nodeMeta?.kind === 'node' && nodeMeta.badgeId === badge.id
 }
 
 function createBadge(node: ExcalidrawElement, mapId: string, count: number): ExcalidrawElement {
@@ -55,16 +65,17 @@ export function collapse(elements: readonly ExcalidrawElement[], nodeId: string)
       descendants.has(e.id) ||
       (container != null && descendants.has(container)) ||
       isLinkOf(e, descendants) !== null ||
-      (meta?.kind === 'badge' && descendants.has(meta.nodeId))
+      (meta?.kind === 'badge' && descendants.has(meta.nodeId) && isOwnBadge(elements, e))
     )
   }
   const hidden = elements.filter(hide)
   const node = byId(elements, nodeId)!
   const meta = metaOf(node) as NodeMeta
-  const collapsedMeta: NodeMeta = { ...meta, collapsed: true, hidden }
-  const collapsedNode = update(node, { customData: { ...node.customData, rabisco: collapsedMeta } })
+  const counted: NodeMeta = { ...meta, collapsed: true, hidden }
+  const badge = createBadge(node, map.mapId, hiddenCount(counted))
+  const collapsedNode = update(node, { customData: { ...node.customData, rabisco: { ...counted, badgeId: badge.id } } })
   const next = elements.map((e) => (e.id === nodeId ? collapsedNode : hide(e) ? update(e, { isDeleted: true }) : e))
-  return { elements: relayout([...next, createBadge(collapsedNode, map.mapId, hiddenCount(collapsedMeta))], map.mapId), select: nodeId }
+  return { elements: relayout([...next, badge], map.mapId), select: nodeId }
 }
 
 export function expand(elements: readonly ExcalidrawElement[], nodeId: string): CommandResult {
@@ -76,6 +87,7 @@ export function expand(elements: readonly ExcalidrawElement[], nodeId: string): 
   const rest: NodeMeta = { ...meta }
   delete rest.collapsed
   delete rest.hidden
+  delete rest.badgeId
   const expandedNode = update(node, { customData: { ...node.customData, rabisco: rest } })
   const badge = badgeOf(elements, nodeId)
   const restored = new Map(

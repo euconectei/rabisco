@@ -78,3 +78,34 @@ describe('mapToOutline', () => {
     expect(mapToOutline(collapsed, mapId)).toEqual(n('Raiz', n('A', n('A1')), n('B')))
   })
 })
+
+describe('review follow-ups', () => {
+  it('exports a collapsed branch once even when the collapsed node was copied', () => {
+    let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+    const root = r.select!
+    r = addChild(r.elements, root, 'A')
+    const a = r.select!
+    r = addChild(r.elements, a, 'A1')
+    r = addChild(r.elements, root, 'B')
+    const collapsed = collapse(r.elements, a).elements
+    const original = collapsed.find((e) => e.id === a)!
+    const copy = { ...original, id: 'copy-of-a', x: original.x + 400 } as typeof original
+    const mapId = (original.customData as { rabisco: { mapId: string } }).rabisco.mapId
+    expect(outlineToMarkdown(mapToOutline([...collapsed, copy], mapId))).toBe('- Raiz\n  - A\n    - A1\n  - B\n')
+  })
+
+  it('strict parsing (paste) refuses text where some line is not a list item or heading', () => {
+    expect(parseMarkdownOutline('# install deps\nnpm i\n# run\nnpm start', 'F', { strict: true })).toBeNull()
+    expect(parseMarkdownOutline('Shopping:\n- milk\n- eggs', 'F', { strict: true })).toBeNull()
+    expect(parseMarkdownOutline('- a\n- b', 'F', { strict: true })).toEqual(n('F', n('a'), n('b')))
+  })
+
+  it('a fenced code block is never an outline when pasting', () => {
+    expect(parseMarkdownOutline('```\n- a\n- b\n```', 'F', { strict: true })).toBeNull()
+  })
+
+  it('lenient parsing (file import) keeps paragraph and code lines as topics instead of dropping them', () => {
+    expect(parseMarkdownOutline('Shopping:\n- milk\n- eggs', 'Lista')).toEqual(n('Lista', n('Shopping:'), n('milk'), n('eggs')))
+    expect(parseMarkdownOutline('# Setup\nnpm i\n```\nnpm start\n```', 'F')).toEqual(n('Setup', n('npm i'), n('npm start')))
+  })
+})

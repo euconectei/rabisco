@@ -133,3 +133,16 @@ describe('reparent', () => {
     expect(reparent(s.elements, s.root, s.b).elements).toEqual(s.elements)
   })
 })
+
+describe('collapsed targets', () => {
+  it('dropping on a collapsed node expands it first: no hidden-and-visible mix, distinct orders, no badge left', () => {
+    const s = sample()
+    const collapsed = collapse(s.elements, s.a).elements
+    const { elements } = reparent(collapsed, s.c, s.a)
+    expect(meta(elements, s.a).collapsed).toBeFalsy()
+    const children = map(elements).byId.get(s.a)!.children
+    expect(children.map((c) => c.id)).toEqual([s.a1, s.c])
+    expect(new Set(children.map((c) => c.order)).size).toBe(2)
+    expect(live(elements).some((e) => metaOf(e)?.kind === 'badge')).toBe(false)
+  })
+})

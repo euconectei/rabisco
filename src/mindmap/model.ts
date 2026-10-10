@@ -17,6 +17,8 @@ export interface NodeMeta {
   /** Collapsed: the descendants' elements live (as copies) in `hidden` and are deleted from the scene. */
   collapsed?: boolean
   hidden?: ExcalidrawElement[]
+  /** The id of this node's own "+N" badge: copies of a badge (Ctrl+D, paste) are plain texts. */
+  badgeId?: string
 }
 
 export interface EdgeMeta {

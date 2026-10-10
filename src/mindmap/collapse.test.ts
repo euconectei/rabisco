@@ -2,7 +2,7 @@ import 'vitest-canvas-mock'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import { parseScene, serializeScene } from '../editor/scene'
 import { badgeOf, collapse, expand, toggleCollapse } from './collapse'
-import { addChild, branchElementIds, createMap } from './commands'
+import { addChild, branchElementIds, createMap, relayout } from './commands'
 import { metaOf, readMaps, type NodeMeta } from './model'
 
 type El = ExcalidrawElement & { text?: string; containerId?: string | null }
@@ -132,4 +132,36 @@ it('deleting a collapsed node leaves no orphan elements behind (its badge goes w
     if (e.containerId) expect(remainingIds.has(e.containerId)).toBe(true)
   }
   expect(remaining.some((e) => (e.customData as { rabisco?: { nodeId?: string } } | undefined)?.rabisco?.nodeId === s.a)).toBe(false)
+})
+
+describe('copies of a collapsed node (Ctrl+D, copy/paste keep customData with the original ids)', () => {
+  function withCopy() {
+    const s = sample()
+    const collapsed = collapse(s.elements, s.a).elements
+    const badge = badgeOf(collapsed, s.a)!
+    // What Excalidraw pastes: new ids, same customData, a little offset.
+    const copies = collapsed
+      .filter((e) => !e.isDeleted && (e.id === s.a || (e as El).containerId === s.a || e.id === badge.id))
+      .map((e) => ({ ...e, id: `copy-${e.id}`, x: e.x + 500, y: e.y + 500, containerId: (e as El).containerId ? `copy-${s.a}` : undefined }) as unknown as ExcalidrawElement)
+    return { s, elements: [...collapsed, ...copies], copyBadgeId: `copy-${badge.id}` }
+  }
+
+  it('a copied badge is a plain text: relayout leaves it where it is', () => {
+    const { s, elements, copyBadgeId } = withCopy()
+    const before = elements.find((e) => e.id === copyBadgeId)!
+    const after = relayout(elements, nodeMeta(elements, s.root).mapId).find((e) => e.id === copyBadgeId)!
+    expect([after.x, after.y]).toEqual([before.x, before.y])
+  })
+
+  it('expanding the original leaves no live badge of that node behind', () => {
+    const { s, elements, copyBadgeId } = withCopy()
+    const expanded = expand(elements, s.a).elements
+    expect(live(expanded).filter((e) => metaOf(e)?.kind === 'badge' && e.id !== copyBadgeId)).toHaveLength(0)
+    expect(badgeOf(expanded, s.a)).toBeUndefined()
+  })
+
+  it('deleting the original branch does not take the copied badge', () => {
+    const { s, elements, copyBadgeId } = withCopy()
+    expect(branchElementIds(elements, s.a)).not.toContain(copyBadgeId)
+  })
 })

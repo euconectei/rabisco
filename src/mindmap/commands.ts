@@ -91,12 +91,18 @@ export function branchElementIds(elements: readonly ExcalidrawElement[], nodeId:
   const map = mapOfNode(elements, nodeId)
   if (!map) return []
   const ids = new Set(branchIds(map, nodeId))
+  // Only the nodes' own badges: a pasted copy of a badge is a plain text elsewhere on the canvas.
+  const badgeIds = new Set(
+    elements.flatMap((e) => {
+      const meta = ids.has(e.id) ? metaOf(e) : null
+      return meta?.kind === 'node' && meta.badgeId ? [meta.badgeId] : []
+    }),
+  )
   return elements
     .filter((e) => {
       if (e.isDeleted) return false
       const container = (e as Mutable).containerId
-      const meta = metaOf(e)
-      const badge = meta?.kind === 'badge' && ids.has(meta.nodeId)
+      const badge = badgeIds.has(e.id)
       return ids.has(e.id) || (container != null && ids.has(container)) || isLinkOf(e, ids) !== null || badge
     })
     .map((e) => e.id)
@@ -164,7 +170,8 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
   return next.map((e) => {
     if (e.isDeleted) return e
     const meta = metaOf(e)
-    if (meta?.kind === 'badge' && meta.mapId === mapId && moved.has(meta.nodeId)) {
+    const owner = meta?.kind === 'badge' ? moved.get(meta.nodeId)?.rect : undefined
+    if (meta?.kind === 'badge' && owner && (metaOf(owner) as NodeMeta).badgeId === e.id) {
       const { rect } = moved.get(meta.nodeId)!
       const right = sideOf(map, meta.nodeId) !== 'left'
       return update(e, {
