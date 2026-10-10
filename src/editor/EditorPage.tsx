@@ -1,4 +1,4 @@
-import { CaptureUpdateAction, Excalidraw, Footer, MainMenu, newElementWith, sceneCoordsToViewportCoords, viewportCoordsToSceneCoords } from '@excalidraw/excalidraw'
+import { CaptureUpdateAction, Excalidraw, Footer, MainMenu, sceneCoordsToViewportCoords, viewportCoordsToSceneCoords } from '@excalidraw/excalidraw'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import '@excalidraw/excalidraw/index.css'
@@ -9,9 +9,9 @@ import { format } from '../i18n/format'
 import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
 import { useI18n } from '../i18n/useI18n'
 import { ExportImageDialog } from '../export/ExportImageDialog'
-import { relayout } from '../mindmap/commands'
 import { exportableMap, mapToOutline, outlineToMarkdown } from '../mindmap/markdown'
-import { metaOf, readMaps, type MapLayout, type MapStyle } from '../mindmap/model'
+import { readMaps, type MapLayout, type MapStyle } from '../mindmap/model'
+import { setLayout, setStyle } from '../mindmap/switchStyle'
 import { toolbarPosition, touchTarget, TouchToolbar, useSettled, type TouchTarget } from '../mindmap/TouchToolbar'
 import { useMindmap, type MindmapApi } from '../mindmap/useMindmap'
 import { Dialog } from './Dialog'
@@ -76,28 +76,13 @@ function EditorScreen({ fileId }: { fileId: string }) {
       selection: Object.entries(api.getAppState().selectedElementIds).flatMap(([id, on]) => (on ? [id] : [])),
     })
     window.__rabiscoSetLayout = (layout: MapLayout) => {
-      const elements = api.getSceneElements()
-      const rootIds = new Set([...readMaps(elements).values()].map((map) => map.root.id))
-      const next = elements.map((element) => {
-        if (!rootIds.has(element.id)) return element
-        const meta = metaOf(element)
-        if (meta?.kind !== 'node') return element
-        return newElementWith(element, { customData: { ...element.customData, rabisco: { ...meta, layout } } })
-      })
+      let next: readonly ExcalidrawElement[] = api.getSceneElements()
+      for (const mapId of [...readMaps(next).keys()]) next = setLayout(next, mapId, layout).elements
       api.updateScene({ elements: next, captureUpdate: CaptureUpdateAction.IMMEDIATELY })
     }
     window.__rabiscoSetStyle = (style: MapStyle) => {
-      const elements = api.getSceneElements()
-      const rootIds = new Set([...readMaps(elements).values()].map((map) => map.root.id))
-      const styled = elements.map((element) => {
-        if (!rootIds.has(element.id)) return element
-        const meta = metaOf(element)
-        if (meta?.kind !== 'node') return element
-        return newElementWith(element, { customData: { ...element.customData, rabisco: { ...meta, style } } })
-      })
-      // Rebuild every map's decorations/links for the new style in a single scene update.
-      let next: readonly ExcalidrawElement[] = styled
-      for (const mapId of [...readMaps(styled).keys()]) next = relayout(next, mapId)
+      let next: readonly ExcalidrawElement[] = api.getSceneElements()
+      for (const mapId of [...readMaps(next).keys()]) next = setStyle(next, mapId, style).elements
       api.updateScene({ elements: next, captureUpdate: CaptureUpdateAction.IMMEDIATELY })
     }
     return () => {

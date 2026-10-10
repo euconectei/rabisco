@@ -1,7 +1,7 @@
 import { convertToExcalidrawElements } from '@excalidraw/excalidraw'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import type { Size } from './layout'
-import type { EdgeMeta, NodeMeta, Side } from './model'
+import type { EdgeMeta, MapStyle, NodeMeta, Side } from './model'
 
 export const TEXT_COLOR = '#1e1e1e'
 
@@ -19,6 +19,8 @@ export interface NodeInput {
   y: number
   color: string
   isRoot: boolean
+  /** The map's style: in lines style the node is transparent with left-aligned text (default boxes). */
+  style?: MapStyle
 }
 
 /** A node: rounded rectangle with bound text; the Rabisco metadata lives on the rectangle. */
@@ -37,6 +39,7 @@ export function createNodeElements(input: NodeInput): ExcalidrawElement[] {
     meta.layout = 'both'
     meta.style = 'boxes'
   }
+  const lines = input.style === 'lines'
   return convertToExcalidrawElements(
     [
       {
@@ -46,11 +49,16 @@ export function createNodeElements(input: NodeInput): ExcalidrawElement[] {
         y: input.y,
         width: input.isRoot ? 180 : 140,
         height: input.isRoot ? 56 : 44,
-        strokeColor: input.color,
+        strokeColor: lines ? 'transparent' : input.color,
         backgroundColor: 'transparent',
         strokeWidth: input.isRoot ? 2 : 1,
         roundness: { type: 3 },
-        label: { text: input.text, fontSize: input.isRoot ? 24 : 20, strokeColor: TEXT_COLOR },
+        label: {
+          text: input.text,
+          fontSize: input.isRoot ? 24 : 20,
+          strokeColor: TEXT_COLOR,
+          ...(lines ? { textAlign: 'left' as const } : {}),
+        },
         customData: { rabisco: meta },
       },
     ],
