@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/euconectei/rabisco/compare/v0.4.0...v0.4.1) (2026-10-10)
+
+
+### Bug Fixes
+
+* address the minor findings of the phase 2 review ([#10](https://github.com/euconectei/rabisco/issues/10)) ([4959a3a](https://github.com/euconectei/rabisco/commit/4959a3a950ef7b8b474a7fccf732681c7bf6ab54))
+
 ## [0.4.0](https://github.com/euconectei/rabisco/compare/v0.3.0...v0.4.0) (2026-10-10)
 
 
