@@ -27,6 +27,8 @@ export interface FakeFile {
   mimeType: string
   parents: string[]
   version: number
+  /** Like Drive: changes only when the content changes (renames bump `version` only). */
+  headRevisionId: string
   modifiedTime: string
   content: string
   thumbnail?: { image: string; mimeType: string }
@@ -54,6 +56,7 @@ export class FakeDrive {
       mimeType: file.mimeType ?? 'application/vnd.excalidraw+json',
       parents: file.parents ?? [],
       version: 1,
+      headRevisionId: `rev-${this.seq}-1`,
       modifiedTime: this.tick(),
       content: file.content,
       trashed: false,
@@ -67,6 +70,7 @@ export class FakeDrive {
     const file = this.files.get(id)!
     file.content = content
     file.version += 1
+    file.headRevisionId = `rev-${id}-${file.version}`
     file.modifiedTime = this.tick()
   }
 
@@ -75,7 +79,14 @@ export class FakeDrive {
   }
 
   private meta(file: FakeFile) {
-    return { id: file.id, name: file.name, version: String(file.version), modifiedTime: file.modifiedTime, parents: file.parents }
+    return {
+      id: file.id,
+      name: file.name,
+      version: String(file.version),
+      headRevisionId: file.headRevisionId,
+      modifiedTime: file.modifiedTime,
+      parents: file.parents,
+    }
   }
 
   private static parseMultipart(contentType: string, body: string): { metadata: Record<string, unknown>; content: string } {
@@ -131,6 +142,7 @@ export class FakeDrive {
       const hints = metadata.contentHints as { thumbnail?: FakeFile['thumbnail'] } | undefined
       if (hints?.thumbnail) file.thumbnail = hints.thumbnail
       file.version += 1
+      file.headRevisionId = `rev-${file.id}-${file.version}`
       file.modifiedTime = this.tick()
       return route.fulfill({ json: this.meta(file) })
     }

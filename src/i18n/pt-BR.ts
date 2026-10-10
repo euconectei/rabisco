@@ -60,6 +60,12 @@ export const ptBR = {
   },
   notFound: { title: 'Página não encontrada', backHome: 'Voltar ao início' },
   language: { label: 'Idioma', 'pt-BR': 'Português', en: 'English' },
+  mindmap: {
+    button: 'Mapa mental',
+    placeHint: 'Clique onde o mapa deve começar (Esc cancela)',
+    rootText: 'Ideia central',
+    nodeText: 'Tópico',
+  },
   auth: {
     signIn: 'Entrar com Google',
     continueAs: 'Continuar como {name}',
@@ -82,6 +88,15 @@ export const ptBR = {
     linkUnseen: 'Novidades (há novidades)',
     menuItem: 'Novidades ({version})',
     sections: {
+      mindmap: {
+        title: 'Mapas mentais no canvas',
+        items: [
+          'Clique em "Mapa mental" e depois no ponto do quadro onde a ideia central deve ficar.',
+          'Com um tópico selecionado: Tab cria um tópico filho, Enter cria um irmão, Delete apaga o ramo, as setas navegam e F2 edita o texto.',
+          'O mapa se organiza sozinho dos dois lados, e cada ramo ganha uma cor.',
+          'Mapas e desenhos livres convivem no mesmo quadro, e o arquivo continua abrindo no excalidraw.com.',
+        ],
+      },
       drive: {
         title: 'Seus desenhos no seu Google Drive',
         items: [
