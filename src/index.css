@@ -22,7 +22,12 @@ html, body, #root { height: 100%; margin: 0; }
   display: inline-block; padding: 0.6rem 1.2rem; border: 0; border-radius: 0.5rem;
   background: var(--accent); color: #fff; font: inherit; text-decoration: none; cursor: pointer;
 }
-.language-switcher { display: inline-flex; gap: 0.5rem; align-items: center; margin-top: 1.5rem; }
+/* PT | EN toggle */
+.language-switcher { display: inline-flex; padding: 0.2rem; gap: 0.15rem; margin-top: 1.5rem; border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); border-radius: 999px; }
+.language-switcher button { min-width: 2.6rem; min-height: 2rem; padding: 0 0.7rem; border: 0; border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.04em; cursor: pointer; opacity: 0.7; }
+.language-switcher button:hover { opacity: 1; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.language-switcher button[aria-pressed='true'] { background: var(--accent); color: #fff; opacity: 1; }
+.language-switcher button:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 2px; }
 .page-header .language-switcher { margin-top: 0; }
 .editor { height: 100vh; height: 100dvh; }
 .app-footer { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; padding: 1.5rem 1rem; font-size: 0.8rem; opacity: 0.7; }
@@ -58,6 +63,8 @@ html, body, #root { height: 100%; margin: 0; }
 .account-email { margin: 0.2rem 0 0.9rem; font-size: 0.85rem; opacity: 0.7; }
 .action-error { position: fixed; z-index: 15; bottom: 4.5rem; left: 50%; transform: translateX(-50%); margin: 0; padding: 0.5rem 1rem; border-radius: 0.5rem; background: #c92a2a; color: #fff; font-size: 0.85rem; }
 .editor-top-right { display: flex; gap: 0.5rem; align-items: center; }
+/* In the editor the toggle sits in the top bar, following the editor theme like the mind map button. */
+.editor-top-right .language-switcher { margin-top: 0; border-color: var(--default-border-color); }
 /* Follows the editor theme (Excalidraw variables), not the system one: the two can differ. */
 .mindmap-button { white-space: nowrap; background: var(--island-bg-color); color: var(--text-primary-color); border-color: var(--default-border-color); }
 .mindmap-placement { position: fixed; inset: 0; z-index: 12; cursor: crosshair; }
