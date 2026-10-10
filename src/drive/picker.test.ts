@@ -16,7 +16,7 @@ function installFakeGapi() {
     }),
     build: vi.fn(() => ({ setVisible: vi.fn() })),
   }
-  const view = { setMode: vi.fn(() => view) }
+  const view = { setMode: vi.fn(() => view), setMimeTypes: vi.fn(() => view) }
   const w = window as unknown as Record<string, unknown>
   w.gapi = { load: vi.fn((_name: string, options: { callback: () => void }) => options.callback()) }
   w.google = {
@@ -91,4 +91,14 @@ it('loads the Google API script only once', async () => {
   fake.answer({ action: 'cancel' })
   await second
   expect(document.head.querySelectorAll(`script[src="${GAPI_SCRIPT_URL}"]`)).toHaveLength(1)
+})
+
+it('only shows file types Rabisco can open', async () => {
+  const fake = installFakeGapi()
+  const picking = pickFile(options)
+  loadScript()
+  await flush()
+  expect(fake.view.setMimeTypes).toHaveBeenCalledWith('application/vnd.excalidraw+json,application/json,application/octet-stream,text/plain')
+  fake.answer({ action: 'cancel' })
+  await picking
 })

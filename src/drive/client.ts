@@ -7,6 +7,13 @@ export const FOLDER_MIME = 'application/vnd.google-apps.folder'
 export const FOLDER_NAME = 'Rabisco'
 const EXTENSION = '.excalidraw'
 
+const MAX_LIST_PAGES = 10
+
+function withFolderLock<T>(work: () => Promise<T>): Promise<T> {
+  const locks = (globalThis.navigator as Navigator | undefined)?.locks
+  return locks ? locks.request('rabisco-folder', work) : work()
+}
+
 const API = 'https://www.googleapis.com/drive/v3'
 const UPLOAD = 'https://www.googleapis.com/upload/drive/v3'
 const META_FIELDS = 'id,name,version,headRevisionId,modifiedTime,parents'
@@ -104,8 +111,9 @@ export function createDriveClient(driveFetch: DriveFetch, folderCache: FolderCac
     }
   }
 
-  const client: DriveClient = {
-    async ensureFolder() {
+  let folderLookup: Promise<string> | null = null
+
+  async function findOrCreateFolder(): Promise<string> {
       const cached = folderCache.get()
       if (cached && (await cachedFolderIsUsable(cached))) return cached
       const query = `mimeType='${FOLDER_MIME}' and name='${FOLDER_NAME}' and trashed=false`
@@ -121,18 +129,36 @@ export function createDriveClient(driveFetch: DriveFetch, folderCache: FolderCac
       }
       folderCache.set(id)
       return id
+  }
+
+  const client: DriveClient = {
+    ensureFolder() {
+      // One lookup at a time (in this tab, and across tabs through the Web Locks API when
+      // available), so first use never creates two "Rabisco" folders.
+      folderLookup ??= withFolderLock(findOrCreateFolder).finally(() => {
+        folderLookup = null
+      })
+      return folderLookup
     },
 
     async listFiles() {
-      const result = await json<{ files: DriveFileMeta[] }>(
-        url(API, '/files', {
-          q: `trashed=false and mimeType!='${FOLDER_MIME}'`,
-          orderBy: 'modifiedTime desc',
-          pageSize: '100',
-          fields: 'files(id,name,version,modifiedTime)',
-        }),
-      )
-      return result.files.filter((file) => isExcalidrawName(file.name))
+      const files: DriveFileMeta[] = []
+      let pageToken: string | undefined
+      for (let page = 0; page < MAX_LIST_PAGES; page++) {
+        const result = await json<{ files: DriveFileMeta[]; nextPageToken?: string }>(
+          url(API, '/files', {
+            q: `trashed=false and mimeType!='${FOLDER_MIME}'`,
+            orderBy: 'modifiedTime desc',
+            pageSize: '100',
+            fields: 'nextPageToken,files(id,name,version,modifiedTime)',
+            ...(pageToken ? { pageToken } : {}),
+          }),
+        )
+        files.push(...result.files.filter((file) => isExcalidrawName(file.name)))
+        pageToken = result.nextPageToken
+        if (!pageToken) break
+      }
+      return files
     },
 
     createFile(name, content, folderId) {

@@ -126,3 +126,30 @@ it('creates a sibling file in the same folder as another file', async () => {
   expect(created.id).toBe('png')
   expect(calls[1].body).toContain(JSON.stringify({ name: 'Mapa (cópia).excalidraw', mimeType: EXCALIDRAW_MIME, parents: ['p9'] }))
 })
+
+it('follows pagination when listing files', async () => {
+  const { driveFetch, calls } = fakeFetch((call) => {
+    const token = new URL(call.url).searchParams.get('pageToken')
+    return token === 'p2'
+      ? { files: [meta({ id: 'b', name: 'B.excalidraw' })] }
+      : { files: [meta({ id: 'a', name: 'A.excalidraw' })], nextPageToken: 'p2' }
+  })
+  const files = await createDriveClient(driveFetch, memoryCache()).listFiles()
+  expect(files.map((f) => f.id)).toEqual(['a', 'b'])
+  expect(calls).toHaveLength(2)
+})
+
+it('creates the Rabisco folder only once for concurrent callers', async () => {
+  let creates = 0
+  const { driveFetch } = fakeFetch((call) => {
+    if (call.method === 'POST') {
+      creates += 1
+      return { id: 'only-folder' }
+    }
+    return { files: [] }
+  })
+  const client = createDriveClient(driveFetch, memoryCache())
+  const ids = await Promise.all([client.ensureFolder(), client.ensureFolder(), client.ensureFolder()])
+  expect(ids).toEqual(['only-folder', 'only-folder', 'only-folder'])
+  expect(creates).toBe(1)
+})
