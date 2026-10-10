@@ -58,6 +58,19 @@ export function collapse(elements: readonly ExcalidrawElement[], nodeId: string)
 
   const descendants = new Set(branchIds(map, nodeId).filter((id) => id !== nodeId))
   const style = styleOf(elements, map.mapId)
+  // A hand-drawn arrow (no Rabisco metadata) bound to a hidden descendant would dangle on screen:
+  // hide it too. Arrows bound only to the collapsed node (still visible) are left alone.
+  const looseArrows = new Set(
+    elements
+      .filter((e) => !e.isDeleted && e.type === 'arrow' && metaOf(e) === null)
+      .filter((e) => {
+        const binding = e as unknown as { startBinding?: { elementId?: string } | null; endBinding?: { elementId?: string } | null }
+        const start = binding.startBinding?.elementId ?? null
+        const end = binding.endBinding?.elementId ?? null
+        return (start != null && descendants.has(start)) || (end != null && descendants.has(end))
+      })
+      .map((e) => e.id),
+  )
   const hide = (e: ExcalidrawElement) => {
     if (e.isDeleted) return false
     const meta = metaOf(e)
@@ -65,6 +78,8 @@ export function collapse(elements: readonly ExcalidrawElement[], nodeId: string)
     return (
       descendants.has(e.id) ||
       (container != null && descendants.has(container)) ||
+      looseArrows.has(e.id) ||
+      (container != null && looseArrows.has(container)) ||
       isLinkOf(e, descendants, style) !== null ||
       isDecorationOf(e, descendants) !== null ||
       (meta?.kind === 'badge' && descendants.has(meta.nodeId) && isOwnBadge(elements, e))
