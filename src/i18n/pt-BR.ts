@@ -187,6 +187,15 @@ export const ptBR = {
           'No tablet, toque num tópico: uma barra com + filho, + irmão, recolher e apagar aparece acima dele.',
         ],
       },
+      mindmapLayouts: {
+        title: 'Organize o mapa do seu jeito',
+        items: [
+          'Com um tópico selecionado, o botão "Organizar" troca a organização do mapa: Dois lados, Para a direita ou Livre.',
+          'Na organização Livre, você arrasta um tópico para onde quiser, e o ramo inteiro vai junto.',
+          'Escolha também o estilo: Caixas ou Linhas, com cara de gráfico de lógica.',
+          'Cada mapa guarda a própria organização e o próprio estilo, sem atrapalhar os outros.',
+        ],
+      },
       home: {
         title: 'Página inicial nova',
         items: [
