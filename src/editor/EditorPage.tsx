@@ -7,10 +7,12 @@ import { useDrive } from '../drive/useDrive'
 import { format } from '../i18n/format'
 import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
 import { useI18n } from '../i18n/useI18n'
+import { ExportImageDialog } from '../export/ExportImageDialog'
 import { exportableMap, mapToOutline, outlineToMarkdown } from '../mindmap/markdown'
 import { toolbarPosition, touchTarget, TouchToolbar, useSettled, type TouchTarget } from '../mindmap/TouchToolbar'
 import { useMindmap, type MindmapApi } from '../mindmap/useMindmap'
 import { Dialog } from './Dialog'
+import { downloadBlob } from './download'
 import { MindmapPlacement } from './MindmapPlacement'
 import { SaveStatus } from './SaveStatus'
 import { TitleField } from './TitleField'
@@ -30,6 +32,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
   const [actionFailed, setActionFailed] = useState(false)
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null)
   const [placing, setPlacing] = useState(false)
+  const [exportingImage, setExportingImage] = useState(false)
   // The map the export items act on (null: they are disabled).
   const [exportMapId, setExportMapId] = useState<string | null>(null)
   // Touch toolbar: the last pointer kind, the node it acts on, and the view (it hides while scrolling or zooming).
@@ -62,6 +65,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
     [onSceneChange, handleMindmapChange],
   )
   const cancelPlacing = useCallback(() => setPlacing(false), [])
+  const closeExport = useCallback(() => setExportingImage(false), [])
   function placeMap(client: { clientX: number; clientY: number }) {
     setPlacing(false)
     if (!api) return
@@ -76,13 +80,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
 
   function downloadMarkdown() {
     const markdown = mapMarkdown()
-    if (!markdown) return
-    const url = URL.createObjectURL(new Blob([markdown], { type: 'text/markdown' }))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${baseName || t.mindmap.defaultRoot}.md`
-    link.click()
-    URL.revokeObjectURL(url)
+    if (markdown) downloadBlob(new Blob([markdown], { type: 'text/markdown' }), `${baseName || t.mindmap.defaultRoot}.md`)
   }
 
   async function saveMarkdownToDrive() {
@@ -152,6 +150,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
         excalidrawAPI={setApi}
         onChange={onChange}
         onPaste={onPaste}
+        UIOptions={{ canvasActions: { saveAsImage: false } }}
         renderTopRightUI={() => (
           <div className="editor-top-right">
             <button type="button" className="button-secondary mindmap-button" onClick={() => setPlacing(true)}>
@@ -168,6 +167,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
             {format(t.whatsNew.menuItem, { version: `v${__APP_VERSION__}` })}
           </MainMenu.Item>
           <MainMenu.Separator />
+          <MainMenu.Item onSelect={() => setExportingImage(true)}>{t.exportImage.menuItem}</MainMenu.Item>
           <MainMenu.Item disabled={!exportMapId} onSelect={() => void attempt(async () => navigator.clipboard.writeText(mapMarkdown() ?? ''))}>
             {t.mindmap.copyAsText}
           </MainMenu.Item>
@@ -186,6 +186,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
         </Footer>
       </Excalidraw>
       {placing && <MindmapPlacement onPlace={placeMap} onCancel={cancelPlacing} />}
+      {exportingImage && api && <ExportImageDialog api={api} baseName={baseName} fileId={fileId} onClose={closeExport} />}
       {api && touch && viewSettled && (pointerType === 'touch' || pointerType === 'pen') && (
         <TouchToolbar
             theme={theme}

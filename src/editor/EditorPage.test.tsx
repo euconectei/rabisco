@@ -26,9 +26,10 @@ vi.mock('@excalidraw/excalidraw', async (importOriginal) => {
     renderTopRightUI?: () => ReactNode
     excalidrawAPI?: (api: unknown) => void
     onPaste?: (data: { text?: string; elements?: unknown[] }, event: null) => boolean
+    UIOptions?: { canvasActions?: { saveAsImage?: boolean } }
     children?: ReactNode
   }
-  function Excalidraw({ langCode, initialData, onChange, renderTopRightUI, excalidrawAPI, onPaste, children }: Props) {
+  function Excalidraw({ langCode, initialData, onChange, renderTopRightUI, excalidrawAPI, onPaste, UIOptions, children }: Props) {
     useEffect(() => {
       mounts.onPaste = onPaste ?? null
     }, [onPaste])
@@ -39,6 +40,7 @@ vi.mock('@excalidraw/excalidraw', async (importOriginal) => {
       excalidrawAPI?.({
         getSceneElements: () => current,
         getAppState: () => appState,
+        getFiles: () => ({}),
         updateScene: (scene: { elements?: unknown[]; appState?: object }) => {
           if (scene.appState) Object.assign(appState, scene.appState)
           if (scene.elements) {
@@ -57,7 +59,12 @@ vi.mock('@excalidraw/excalidraw', async (importOriginal) => {
       onChange?.([...elements, element], appState, {})
     }
     return (
-      <div data-testid="excalidraw" data-lang={langCode} data-content={elements.map((e) => e.text ?? e.id).join('|')}>
+      <div
+        data-testid="excalidraw"
+        data-lang={langCode}
+        data-content={elements.map((e) => e.text ?? e.id).join('|')}
+        data-save-as-image={String(UIOptions?.canvasActions?.saveAsImage)}
+      >
         {renderTopRightUI?.()}
         <button type="button" onClick={() => edit('Primeira edição')}>simulate edit</button>
         <button type="button" onClick={() => edit('Segunda edição')}>simulate second edit</button>
@@ -294,6 +301,17 @@ describe('mind map', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Salvar .md no Drive' }))
     await waitFor(() => expect(drive.client.createSibling).toHaveBeenCalledWith('Mapa.md', '- Ideia central\n', 'text/markdown', 'f1'))
     click.mockRestore()
+  })
+
+  it('opens the export image dialog from the menu, the only way to export an image', async () => {
+    open()
+    const element = await canvas()
+    // Excalidraw's own image dialog (which cannot save to Drive) is switched off.
+    expect(element).toHaveAttribute('data-save-as-image', 'false')
+    await userEvent.click(screen.getByRole('button', { name: 'Exportar imagem…' }))
+    expect(screen.getByRole('dialog', { name: 'Exportar imagem' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Fechar' }))
+    expect(screen.queryByRole('dialog', { name: 'Exportar imagem' })).not.toBeInTheDocument()
   })
 
   it('shows the touch toolbar for a selected node after a touch, never after a mouse click', async () => {
