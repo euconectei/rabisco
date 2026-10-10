@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/euconectei/rabisco/compare/v0.4.1...v0.5.0) (2026-10-10)
+
+
+### Features
+
+* keyboard-driven mind maps on the canvas ([#12](https://github.com/euconectei/rabisco/issues/12)) ([dcf98e9](https://github.com/euconectei/rabisco/commit/dcf98e916a63488d4777ea62d85171e2b6c573bb))
+
 ## [0.4.1](https://github.com/euconectei/rabisco/compare/v0.4.0...v0.4.1) (2026-10-10)
 
 
