@@ -339,3 +339,60 @@ it('Ctrl + . does nothing while a text is being edited', () => {
   expect(pressWith('.', { ctrlKey: true }).defaultPrevented).toBe(false)
   expect(api.updateScene).not.toHaveBeenCalled()
 })
+
+describe('dragging a node', () => {
+  function twoBranches() {
+    let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+    const root = r.select!
+    r = addChild(r.elements, root, 'A')
+    const a = r.select!
+    r = addChild(r.elements, root, 'B')
+    const b = r.select!
+    r = addChild(r.elements, root, 'C')
+    return { elements: r.elements, root, a, b, c: r.select! }
+  }
+  const moveTo = (els: readonly ExcalidrawElement[], id: string, x: number, y: number) =>
+    els.map((e) => (e.id === id ? ({ ...e, x, y, version: e.version + 1 } as ExcalidrawElement) : e))
+  const dragEnd = (result: { current: ReturnType<typeof useMindmap> }, els: readonly ExcalidrawElement[], selected: string) => {
+    const appState = { editingTextElement: null, selectedElementIds: { [selected]: true } }
+    act(() => result.current.handleChange(els, { ...appState, selectedElementsAreBeingDragged: true } as never))
+    act(() => result.current.handleChange(els, { ...appState, selectedElementsAreBeingDragged: false } as never))
+  }
+
+  it('dropped on another node, moves the branch there in one undo step', () => {
+    const t = twoBranches()
+    const target = t.elements.find((e) => e.id === t.b)!
+    const dropped = moveTo(t.elements, t.c, target.x + 5, target.y + 2)
+    const { api, state } = fakeApi(dropped, [t.c])
+    const { result } = renderHook(() => useMindmap(api, labels))
+    dragEnd(result, dropped, t.c)
+    expect(api.updateScene).toHaveBeenCalledTimes(1)
+    expect(api.updateScene).toHaveBeenCalledWith(expect.objectContaining({ captureUpdate: 'IMMEDIATELY' }))
+    const map = [...readMaps(state.elements).values()][0]
+    expect(map.byId.get(t.c)!.parentId).toBe(t.b)
+  })
+
+  it('dropped on empty canvas, goes back to its place', () => {
+    const t = twoBranches()
+    const before = t.elements.find((e) => e.id === t.c)!
+    const dropped = moveTo(t.elements, t.c, 3000, 3000)
+    const { api, state } = fakeApi(dropped, [t.c])
+    const { result } = renderHook(() => useMindmap(api, labels))
+    dragEnd(result, dropped, t.c)
+    const after = state.elements.find((e) => e.id === t.c)!
+    expect([after.x, after.y]).toEqual([before.x, before.y])
+    expect([...readMaps(state.elements).values()][0].byId.get(t.c)!.parentId).toBe(t.root)
+  })
+
+  it('dragging the root brings the whole map to the new position', () => {
+    const t = twoBranches()
+    const root = t.elements.find((e) => e.id === t.root)!
+    const a = t.elements.find((e) => e.id === t.a)!
+    const dropped = moveTo(t.elements, t.root, root.x + 300, root.y + 100)
+    const { api, state } = fakeApi(dropped, [t.root])
+    const { result } = renderHook(() => useMindmap(api, labels))
+    dragEnd(result, dropped, t.root)
+    const movedA = state.elements.find((e) => e.id === t.a)!
+    expect([movedA.x - a.x, movedA.y - a.y]).toEqual([300, 100])
+  })
+})

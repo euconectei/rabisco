@@ -7,6 +7,7 @@ import { toggleCollapse } from './collapse'
 import { actionForKey } from './keyboard'
 import type { Point } from './layout'
 import { metaOf, readMaps } from './model'
+import { dropTarget, reparent } from './reparent'
 
 /** The slice of Excalidraw's imperative API the mind map needs (easy to fake in tests). */
 export interface MindmapApi {
@@ -216,11 +217,29 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
 
   // When editing a node's text ends, its size may have changed: re-lay out that map.
   const editingNode = useRef<string | null>(null)
+  // A drag in progress: when it ends over another node of the same map, the branch moves there.
+  const dragging = useRef(false)
   const handleChange = useCallback(
     (
       elements: readonly ExcalidrawElement[],
-      appState: Pick<AppState, 'editingTextElement'> & Partial<Pick<AppState, 'selectedElementsAreBeingDragged'>>,
+      appState: Pick<AppState, 'editingTextElement'> &
+        Partial<Pick<AppState, 'selectedElementsAreBeingDragged' | 'selectedElementIds'>>,
     ) => {
+      const wasDragging = dragging.current
+      dragging.current = !!appState.selectedElementsAreBeingDragged
+      if (wasDragging && !dragging.current && api && !appState.editingTextElement) {
+        const dragged = findNodeOf(elements, appState.selectedElementIds ? selectedIds({ selectedElementIds: appState.selectedElementIds }) : [])
+        const target = dragged ? dropTarget(elements, dragged.nodeId) : null
+        if (dragged && target) {
+          const result = reparent(elements, dragged.nodeId, target)
+          api.updateScene({
+            elements: result.elements,
+            appState: { selectedElementIds: { [dragged.nodeId]: true } } as Partial<AppState>,
+            captureUpdate: CaptureUpdateAction.IMMEDIATELY,
+          })
+          return
+        }
+      }
       const deleting = pendingDelete.current
       if (deleting && api) {
         const node = elements.find((e) => e.id === deleting.nodeId)
