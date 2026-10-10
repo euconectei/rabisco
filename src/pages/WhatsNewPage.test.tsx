@@ -1,3 +1,4 @@
+import { latestWhatsNewDate } from '../whatsNew/entries'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AppRoutes } from '../routes'
@@ -22,7 +23,7 @@ it('shows the same entry in English', () => {
 
 it('marks the news as seen when opened', () => {
   renderWithProviders(<AppRoutes />, { route: '/whats-new' })
-  expect(localStorage.getItem('rabisco.whatsNew.lastSeen')).toBe('2026-10-09')
+  expect(localStorage.getItem('rabisco.whatsNew.lastSeen')).toBe(latestWhatsNewDate)
 })
 
 it('goes home when opened directly, with no history to go back to', async () => {

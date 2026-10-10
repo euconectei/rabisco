@@ -31,7 +31,7 @@ export const ptBR = {
       scope: 'O app enxerga só os arquivos que ele mesmo criou ou que você abriu nele. O resto do seu Drive fica fora do alcance.',
       openSource: 'Código aberto',
       openSourceText: '(licença MIT): qualquer pessoa pode ver como ele funciona.',
-      offline: 'Caiu a conexão? Continue desenhando: o Rabisco salva quando ela voltar.',
+      offline: 'Caiu a conexão no meio do desenho? Continue: as mudanças ficam neste aparelho e são salvas quando a internet voltar.',
     },
     ctaTitle: 'Comece um rabisco agora',
     ctaText: 'Entre com a sua conta Google e crie o primeiro desenho em segundos.',

@@ -33,7 +33,7 @@ export const en: Messages = {
       scope: 'The app only sees the files it created or that you opened with it. The rest of your Drive stays out of reach.',
       openSource: 'Open source',
       openSourceText: '(MIT license): anyone can see how it works.',
-      offline: 'Lost your connection? Keep drawing: Rabisco saves once it is back.',
+      offline: "Lost your connection mid-drawing? Keep going: changes stay on this device and are saved when you're back online.",
     },
     ctaTitle: 'Start a sketch now',
     ctaText: 'Sign in with your Google account and create your first drawing in seconds.',

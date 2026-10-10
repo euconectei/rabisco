@@ -5,12 +5,12 @@ export type Shot = 'canvas' | 'mindmap' | 'draw' | 'files'
 
 const SIZES: Record<Shot, { width: number; height: number }> = {
   canvas: { width: 1280, height: 800 },
-  mindmap: { width: 700, height: 438 },
+  mindmap: { width: 1140, height: 712 },
   draw: { width: 720, height: 450 },
   files: { width: 700, height: 415 },
 }
 
-export const screenshotPath = (lang: string, shot: Shot, theme: 'light' | 'dark') =>
+const screenshotPath = (lang: string, shot: Shot, theme: 'light' | 'dark') =>
   `/landing/${lang}-${shot}-${theme}.webp`
 
 export function Screenshot({
@@ -33,6 +33,7 @@ export function Screenshot({
         alt={alt}
         {...SIZES[shot]}
         loading={eager ? 'eager' : 'lazy'}
+        fetchPriority={eager ? 'high' : 'auto'}
         decoding="async"
       />
     </picture>

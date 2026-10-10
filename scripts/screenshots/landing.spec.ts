@@ -108,6 +108,8 @@ for (const lang of ['pt-BR', 'en'] as const) {
         const drive = new FakeDrive()
         for (const name of c.files) drive.add({ name: `${name}.excalidraw`, content: '{"type":"excalidraw","elements":[]}' })
         await installFakeGoogle(page, drive)
+        // The page's clock matches the fake Drive's, so "edited … ago" does not depend on when this runs.
+        await page.clock.setFixedTime(new Date('2026-10-09T14:00:00Z'))
 
         await page.goto('/app')
         await page.getByRole('button', { name: c.signIn }).click()
@@ -147,19 +149,23 @@ for (const lang of ['pt-BR', 'en'] as const) {
         await page.mouse.move(1270, 790)
         await expect(page.locator('.save-status').filter({ hasText: c.saved })).toBeAttached({ timeout: 10_000 })
         const prefix = `${lang}-`
-        await saveWebp(page, await page.screenshot({ clip: { x: 505, y: 211, width: 700, height: 438 } }), `${prefix}mindmap-${theme}`)
+        // The map alone, without the editor's bottom bar (zoom, undo) creeping into the crop.
+        const footer = await page.addStyleTag({ content: '.layer-ui__wrapper__footer-left, .zoom-actions, .undo-redo-buttons { display: none !important; }' })
+        await saveWebp(page, await page.screenshot({ clip: { x: 70, y: 82, width: 1140, height: 712 } }), `${prefix}mindmap-${theme}`)
+        await footer.evaluate((el) => el.remove())
 
         // A handwritten title above the map fills the canvas shot.
         await page.keyboard.press('t')
         await page.mouse.click(520, 250)
         await type(page, c.title)
         // Esc leaves the new text selected: bump its size twice.
-        await page.keyboard.press('Control+Shift+Period')
-        await page.keyboard.press('Control+Shift+Period')
+        await page.keyboard.press('ControlOrMeta+Shift+Period')
+        await page.keyboard.press('ControlOrMeta+Shift+Period')
         await page.keyboard.press('Escape')
 
         // Hand-drawn flow on empty canvas to the right of the map, at 100% zoom.
-        await page.keyboard.press('Control+0') // reset zoom
+        await page.keyboard.press('ControlOrMeta+0') // reset zoom
+        await expect(page.getByText('100%', { exact: true })).toBeVisible()
         for (let i = 0; i < 9; i++) await page.mouse.wheel(250, 0)
         const [idea, draft, publish] = c.flow
         await box(page, 'r', 380, 170, idea)
