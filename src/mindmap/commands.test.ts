@@ -2,8 +2,9 @@ import 'vitest-canvas-mock'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import { parseScene, serializeScene } from '../editor/scene'
 import { MINDMAP_PALETTE, ROOT_COLOR } from './colors'
-import { addChild, addSibling, branchElementIds, createMap, findNodeOf, layoutDrift, navigate, relayout } from './commands'
+import { addChild, addSibling, branchElementIds, createMap, findNodeOf, isLinkOf, layoutDrift, navigate, relayout } from './commands'
 import { metaOf, readMaps } from './model'
+import { edge, knob, underline } from './testElements'
 
 type El = ExcalidrawElement & { text?: string; containerId?: string | null; strokeColor: string }
 
@@ -153,7 +154,8 @@ it('ignores copied links that still carry the original metadata (Ctrl+D, copy/pa
   const elements = [...t.elements, copy]
   const mapId = metaOf(rect(t.elements, t.root))!.mapId
   const after = relayout(elements, mapId)
-  expect(after.find((e) => e.id === 'copied-edge')).toBe(copy)
+  // The duplicate loses its Rabisco metadata and becomes a plain arrow.
+  expect(metaOf(after.find((e) => e.id === 'copied-edge')!)).toBeNull()
   expect(branchElementIds(elements, t.a)).not.toContain('copied-edge')
 })
 
@@ -163,4 +165,48 @@ it('detects when a map drifted from its layout (e.g. after an undo)', () => {
   expect(layoutDrift(t.elements, mapId)).toBe(false)
   const moved = t.elements.map((e) => (e.id === t.b ? ({ ...e, y: e.y + 37 } as ExcalidrawElement) : e))
   expect(layoutDrift(moved, mapId)).toBe(true)
+})
+
+it('isLinkOf: lines style trusts customData, boxes style requires endBinding', () => {
+  const childIds = new Set(['child'])
+  expect(isLinkOf(edge('e1', 'child'), childIds, 'lines')).toBe('child')
+  expect(isLinkOf(edge('e1', 'child'), childIds, 'boxes')).toBeNull()
+  const bound = edge('e2', 'child', { endBinding: { elementId: 'child', focus: 0, gap: 1 } })
+  expect(isLinkOf(bound, childIds, 'boxes')).toBe('child')
+  // A copied link: same customData, but bound to another node.
+  const copied = edge('e3', 'child', { endBinding: { elementId: 'other', focus: 0, gap: 1 } })
+  expect(isLinkOf(copied, childIds, 'boxes')).toBeNull()
+  expect(isLinkOf(copied, childIds, 'lines')).toBe('child')
+})
+
+it('duplicate link: the first wins, the second loses its Rabisco metadata', () => {
+  const t = threeChildren()
+  const original = live(t.elements).find((e) => metaOf(e)?.kind === 'edge' && (metaOf(e) as { childId: string }).childId === t.a)!
+  const dup = { ...original, id: 'dup-edge' } as unknown as ExcalidrawElement
+  const elements = [...t.elements, dup]
+  const mapId = metaOf(rect(t.elements, t.root))!.mapId
+  const after = relayout(elements, mapId)
+  expect(metaOf(after.find((e) => e.id === 'dup-edge')!)).toBeNull()
+  expect(branchElementIds(elements, t.a)).not.toContain('dup-edge')
+})
+
+it('duplicate decoration: the first wins, the second is ignored by relayout and branchElementIds', () => {
+  const t = threeChildren()
+  const mapId = metaOf(rect(t.elements, t.root))!.mapId
+  const elements = [...t.elements, underline('u1', t.a, mapId), underline('u2', t.a, mapId), knob('k1', t.a, mapId)]
+  const after = relayout(elements, mapId)
+  expect(metaOf(after.find((e) => e.id === 'u1')!)).toMatchObject({ kind: 'underline' })
+  expect(metaOf(after.find((e) => e.id === 'u2')!)).toBeNull()
+  expect(metaOf(after.find((e) => e.id === 'k1')!)).toMatchObject({ kind: 'knob' })
+  const ids = new Set(branchElementIds(elements, t.a))
+  expect(ids.has('u1')).toBe(true)
+  expect(ids.has('k1')).toBe(true)
+  expect(ids.has('u2')).toBe(false)
+})
+
+it('a new map is born explicit: both sides, boxes style', () => {
+  const { elements, select } = createMap([], { x: 0, y: 0 }, 'Raiz')
+  const rabisco = metaOf(rect(elements, select!)) as { layout?: unknown; style?: unknown }
+  expect(rabisco.layout).toBe('both')
+  expect(rabisco.style).toBe('boxes')
 })

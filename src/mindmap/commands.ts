@@ -3,7 +3,7 @@ import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import { colorForBranch, ROOT_COLOR } from './colors'
 import { createEdgeElement, createNodeElements, newId, nodeSize, withBoundEdge } from './elements'
 import { assignedSides, layoutMap, type Point, type Size } from './layout'
-import { branchIds, metaOf, readMaps, sideOf, type MindMap, type NodeMeta, type Side } from './model'
+import { branchIds, metaOf, readMaps, sideOf, styleOf, type MapStyle, type MindMap, type NodeMeta, type Side } from './model'
 
 export interface CommandResult {
   elements: ExcalidrawElement[]
@@ -35,14 +35,54 @@ export const byId = (elements: readonly ExcalidrawElement[], id: string) => elem
 
 /**
  * A map link must really end at the child its metadata names. Copies (Ctrl+D, copy/paste, edits on
- * excalidraw.com) keep the original customData but Excalidraw binds them to the copied nodes, so
- * they are treated as plain arrows instead of hijacking the original map's links.
+ * excalidraw.com) keep the original customData but Excalidraw binds them to the copied nodes, so in
+ * boxes style they are treated as plain arrows instead of hijacking the original map's links. In lines
+ * style the link is not bound at all, so the customData alone identifies it (duplicates are handled by
+ * dedupeLinksAndDecorations).
  */
-export function isLinkOf(element: ExcalidrawElement, childIds: ReadonlySet<string>): string | null {
+export function isLinkOf(element: ExcalidrawElement, childIds: ReadonlySet<string>, style: MapStyle): string | null {
   const meta = metaOf(element)
   if (meta?.kind !== 'edge' || !childIds.has(meta.childId)) return null
-  const end = (element as unknown as { endBinding?: { elementId?: string } | null }).endBinding?.elementId
-  return end === meta.childId ? meta.childId : null
+  if (style === 'boxes') {
+    const end = (element as unknown as { endBinding?: { elementId?: string } | null }).endBinding?.elementId
+    return end === meta.childId ? meta.childId : null
+  }
+  return meta.childId
+}
+
+/** The node a lines-style decoration (underline/knob) belongs to, when that node is in the given set. */
+export function isDecorationOf(element: ExcalidrawElement, nodeIds: ReadonlySet<string>): string | null {
+  const meta = metaOf(element)
+  if ((meta?.kind !== 'underline' && meta?.kind !== 'knob') || !nodeIds.has(meta.nodeId)) return null
+  return meta.nodeId
+}
+
+/**
+ * Copy/paste keeps customData but duplicates it: for each (mapId, childId) link and (mapId, nodeId)
+ * decoration the first element in scene order is the real one; the rest lose customData.rabisco and
+ * become plain drawing elements. Keeps duplicated links/decoration from hijacking a map's structure.
+ */
+export function dedupeLinksAndDecorations(elements: readonly ExcalidrawElement[]): ExcalidrawElement[] {
+  const seen = new Set<string>()
+  const duplicates = new Set<string>()
+  for (const element of elements) {
+    if (element.isDeleted) continue
+    const meta = metaOf(element)
+    let key: string | null = null
+    if (meta?.kind === 'edge') key = `edge\u0000${meta.mapId}\u0000${meta.childId}`
+    else if (meta?.kind === 'underline') key = `underline\u0000${meta.mapId}\u0000${meta.nodeId}`
+    else if (meta?.kind === 'knob') key = `knob\u0000${meta.mapId}\u0000${meta.nodeId}`
+    if (key === null) continue
+    if (seen.has(key)) duplicates.add(element.id)
+    else seen.add(key)
+  }
+  if (duplicates.size === 0) return [...elements]
+  return elements.map((element) => {
+    if (!duplicates.has(element.id)) return element
+    const customData = { ...element.customData } as Record<string, unknown>
+    delete customData.rabisco
+    return update(element, { customData })
+  })
 }
 
 export function createMap(elements: readonly ExcalidrawElement[], at: Point, rootText: string): CommandResult {
@@ -84,26 +124,29 @@ export function addSibling(elements: readonly ExcalidrawElement[], nodeId: strin
 }
 
 /**
- * Every element of a branch: its nodes, their texts and their links (including the link to the
- * parent). Rabisco selects these and lets Excalidraw delete them, so its own undo restores them.
+ * Every element of a branch: its nodes, their texts, their links (including the link to the parent)
+ * and, in lines style, their underlines and knobs. Rabisco selects these and lets Excalidraw delete
+ * them, so its own undo restores them.
  */
 export function branchElementIds(elements: readonly ExcalidrawElement[], nodeId: string): string[] {
-  const map = mapOfNode(elements, nodeId)
+  const deduped = dedupeLinksAndDecorations(elements)
+  const map = mapOfNode(deduped, nodeId)
   if (!map) return []
+  const style = styleOf(deduped, map.mapId)
   const ids = new Set(branchIds(map, nodeId))
   // Only the nodes' own badges: a pasted copy of a badge is a plain text elsewhere on the canvas.
   const badgeIds = new Set(
-    elements.flatMap((e) => {
+    deduped.flatMap((e) => {
       const meta = ids.has(e.id) ? metaOf(e) : null
       return meta?.kind === 'node' && meta.badgeId ? [meta.badgeId] : []
     }),
   )
-  return elements
+  return deduped
     .filter((e) => {
       if (e.isDeleted) return false
       const container = (e as Mutable).containerId
       const badge = badgeIds.has(e.id)
-      return ids.has(e.id) || (container != null && ids.has(container)) || isLinkOf(e, ids) !== null || badge
+      return ids.has(e.id) || (container != null && ids.has(container)) || isLinkOf(e, ids, style) !== null || isDecorationOf(e, ids) !== null || badge
     })
     .map((e) => e.id)
 }
@@ -130,9 +173,11 @@ export function navigate(elements: readonly ExcalidrawElement[], nodeId: string,
 
 /** Re-positions and re-colors one map. Elements outside that map keep their identity. */
 export function relayout(elements: readonly ExcalidrawElement[], mapId: string): ExcalidrawElement[] {
-  const map = readMaps(elements).get(mapId)
-  if (!map) return [...elements]
-  const rects = new Map(elements.filter((e) => map.byId.has(e.id)).map((e) => [e.id, e]))
+  const deduped = dedupeLinksAndDecorations(elements)
+  const map = readMaps(deduped).get(mapId)
+  if (!map) return [...deduped]
+  const style = styleOf(deduped, mapId)
+  const rects = new Map(deduped.filter((e) => map.byId.has(e.id)).map((e) => [e.id, e]))
   const sizes = new Map<string, Size>([...rects].map(([id, e]) => [id, nodeSize(e)]))
   const root = rects.get(map.root.id)!
   const positions = layoutMap(map, sizes, { x: root.x, y: root.y })
@@ -151,7 +196,7 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
 
   const mapNodeIds = new Set(map.byId.keys())
   const moved = new Map<string, { dx: number; dy: number; rect: ExcalidrawElement }>()
-  const next = elements.map((e) => {
+  const next = deduped.map((e) => {
     if (!map.byId.has(e.id) || e.isDeleted) return e
     const meta = metaOf(e) as NodeMeta
     const position = positions.get(e.id)!
@@ -185,7 +230,10 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
       const { dx, dy } = moved.get(container)!
       return dx || dy ? update(e, { x: e.x + dx, y: e.y + dy }) : e
     }
-    const childId = isLinkOf(e, mapNodeIds)
+    // Lines-style links are loose curved lines: their geometry is recomputed separately (see lines.ts),
+    // not repositioned here like a bound arrow.
+    if (style !== 'boxes') return e
+    const childId = isLinkOf(e, mapNodeIds, style)
     if (!childId || childId === map.root.id) return e
     const child = moved.get(childId)!.rect
     const parent = moved.get(map.byId.get(childId)!.parentId!)!.rect

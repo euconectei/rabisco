@@ -33,6 +33,10 @@ export function createNodeElements(input: NodeInput): ExcalidrawElement[] {
     side: input.side,
     colorAuto: true,
   }
+  if (input.isRoot) {
+    meta.layout = 'both'
+    meta.style = 'boxes'
+  }
   return convertToExcalidrawElements(
     [
       {

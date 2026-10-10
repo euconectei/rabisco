@@ -1,6 +1,6 @@
 import 'vitest-canvas-mock'
 import { createEdgeElement, createNodeElements } from './elements'
-import { metaOf } from './model'
+import { metaOf, type NodeMeta } from './model'
 
 it('creates a rectangle with bound text and valid Rabisco metadata', () => {
   const [rect, text] = createNodeElements({ mapId: 'm', parentId: null, order: 0, side: null, text: 'Ideia', x: 10, y: 20, color: '#1e1e1e', isRoot: true })
@@ -23,4 +23,13 @@ it('creates a link bound to both nodes, without arrowheads', () => {
   expect(edge.startArrowhead).toBeNull()
   expect(edge.endArrowhead).toBeNull()
   expect(metaOf(edge as never)).toMatchObject({ kind: 'edge', mapId: 'm', childId: child.id })
+})
+
+it('the root carries layout and style; other nodes do not', () => {
+  const [root] = createNodeElements({ mapId: 'm', parentId: null, order: 0, side: null, text: 'A', x: 0, y: 0, color: '#1e1e1e', isRoot: true })
+  const [child] = createNodeElements({ mapId: 'm', parentId: root.id, order: 0, side: null, text: 'B', x: 300, y: 0, color: '#1971c2', isRoot: false })
+  expect((metaOf(root) as NodeMeta).layout).toBe('both')
+  expect((metaOf(root) as NodeMeta).style).toBe('boxes')
+  expect((metaOf(child) as NodeMeta).layout).toBeUndefined()
+  expect((metaOf(child) as NodeMeta).style).toBeUndefined()
 })

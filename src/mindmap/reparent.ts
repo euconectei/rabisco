@@ -3,7 +3,7 @@ import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import { expand } from './collapse'
 import { byId, isLinkOf, mapOfNode, relayout, type CommandResult } from './commands'
 import { withBoundEdge } from './elements'
-import { branchIds, metaOf, type NodeMeta, type Side } from './model'
+import { branchIds, metaOf, styleOf, type NodeMeta, type Side } from './model'
 
 function update<T extends ExcalidrawElement>(element: T, changes: Record<string, unknown>): T {
   return newElementWith(element as never, changes as never) as unknown as T
@@ -59,7 +59,8 @@ export function reparent(original: readonly ExcalidrawElement[], nodeId: string,
   let side: Side | null = null
   if (parent.parentId === null) side = center(byId(elements, nodeId)!).x < center(byId(elements, newParentId)!).x ? 'left' : 'right'
 
-  const link = elements.find((e) => !e.isDeleted && isLinkOf(e, new Set([nodeId])) === nodeId)
+  const style = styleOf(elements, map.mapId)
+  const link = elements.find((e) => !e.isDeleted && isLinkOf(e, new Set([nodeId]), style) === nodeId)
   const oldParentId = current.parentId
   const next = elements.map((e) => {
     if (e.id === nodeId) {
