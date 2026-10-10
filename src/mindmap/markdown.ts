@@ -75,16 +75,18 @@ const FENCE = /^ {0,3}(```|~~~)/
  */
 export function parseMarkdownOutline(text: string, fallbackRoot: string, { strict = false } = {}): OutlineNode | null {
   const top: OutlineNode = { text: fallbackRoot, children: [] }
-  const stack: { level: number; node: OutlineNode }[] = [{ level: 0, node: top }]
+  const stack: { kind: 'heading' | 'item'; level: number; node: OutlineNode }[] = [{ kind: 'heading', level: 0, node: top }]
   let headingLevel = 0
   let indents: number[] = []
   let found = false
 
-  const add = (level: number, itemText: string, structural = true) => {
+  const add = (kind: 'heading' | 'item', level: number, itemText: string, structural = true) => {
+    // A heading never nests inside a list item: unwind the items first, then headings of this level or deeper.
+    if (kind === 'heading') while (stack.length > 1 && stack[stack.length - 1].kind === 'item') stack.pop()
     while (stack.length > 1 && stack[stack.length - 1].level >= level) stack.pop()
     const node: OutlineNode = { text: itemText.trim(), children: [] }
     stack[stack.length - 1].node.children.push(node)
-    stack.push({ level, node })
+    stack.push({ kind, level, node })
     if (structural) found = true
   }
 
@@ -98,7 +100,7 @@ export function parseMarkdownOutline(text: string, fallbackRoot: string, { stric
     if (!line.trim()) continue
     if (inFence) {
       indents = []
-      add(headingLevel + 1, line, false)
+      add('item', headingLevel + 1, line, false)
       continue
     }
     const item = LIST_ITEM.exec(line)
@@ -106,19 +108,19 @@ export function parseMarkdownOutline(text: string, fallbackRoot: string, { stric
       const indent = item[1].replace(/\t/g, '  ').length
       while (indents.length && indents[indents.length - 1] > indent) indents.pop()
       if (!indents.length || indents[indents.length - 1] < indent) indents.push(indent)
-      add(headingLevel + indents.length, item[2])
+      add('item', headingLevel + indents.length, item[2])
       continue
     }
     const heading = HEADING.exec(line)
     if (heading) {
       headingLevel = heading[1].length
       indents = []
-      add(headingLevel, heading[2])
+      add('heading', headingLevel, heading[2])
       continue
     }
     if (strict) return null
     indents = []
-    add(headingLevel + 1, line, false)
+    add('item', headingLevel + 1, line, false)
   }
   if (!found) return null
   return top.children.length === 1 ? top.children[0] : top
