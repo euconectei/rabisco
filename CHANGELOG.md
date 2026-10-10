@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.8.0](https://github.com/euconectei/rabisco/compare/v0.7.0...v0.8.0) (2026-10-10)
+
+
+### Features
+
+* **drive:** upload Blob content and choose unique sibling names ([e5978d3](https://github.com/euconectei/rabisco/commit/e5978d39a7b54f793fb0cc7ea6157a8cb9b7d2e6))
+* **editor:** export image dialog with download and save to Drive ([8104c4d](https://github.com/euconectei/rabisco/commit/8104c4d8ffff028a558d2c72ca8359b32aca5d22))
+* **export:** embed the editable scene in exported PNGs ([a6d0695](https://github.com/euconectei/rabisco/commit/a6d069531a5f2eca4883ced10f24ecae36d02b50))
+* **export:** render PNG and SVG with scope, background, theme and scale ([9f72fec](https://github.com/euconectei/rabisco/commit/9f72fecd72d1973cb78b1af8982f881cdf7475e3))
+* **import:** reopen exported PNG/SVG with an embedded scene ([f480a55](https://github.com/euconectei/rabisco/commit/f480a55b9ccb6c7e26a9e8a925018a86a2525b2a))
+
+
+### Bug Fixes
+
+* **export:** tell when the image itself could not be made ([9888c79](https://github.com/euconectei/rabisco/commit/9888c79df4c37a51b88ec23cd880c48ef54779e8))
+
 ## [0.7.0](https://github.com/euconectei/rabisco/compare/v0.6.1...v0.7.0) (2026-10-10)
 
 
