@@ -11,7 +11,7 @@ import { createSaveQueue, type SaveQueue, type SaveStatus } from './saveQueue'
 import { parseScene, sceneSignature, serializeScene, type SceneData } from './scene'
 import { renderThumbnail } from './thumbnail'
 
-export type OpenErrorReason = 'notFound' | 'forbidden' | 'invalidFile' | 'network' | 'unknown'
+export type OpenErrorReason = 'auth' | 'notFound' | 'forbidden' | 'invalidFile' | 'network' | 'unknown'
 
 export type LoadState =
   | { kind: 'loading' }
@@ -21,7 +21,9 @@ export type LoadState =
 
 function reasonOf(error: unknown): OpenErrorReason {
   const kind = error instanceof DriveError ? error.kind : 'unknown'
-  return kind === 'notFound' || kind === 'forbidden' || kind === 'invalidFile' || kind === 'network' ? kind : 'unknown'
+  return kind === 'auth' || kind === 'notFound' || kind === 'forbidden' || kind === 'invalidFile' || kind === 'network'
+    ? kind
+    : 'unknown'
 }
 
 /** Only what ends up in the saved file: element versions, file ids and the exported appState fields. */
@@ -128,15 +130,22 @@ export function useDriveFile(fileId: string) {
     [showScene, startQueue],
   )
 
-  useEffect(() => {
-    let cancelled = false
-    void (async () => {
+  // Revision first, then content: if someone saves in between, we hold an older revision with newer
+  // content, which can only cause a (safe) conflict, never a silent overwrite.
+  const readFile = useCallback(async () => {
+    const fileMeta = await drive.getMeta(fileId)
+    const text = await drive.download(fileId)
+    return { fileMeta, text }
+  }, [drive, fileId])
+
+  const loadFile = useCallback(
+    async (isCancelled: () => boolean) => {
       try {
-        const [fileMeta, text] = await Promise.all([drive.getMeta(fileId), drive.download(fileId)])
+        const { fileMeta, text } = await readFile()
         const remoteScene = parseScene(text)
         const remoteJson = serializeScene(remoteScene)
         const draft = await getDraft(fileId)
-        if (cancelled) return
+        if (isCancelled()) return
         setMeta(fileMeta)
         const draftScene = draft ? parseOrNull(draft.json) : null
         if (draft && draftScene && sceneSignature(draftScene) !== sceneSignature(remoteScene)) {
@@ -153,28 +162,40 @@ export function useDriveFile(fileId: string) {
         if (draft) void deleteDraft(fileId)
         becomeReady(remoteScene, remoteJson, contentRevision(fileMeta))
       } catch (error) {
-        if (!cancelled) setLoad({ kind: 'error', reason: reasonOf(error) })
+        if (!isCancelled()) setLoad({ kind: 'error', reason: reasonOf(error) })
       }
-    })()
+    },
+    [becomeReady, fileId, readFile],
+  )
+
+  useEffect(() => {
+    let cancelled = false
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loadFile sets state only after awaiting Drive
+    void loadFile(() => cancelled)
     return () => {
       cancelled = true
       queue.current?.dispose()
       queue.current = null
     }
-  }, [becomeReady, drive, fileId])
+  }, [loadFile])
 
   // After "Reconnect" succeeds, retry what the expired session blocked.
   const previousAuth = useRef(auth.status)
+  const openFailedOnAuth = load.kind === 'error' && load.reason === 'auth'
   useEffect(() => {
-    if (previousAuth.current !== 'signed-in' && auth.status === 'signed-in' && status === 'needs-auth') {
-      queue.current?.retryNow()
-    }
+    const reconnected = previousAuth.current !== 'signed-in' && auth.status === 'signed-in'
     previousAuth.current = auth.status
-  }, [auth.status, status])
+    if (!reconnected) return
+    if (status === 'needs-auth') queue.current?.retryNow()
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loadFile sets state only after awaiting Drive
+    if (openFailedOnAuth) void loadFile(() => false)
+  }, [auth.status, status, openFailedOnAuth, loadFile])
 
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (queue.current?.isDirty()) event.preventDefault()
+      if (!queue.current?.isDirty()) return
+      event.preventDefault()
+      event.returnValue = '' // Safari and older browsers only honor returnValue
     }
     window.addEventListener('beforeunload', onBeforeUnload)
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
@@ -213,7 +234,7 @@ export function useDriveFile(fileId: string) {
   )
 
   const useRemote = useCallback(async () => {
-    const [fileMeta, text] = await Promise.all([drive.getMeta(fileId), drive.download(fileId)])
+    const { fileMeta, text } = await readFile()
     const remoteScene = parseScene(text)
     const remoteJson = serializeScene(remoteScene)
     queue.current?.acceptRemote(contentRevision(fileMeta), remoteJson)
@@ -222,15 +243,17 @@ export function useDriveFile(fileId: string) {
   }, [drive, fileId, showScene])
 
   const rename = useCallback(
-    async (name: string) => {
+    /** Resolves false when the rename failed, so the title can show the old name again. */
+    async (name: string): Promise<boolean> => {
       const trimmed = name.trim()
       const currentName = meta?.name.replace(/\.excalidraw$/i, '')
-      if (!trimmed || trimmed === currentName) return
+      if (!trimmed || trimmed === currentName) return !!trimmed
       try {
         // Renaming does not touch the content revision, so the conflict check is unaffected.
         setMeta(await drive.rename(fileId, trimmed))
+        return true
       } catch {
-        // Keep the old name; the title field resets from meta.
+        return false
       }
     },
     [drive, fileId, meta?.name],

@@ -26,7 +26,9 @@ export const ptBR = {
     copySuffix: ' (cópia)',
     retry: 'Tentar de novo',
     saveAsNew: 'Salvar como novo arquivo',
+    actionFailed: 'Não deu certo. Verifique sua conexão e tente de novo.',
     errors: {
+      auth: 'Sua sessão com o Google expirou. Reconecte para abrir este desenho.',
       notFound: 'Não encontramos este desenho no seu Drive.',
       forbidden: 'Você não tem acesso a este desenho.',
       invalidFile: 'Este arquivo não é um desenho do Excalidraw.',

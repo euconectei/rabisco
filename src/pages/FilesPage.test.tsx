@@ -1,4 +1,6 @@
 import 'vitest-canvas-mock'
+import 'fake-indexeddb/auto'
+import { getDraft, putDraft } from '../editor/drafts'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useLocation } from 'react-router-dom'
@@ -70,13 +72,15 @@ it('opens a file chosen in the Drive Picker, and stays on cancel', async () => {
   await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/edit/picked'))
 })
 
-it('shows the account and signs out', async () => {
+it('shows the account and signs out, forgetting local drafts', async () => {
+  await putDraft({ fileId: 'd1', json: '{}', baseVersion: 'r', updatedAt: 1 })
   const { auth } = setup()
   await userEvent.click(await screen.findByRole('button', { name: 'Conta: Ana Souza' }))
   expect(screen.getByText('ana@example.com')).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Sair' }))
   expect(auth.signOut).toHaveBeenCalled()
   await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/'))
+  await expect(getDraft('d1')).resolves.toBeNull()
 })
 
 it('works in English', async () => {

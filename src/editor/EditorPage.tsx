@@ -1,5 +1,6 @@
 import { Excalidraw, Footer, MainMenu } from '@excalidraw/excalidraw'
 import '@excalidraw/excalidraw/index.css'
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useDrive } from '../drive/useDrive'
 import { format } from '../i18n/format'
@@ -21,7 +22,17 @@ function EditorScreen({ fileId }: { fileId: string }) {
   const navigate = useNavigate()
   const drive = useDrive()
   const file = useDriveFile(fileId)
+  const [actionFailed, setActionFailed] = useState(false)
   const baseName = file.meta?.name.replace(/\.excalidraw$/i, '') ?? ''
+
+  async function attempt(action: () => Promise<unknown>) {
+    setActionFailed(false)
+    try {
+      await action()
+    } catch {
+      setActionFailed(true)
+    }
+  }
 
   async function saveAsNew() {
     const json = file.currentJson()
@@ -64,7 +75,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
         langCode={lang}
         initialData={{ elements: scene.elements, appState: scene.appState, files: scene.files, scrollToContent: true }}
         onChange={file.onSceneChange}
-        renderTopRightUI={() => <TitleField key={baseName} name={baseName} onRename={(name) => void file.rename(name)} />}
+        renderTopRightUI={() => <TitleField key={baseName} name={baseName} onRename={file.rename} />}
       >
         <MainMenu>
           <MainMenu.Item onSelect={() => navigate('/app')}>{t.editor.backToFiles}</MainMenu.Item>
@@ -82,17 +93,23 @@ function EditorScreen({ fileId }: { fileId: string }) {
           ))}
         </MainMenu>
         <Footer>
-          <SaveStatus status={file.status} lost={file.lost} onRetry={file.retry} onSaveAsNew={() => void saveAsNew()} />
+          <SaveStatus status={file.status} lost={file.lost} onRetry={file.retry} onSaveAsNew={() => void attempt(saveAsNew)} />
         </Footer>
       </Excalidraw>
+      {actionFailed && file.status !== 'conflict' && (
+        <p className="action-error" role="alert">
+          {t.editor.actionFailed}
+        </p>
+      )}
       {file.status === 'conflict' && (
         <Dialog title={t.editor.conflict.title}>
           <p>{t.editor.conflict.body}</p>
+          {actionFailed && <p role="alert">{t.editor.actionFailed}</p>}
           <div className="dialog-actions">
             <button type="button" className="button" onClick={file.keepMine}>
               {t.editor.conflict.keepMine}
             </button>
-            <button type="button" className="button-secondary" onClick={() => void file.useRemote()}>
+            <button type="button" className="button-secondary" onClick={() => void attempt(file.useRemote)}>
               {t.editor.conflict.useRemote}
             </button>
           </div>

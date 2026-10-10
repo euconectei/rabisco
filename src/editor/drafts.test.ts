@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto'
-import { deleteDraft, getDraft, putDraft, type Draft } from './drafts'
+import { clearDrafts, deleteDraft, getDraft, putDraft, type Draft } from './drafts'
 
 const draft: Draft = { fileId: 'f1', json: '{"type":"excalidraw"}', baseVersion: '7', updatedAt: 1760000000000 }
 
@@ -18,6 +18,14 @@ it('deletes a draft', async () => {
   await putDraft({ ...draft, fileId: 'f2' })
   await deleteDraft('f2')
   await expect(getDraft('f2')).resolves.toBeNull()
+})
+
+it('clears every draft (on sign-out, for shared computers)', async () => {
+  await putDraft({ ...draft, fileId: 'x1' })
+  await putDraft({ ...draft, fileId: 'x2' })
+  await clearDrafts()
+  await expect(getDraft('x1')).resolves.toBeNull()
+  await expect(getDraft('x2')).resolves.toBeNull()
 })
 
 it('never rejects when IndexedDB is broken', async () => {

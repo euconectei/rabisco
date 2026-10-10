@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import { clearDrafts } from '../editor/drafts'
 import { format } from '../i18n/format'
 import { useI18n } from '../i18n/useI18n'
 
@@ -30,6 +31,7 @@ export function AccountMenu() {
             type="button"
             className="button-secondary"
             onClick={async () => {
+              await clearDrafts()
               await signOut()
               navigate('/')
             }}
