@@ -31,6 +31,18 @@ function mapOfNode(elements: readonly ExcalidrawElement[], nodeId: string): Mind
 
 const byId = (elements: readonly ExcalidrawElement[], id: string) => elements.find((e) => e.id === id)
 
+/**
+ * A map link must really end at the child its metadata names. Copies (Ctrl+D, copy/paste, edits on
+ * excalidraw.com) keep the original customData but Excalidraw binds them to the copied nodes, so
+ * they are treated as plain arrows instead of hijacking the original map's links.
+ */
+function isLinkOf(element: ExcalidrawElement, childIds: ReadonlySet<string>): string | null {
+  const meta = metaOf(element)
+  if (meta?.kind !== 'edge' || !childIds.has(meta.childId)) return null
+  const end = (element as unknown as { endBinding?: { elementId?: string } | null }).endBinding?.elementId
+  return end === meta.childId ? meta.childId : null
+}
+
 export function createMap(elements: readonly ExcalidrawElement[], at: Point, rootText: string): CommandResult {
   const mapId = newId()
   const created = createNodeElements({ mapId, parentId: null, order: 0, side: null, text: rootText, x: at.x - 90, y: at.y - 28, color: ROOT_COLOR, isRoot: true })
@@ -80,9 +92,8 @@ export function branchElementIds(elements: readonly ExcalidrawElement[], nodeId:
   return elements
     .filter((e) => {
       if (e.isDeleted) return false
-      const meta = metaOf(e)
       const container = (e as Mutable).containerId
-      return ids.has(e.id) || (container != null && ids.has(container)) || (meta?.kind === 'edge' && ids.has(meta.childId))
+      return ids.has(e.id) || (container != null && ids.has(container)) || isLinkOf(e, ids) !== null
     })
     .map((e) => e.id)
 }
@@ -128,6 +139,7 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
     }
   })
 
+  const mapNodeIds = new Set(map.byId.keys())
   const moved = new Map<string, { dx: number; dy: number; rect: ExcalidrawElement }>()
   const next = elements.map((e) => {
     if (!map.byId.has(e.id) || e.isDeleted) return e
@@ -152,11 +164,11 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
       const { dx, dy } = moved.get(container)!
       return dx || dy ? update(e, { x: e.x + dx, y: e.y + dy }) : e
     }
-    const meta = metaOf(e)
-    if (meta?.kind !== 'edge' || meta.mapId !== mapId || !map.byId.has(meta.childId)) return e
-    const child = moved.get(meta.childId)!.rect
-    const parent = moved.get(map.byId.get(meta.childId)!.parentId!)!.rect
-    const right = sideOf(map, meta.childId) !== 'left'
+    const childId = isLinkOf(e, mapNodeIds)
+    if (!childId || childId === map.root.id) return e
+    const child = moved.get(childId)!.rect
+    const parent = moved.get(map.byId.get(childId)!.parentId!)!.rect
+    const right = sideOf(map, childId) !== 'left'
     const start = { x: right ? parent.x + parent.width : parent.x, y: parent.y + parent.height / 2 }
     const end = { x: right ? child.x : child.x + child.width, y: child.y + child.height / 2 }
     const dx = end.x - start.x
@@ -170,7 +182,7 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
         [0, 0],
         [dx, dy],
       ],
-      strokeColor: branchColor.get(meta.childId) ?? e.strokeColor,
+      strokeColor: branchColor.get(childId) ?? e.strokeColor,
     })
   })
 }

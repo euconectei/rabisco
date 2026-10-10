@@ -137,3 +137,22 @@ it('survives a save and reload: the file holds the same map', () => {
   expect(map.root.children.map((n) => n.id)).toEqual([t.a, t.b, t.c])
   expect(textOf(reloaded, t.b)).toBe('B')
 })
+
+it('ignores copied links that still carry the original metadata (Ctrl+D, copy/paste)', () => {
+  const t = threeChildren()
+  const original = live(t.elements).find((e) => metaOf(e)?.kind === 'edge' && (metaOf(e) as { childId: string }).childId === t.a)!
+  // A duplicate keeps customData but Excalidraw binds it to the duplicated nodes.
+  const copy = {
+    ...original,
+    id: 'copied-edge',
+    x: original.x + 1000,
+    y: original.y + 1000,
+    endBinding: { elementId: 'copied-node', focus: 0, gap: 1 },
+    startBinding: { elementId: 'copied-root', focus: 0, gap: 1 },
+  } as unknown as ExcalidrawElement
+  const elements = [...t.elements, copy]
+  const mapId = metaOf(rect(t.elements, t.root))!.mapId
+  const after = relayout(elements, mapId)
+  expect(after.find((e) => e.id === 'copied-edge')).toBe(copy)
+  expect(branchElementIds(elements, t.a)).not.toContain('copied-edge')
+})
