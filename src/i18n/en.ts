@@ -62,6 +62,12 @@ export const en: Messages = {
   },
   notFound: { title: 'Page not found', backHome: 'Back to home' },
   language: { label: 'Language', 'pt-BR': 'Português', en: 'English' },
+  mindmap: {
+    button: 'Mind map',
+    placeHint: 'Click where the map should start (Esc cancels)',
+    rootText: 'Central idea',
+    nodeText: 'Topic',
+  },
   auth: {
     signIn: 'Sign in with Google',
     continueAs: 'Continue as {name}',

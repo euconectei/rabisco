@@ -1,6 +1,6 @@
 import 'vitest-canvas-mock'
 import 'fake-indexeddb/auto'
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useEffect, type ReactNode } from 'react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
@@ -24,11 +24,26 @@ vi.mock('@excalidraw/excalidraw', async (importOriginal) => {
     initialData?: { elements?: Array<{ id: string; text?: string }>; appState?: object }
     onChange?: (elements: unknown[], appState: object, files: object) => void
     renderTopRightUI?: () => ReactNode
+    excalidrawAPI?: (api: unknown) => void
     children?: ReactNode
   }
-  function Excalidraw({ langCode, initialData, onChange, renderTopRightUI, children }: Props) {
+  function Excalidraw({ langCode, initialData, onChange, renderTopRightUI, excalidrawAPI, children }: Props) {
     useEffect(() => {
       mounts.count += 1
+      let current = (initialData?.elements ?? []) as unknown[]
+      const appState = { ...(initialData?.appState ?? {}), selectedElementIds: {}, editingTextElement: null, scrollX: 0, scrollY: 0, zoom: { value: 1 }, offsetLeft: 0, offsetTop: 0 }
+      excalidrawAPI?.({
+        getSceneElements: () => current,
+        getAppState: () => appState,
+        updateScene: (scene: { elements?: unknown[]; appState?: object }) => {
+          if (scene.appState) Object.assign(appState, scene.appState)
+          if (scene.elements) {
+            current = scene.elements
+            onChange?.(current, appState, {})
+          }
+        },
+      })
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- mount only, like the real component
     }, [])
     const elements = initialData?.elements ?? []
     // Like the real component, onChange always carries the full appState.
@@ -209,6 +224,31 @@ describe('review follow-ups', () => {
     await userEvent.clear(title)
     await userEvent.type(title, 'Plano{Enter}')
     await waitFor(() => expect(title).toHaveValue('Mapa'))
+  })
+})
+
+describe('mind map', () => {
+  it('creates a mind map where the canvas is clicked, and it reaches the save queue', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const drive = open()
+    await canvas()
+    await userEvent.click(screen.getByRole('button', { name: 'Mapa mental' }))
+    expect(screen.getByText('Clique onde o mapa deve começar (Esc cancela)')).toBeInTheDocument()
+    fireEvent.pointerDown(screen.getByTestId('mindmap-placement'), { clientX: 300, clientY: 200 })
+    expect(screen.queryByTestId('mindmap-placement')).not.toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(2000))
+    await waitFor(() => expect(drive.client.save).toHaveBeenCalled())
+    const saved = JSON.parse(drive.client.save.mock.calls.at(-1)![1]) as { elements: Array<{ customData?: { rabisco?: { kind: string } }; text?: string }> }
+    expect(saved.elements.some((e) => e.customData?.rabisco?.kind === 'node')).toBe(true)
+    expect(saved.elements.some((e) => e.text === 'Ideia central')).toBe(true)
+  })
+
+  it('Esc cancels placing a map', async () => {
+    open()
+    await canvas()
+    await userEvent.click(screen.getByRole('button', { name: 'Mapa mental' }))
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByTestId('mindmap-placement')).not.toBeInTheDocument()
   })
 })
 

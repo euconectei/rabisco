@@ -1,12 +1,15 @@
-import { Excalidraw, Footer, MainMenu } from '@excalidraw/excalidraw'
+import { Excalidraw, Footer, MainMenu, viewportCoordsToSceneCoords } from '@excalidraw/excalidraw'
+import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import '@excalidraw/excalidraw/index.css'
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useDrive } from '../drive/useDrive'
 import { format } from '../i18n/format'
 import { LANGUAGES } from '../i18n/languages'
 import { useI18n } from '../i18n/useI18n'
+import { useMindmap, type MindmapApi } from '../mindmap/useMindmap'
 import { Dialog } from './Dialog'
+import { MindmapPlacement } from './MindmapPlacement'
 import { SaveStatus } from './SaveStatus'
 import { TitleField } from './TitleField'
 import { useDriveFile } from './useDriveFile'
@@ -23,6 +26,26 @@ function EditorScreen({ fileId }: { fileId: string }) {
   const drive = useDrive()
   const file = useDriveFile(fileId)
   const [actionFailed, setActionFailed] = useState(false)
+  const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null)
+  const [placing, setPlacing] = useState(false)
+  const mindmapLabels = useMemo(() => ({ rootText: t.mindmap.rootText, nodeText: t.mindmap.nodeText }), [t])
+  // Excalidraw types updateScene's appState as a generic Pick; MindmapApi only needs a partial update.
+  const mindmap = useMindmap(api as unknown as MindmapApi | null, mindmapLabels)
+  const onSceneChange = file.onSceneChange
+  const handleMindmapChange = mindmap.handleChange
+  const onChange = useCallback<NonNullable<Parameters<typeof Excalidraw>[0]['onChange']>>(
+    (elements, appState, files) => {
+      onSceneChange(elements, appState, files)
+      handleMindmapChange(elements, appState)
+    },
+    [onSceneChange, handleMindmapChange],
+  )
+  const cancelPlacing = useCallback(() => setPlacing(false), [])
+  function placeMap(client: { clientX: number; clientY: number }) {
+    setPlacing(false)
+    if (!api) return
+    mindmap.createMapAt(viewportCoordsToSceneCoords(client, api.getAppState()))
+  }
   const baseName = file.meta?.name.replace(/\.excalidraw$/i, '') ?? ''
 
   async function attempt(action: () => Promise<unknown>) {
@@ -74,8 +97,16 @@ function EditorScreen({ fileId }: { fileId: string }) {
         key={file.sceneKey}
         langCode={lang}
         initialData={{ elements: scene.elements, appState: scene.appState, files: scene.files, scrollToContent: true }}
-        onChange={file.onSceneChange}
-        renderTopRightUI={() => <TitleField key={baseName} name={baseName} onRename={file.rename} />}
+        excalidrawAPI={setApi}
+        onChange={onChange}
+        renderTopRightUI={() => (
+          <div className="editor-top-right">
+            <button type="button" className="button-secondary mindmap-button" onClick={() => setPlacing(true)}>
+              {t.mindmap.button}
+            </button>
+            <TitleField key={baseName} name={baseName} onRename={file.rename} />
+          </div>
+        )}
       >
         <MainMenu>
           <MainMenu.Item onSelect={() => navigate('/app')}>{t.editor.backToFiles}</MainMenu.Item>
@@ -96,6 +127,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
           <SaveStatus status={file.status} lost={file.lost} onRetry={file.retry} onSaveAsNew={() => void attempt(saveAsNew)} />
         </Footer>
       </Excalidraw>
+      {placing && <MindmapPlacement onPlace={placeMap} onCancel={cancelPlacing} />}
       {actionFailed && file.status !== 'conflict' && (
         <p className="action-error" role="alert">
           {t.editor.actionFailed}

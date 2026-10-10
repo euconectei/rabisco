@@ -60,6 +60,12 @@ export const ptBR = {
   },
   notFound: { title: 'Página não encontrada', backHome: 'Voltar ao início' },
   language: { label: 'Idioma', 'pt-BR': 'Português', en: 'English' },
+  mindmap: {
+    button: 'Mapa mental',
+    placeHint: 'Clique onde o mapa deve começar (Esc cancela)',
+    rootText: 'Ideia central',
+    nodeText: 'Tópico',
+  },
   auth: {
     signIn: 'Entrar com Google',
     continueAs: 'Continuar como {name}',
