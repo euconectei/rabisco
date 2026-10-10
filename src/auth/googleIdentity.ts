@@ -4,6 +4,9 @@ export const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
 export const DRIVE_INSTALL_SCOPE = 'https://www.googleapis.com/auth/drive.install'
 export const SCOPES = `${DRIVE_SCOPE} ${DRIVE_INSTALL_SCOPE} openid email profile`
 
+/** A Google window that never answers (closed without callback, stuck popup) must not hang saving. */
+export const TOKEN_REQUEST_TIMEOUT_MS = 120_000
+
 export interface TokenResponse {
   accessToken: string
   expiresInSec: number
@@ -64,7 +67,16 @@ export async function loadIdentityClient(clientId: string): Promise<IdentityClie
   await loadScript()
   return {
     requestToken({ prompt, loginHint }) {
-      return new Promise<TokenResponse>((resolve, reject) => {
+      return new Promise<TokenResponse>((resolveRaw, rejectRaw) => {
+        const timer = setTimeout(() => rejectRaw(new Error('timeout')), TOKEN_REQUEST_TIMEOUT_MS)
+        const resolve = (value: TokenResponse) => {
+          clearTimeout(timer)
+          resolveRaw(value)
+        }
+        const reject = (reason: Error) => {
+          clearTimeout(timer)
+          rejectRaw(reason)
+        }
         // A fresh token client per request keeps each promise tied to its own callback.
         const client = oauth2().initTokenClient({
           client_id: clientId,

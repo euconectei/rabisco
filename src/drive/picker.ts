@@ -1,10 +1,11 @@
 import type { Language } from '../i18n/languages'
 
 export const GAPI_SCRIPT_URL = 'https://apis.google.com/js/api.js'
+const PICKABLE_MIME_TYPES = 'application/vnd.excalidraw+json,application/json,application/octet-stream,text/plain'
 
 interface PickerApi {
   PickerBuilder: new () => PickerBuilder
-  DocsView: new (viewId?: string) => { setMode(mode: string): unknown }
+  DocsView: new (viewId?: string) => { setMode(mode: string): unknown; setMimeTypes(types: string): unknown }
   ViewId: { DOCS: string }
   DocsViewMode: { LIST: string }
   Action: { PICKED: string; CANCEL: string }
@@ -67,6 +68,8 @@ export async function pickFile(options: PickFileOptions): Promise<{ id: string; 
   return new Promise((resolve) => {
     const view = new picker.DocsView(picker.ViewId.DOCS)
     view.setMode(picker.DocsViewMode.LIST)
+    // Files from excalidraw.com land in Drive with assorted types; Google Docs, videos etc. are hidden.
+    view.setMimeTypes(PICKABLE_MIME_TYPES)
     new picker.PickerBuilder()
       .addView(view)
       .setOAuthToken(options.accessToken)

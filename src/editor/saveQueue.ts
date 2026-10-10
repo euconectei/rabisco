@@ -125,6 +125,9 @@ export function createSaveQueue(initial: { json: string; version: string }, deps
       if (latestJson === savedJson) {
         cancelDraft()
         await deps.deleteDraft()
+      }
+      // Re-check: a change may have landed while the draft was being cleared.
+      if (latestJson === savedJson) {
         deps.onStatus('saved')
       } else {
         deps.onStatus('pending')

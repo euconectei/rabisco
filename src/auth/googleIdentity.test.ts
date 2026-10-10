@@ -74,3 +74,16 @@ it('asks for drive.install so Rabisco shows up in Drive\'s "Open with" menu', ()
     expect.arrayContaining(['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive.install']),
   )
 })
+
+it('gives up when Google never answers (stuck popup)', async () => {
+  vi.useFakeTimers()
+  installFakeGis(() => {})
+  const loading = loadIdentityClient('c')
+  finishScriptLoad()
+  const client = await loading
+  const request = client.requestToken({ prompt: '' })
+  const assertion = expect(request).rejects.toThrow('timeout')
+  await vi.advanceTimersByTimeAsync(120_000)
+  await assertion
+  vi.useRealTimers()
+})

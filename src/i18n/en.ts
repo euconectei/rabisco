@@ -28,7 +28,9 @@ export const en: Messages = {
     copySuffix: ' (copy)',
     retry: 'Try again',
     saveAsNew: 'Save as a new file',
+    actionFailed: 'That did not work. Check your connection and try again.',
     errors: {
+      auth: 'Your Google session expired. Reconnect to open this drawing.',
       notFound: 'We could not find this drawing in your Drive.',
       forbidden: 'You do not have access to this drawing.',
       invalidFile: 'This file is not an Excalidraw drawing.',

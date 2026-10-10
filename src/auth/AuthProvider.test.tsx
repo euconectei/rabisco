@@ -89,15 +89,6 @@ it('renews silently five minutes before expiry', async () => {
   await expect(latest.tokens.getToken()).resolves.toBe('t2')
 })
 
-it('needs a reconnect when silent renewal fails', async () => {
-  vi.useFakeTimers({ shouldAdvanceTime: true })
-  setup(fakeIdentity([{ accessToken: 't1', expiresInSec: 3600, grantedScopes: ALL_SCOPES }, new Error('interaction_required')]).identity)
-  await act(async () => latest.signIn())
-  await act(async () => vi.advanceTimersByTimeAsync(3300 * 1000))
-  expect(screen.getByTestId('status')).toHaveTextContent('needs-reconnect')
-  await expect(latest.tokens.getToken()).rejects.toMatchObject({ kind: 'auth' })
-})
-
 it('refreshToken (used on 401) renews or fails with an auth error', async () => {
   setup(fakeIdentity([{ accessToken: 't1', expiresInSec: 3600, grantedScopes: ALL_SCOPES }, { accessToken: 't2', expiresInSec: 3600, grantedScopes: ALL_SCOPES }, new Error('nope')]).identity)
   await act(async () => latest.signIn())
@@ -130,4 +121,31 @@ it('explains when Drive access was not granted, then asks for consent again', as
   await userEvent.click(screen.getByRole('button', { name: 'sign in' }))
   expect(identity.requestToken).toHaveBeenLastCalledWith({ prompt: 'consent', loginHint: 'ana@example.com' })
   expect(screen.getByTestId('status')).toHaveTextContent('signed-in')
+})
+
+it('shares one renewal between concurrent 401s (a single Google popup)', async () => {
+  const { identity } = setup(
+    fakeIdentity([
+      { accessToken: 't1', expiresInSec: 3600, grantedScopes: ALL_SCOPES },
+      { accessToken: 't2', expiresInSec: 3600, grantedScopes: ALL_SCOPES },
+    ]).identity,
+  )
+  await act(async () => latest.signIn())
+  const tokens = await act(async () => Promise.all([latest.tokens.refreshToken(), latest.tokens.refreshToken()]))
+  expect(tokens).toEqual(['t2', 't2'])
+  expect(identity.requestToken).toHaveBeenCalledTimes(2) // sign-in + one renewal
+})
+
+it('keeps a still-valid token when the early silent renewal fails', async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+  setup(fakeIdentity([{ accessToken: 't1', expiresInSec: 3600, grantedScopes: ALL_SCOPES }, new Error('popup_blocked'), new Error('popup_blocked')]).identity)
+  await act(async () => latest.signIn())
+  await act(async () => vi.advanceTimersByTimeAsync(3300 * 1000))
+  expect(screen.getByTestId('status')).toHaveTextContent('signed-in')
+  await expect(latest.tokens.getToken()).resolves.toBe('t1')
+  await act(async () => vi.advanceTimersByTimeAsync(300 * 1000))
+  await act(async () => {
+    await expect(latest.tokens.getToken()).rejects.toMatchObject({ kind: 'auth' })
+  })
+  expect(screen.getByTestId('status')).toHaveTextContent('needs-reconnect')
 })

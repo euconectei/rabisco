@@ -1,4 +1,4 @@
-import { createStore, del, get, set, type UseStore } from 'idb-keyval'
+import { clear, createStore, del, get, set, type UseStore } from 'idb-keyval'
 
 // Unsaved edits per Drive file. Drafts are a safety net: any IndexedDB failure is swallowed so it
 // can never break the editor.
@@ -35,4 +35,9 @@ export async function getDraft(fileId: string): Promise<Draft | null> {
 
 export function deleteDraft(fileId: string): Promise<void> {
   return safely(() => del(fileId, draftsStore()), undefined)
+}
+
+/** Forgets every local draft (on sign-out, so a shared computer keeps nothing behind). */
+export function clearDrafts(): Promise<void> {
+  return safely(() => clear(draftsStore()), undefined)
 }

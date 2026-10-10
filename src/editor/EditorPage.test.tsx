@@ -141,6 +141,77 @@ describe('opening', () => {
   })
 })
 
+describe('review follow-ups', () => {
+  it('reads the revision before the content, so a save in between can only cause a safe conflict', async () => {
+    const drive = seededDrive()
+    let releaseMeta!: () => void
+    const realGetMeta = drive.client.getMeta.getMockImplementation()!
+    drive.client.getMeta.mockImplementationOnce(async (id: string) => {
+      await new Promise<void>((resolve) => (releaseMeta = resolve))
+      return realGetMeta(id)
+    })
+    open(drive)
+    await waitFor(() => expect(drive.client.getMeta).toHaveBeenCalled(), { timeout: 10_000 })
+    expect(drive.client.download).not.toHaveBeenCalled()
+    releaseMeta()
+    expect((await canvas()).dataset.content).toBe('rect-1|Ideia principal')
+  })
+
+  it('asks to reconnect when the session expired before opening, then opens the file', async () => {
+    const drive = seededDrive()
+    drive.client.getMeta.mockRejectedValueOnce(new DriveError('auth', 'expired', 401))
+    const tree = (auth: AuthValue) => (
+      <I18nProvider initialLanguage="pt-BR">
+        <AuthContext.Provider value={auth}>
+          <DriveContext.Provider value={drive.client}>
+            <MemoryRouter initialEntries={['/edit/f1']}>
+              <AppRoutes />
+            </MemoryRouter>
+          </DriveContext.Provider>
+        </AuthContext.Provider>
+      </I18nProvider>
+    )
+    const { rerender } = render(tree(signedInAuth()))
+    expect(await screen.findByText('Sua sessão com o Google expirou. Reconecte para abrir este desenho.', {}, { timeout: 10_000 })).toBeInTheDocument()
+    rerender(tree(signedInAuth({ status: 'needs-reconnect' })))
+    rerender(tree(signedInAuth({ status: 'signed-in' })))
+    expect((await canvas()).dataset.content).toBe('rect-1|Ideia principal')
+  })
+
+  it('also sets returnValue when leaving with unsaved changes (Safari and older browsers)', async () => {
+    open()
+    await canvas()
+    await userEvent.click(screen.getByRole('button', { name: 'simulate edit' }))
+    const event = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent
+    let assigned: unknown = 'untouched'
+    Object.defineProperty(event, 'returnValue', { configurable: true, get: () => assigned, set: (v) => (assigned = v) })
+    window.dispatchEvent(event)
+    expect(assigned).toBe('')
+  })
+
+  it('tells when "Use the Drive version" fails', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const drive = open()
+    await canvas()
+    drive.editExternally('f1', fixture.replace('Ideia principal', 'Editado no tablet'))
+    await userEvent.click(screen.getByRole('button', { name: 'simulate edit' }))
+    await act(() => vi.advanceTimersByTimeAsync(2000))
+    drive.client.download.mockRejectedValueOnce(new DriveError('network', 'offline'))
+    await userEvent.click(await screen.findByRole('button', { name: 'Usar a do Drive' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não deu certo. Verifique sua conexão e tente de novo.')
+  })
+
+  it('puts the old name back in the title when renaming fails', async () => {
+    const drive = open()
+    await canvas()
+    drive.client.rename.mockRejectedValueOnce(new DriveError('server', 'boom', 500))
+    const title = screen.getByRole('textbox', { name: 'Nome do desenho' })
+    await userEvent.clear(title)
+    await userEvent.type(title, 'Plano{Enter}')
+    await waitFor(() => expect(title).toHaveValue('Mapa'))
+  })
+})
+
 describe('drafts', () => {
   it('offers to restore unsaved changes, and restoring keeps them pending', async () => {
     const draftJson = fixture.replace('Ideia principal', 'Ideia do rascunho')

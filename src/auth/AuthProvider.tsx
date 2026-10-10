@@ -53,30 +53,50 @@ export function AuthProvider({ config, children, identity, fetchUserInfo = fetch
   }, [])
 
   const refreshRef = useRef<() => Promise<string>>(async () => '')
+  const renewEarlyRef = useRef<() => Promise<void>>(async () => {})
+  const refreshing = useRef<Promise<string> | null>(null)
 
   const storeToken = useCallback((token: TokenResponse) => {
     session.current = { accessToken: token.accessToken, expiresAt: Date.now() + token.expiresInSec * 1000 }
     if (renewTimer.current) clearTimeout(renewTimer.current)
     const delayMs = Math.max(token.expiresInSec - RENEW_BEFORE_SEC, 0) * 1000
-    renewTimer.current = setTimeout(() => void refreshRef.current().catch(() => {}), delayMs)
+    renewTimer.current = setTimeout(() => void renewEarlyRef.current(), delayMs)
   }, [])
 
-  const refreshToken = useCallback(async (): Promise<string> => {
-    try {
-      const client = await getClient()
-      const token = await client.requestToken({ prompt: '', loginHint: hintRef.current?.email })
-      if (!token.grantedScopes.includes(DRIVE_SCOPE)) throw new Error('missing_drive_scope')
-      storeToken(token)
-      return token.accessToken
-    } catch {
-      clearSession()
-      setStatus('needs-reconnect')
-      throw new DriveError('auth', 'Session expired')
-    }
-  }, [clearSession, getClient, storeToken])
+  const requestSilently = useCallback(async (): Promise<TokenResponse> => {
+    const client = await getClient()
+    const token = await client.requestToken({ prompt: '', loginHint: hintRef.current?.email })
+    if (!token.grantedScopes.includes(DRIVE_SCOPE)) throw new Error('missing_drive_scope')
+    storeToken(token)
+    return token
+  }, [getClient, storeToken])
+
+  // Used when a token is needed now (401, expired): one shared attempt, failure means reconnect.
+  const refreshToken = useCallback((): Promise<string> => {
+    refreshing.current ??= requestSilently()
+      .then((token) => token.accessToken)
+      .catch(() => {
+        clearSession()
+        setStatus('needs-reconnect')
+        throw new DriveError('auth', 'Session expired')
+      })
+      .finally(() => {
+        refreshing.current = null
+      })
+    return refreshing.current
+  }, [clearSession, requestSilently])
+
+  // The early renewal runs without a click, so the browser may block Google's window. Failing here
+  // is fine: the current token still works until it expires, and getToken() renews (or asks to
+  // reconnect) at that point.
+  const renewEarly = useCallback(async () => {
+    if (refreshing.current) return
+    await requestSilently().catch(() => {})
+  }, [requestSilently])
   useEffect(() => {
     refreshRef.current = refreshToken
-  }, [refreshToken])
+    renewEarlyRef.current = renewEarly
+  }, [refreshToken, renewEarly])
 
   const signIn = useCallback(async () => {
     setError(null)

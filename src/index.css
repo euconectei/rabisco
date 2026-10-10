@@ -44,3 +44,4 @@ html, body, #root { height: 100%; margin: 0; }
 .account-popover { position: absolute; right: 0; top: calc(100% + 0.5rem); z-index: 5; min-width: 14rem; padding: 1rem; border-radius: 0.75rem; background: Canvas; color: CanvasText; box-shadow: 0 8px 30px #0003; }
 .account-name { margin: 0; font-weight: 600; }
 .account-email { margin: 0.2rem 0 0.9rem; font-size: 0.85rem; opacity: 0.7; }
+.action-error { position: fixed; z-index: 15; bottom: 4.5rem; left: 50%; transform: translateX(-50%); margin: 0; padding: 0.5rem 1rem; border-radius: 0.5rem; background: #c92a2a; color: #fff; font-size: 0.85rem; }

@@ -295,3 +295,18 @@ it('retries on demand while offline', async () => {
   await wait(60_000)
   expect(s.deps.upload).toHaveBeenCalledTimes(2)
 })
+
+it('does not claim "saved" when a change lands while the draft is being cleared', async () => {
+  const s = setup()
+  let releaseDelete!: () => void
+  vi.mocked(s.deps.deleteDraft).mockImplementationOnce(() => new Promise<void>((resolve) => (releaseDelete = resolve)))
+  s.queue.change('J1')
+  await wait(2000)
+  s.queue.change('J2')
+  releaseDelete()
+  await settle()
+  expect(s.last()).toBe('pending')
+  await wait(2000)
+  expect(s.deps.upload).toHaveBeenLastCalledWith('J2')
+  expect(s.last()).toBe('saved')
+})

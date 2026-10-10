@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useI18n } from '../i18n/useI18n'
 
 // Render with key={name} so the field resets when the file is renamed or reloaded.
-export function TitleField({ name, onRename }: { name: string; onRename(name: string): void }) {
+export function TitleField({ name, onRename }: { name: string; onRename(name: string): Promise<boolean> }) {
   const { t } = useI18n()
   const [value, setValue] = useState(name)
   return (
@@ -18,7 +18,9 @@ export function TitleField({ name, onRename }: { name: string; onRename(name: st
           event.currentTarget.blur()
         }
       }}
-      onBlur={() => onRename(value)}
+      onBlur={async () => {
+        if (!(await onRename(value))) setValue(name)
+      }}
     />
   )
 }
