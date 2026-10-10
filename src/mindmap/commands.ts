@@ -126,7 +126,7 @@ function insertChild(elements: readonly ExcalidrawElement[], map: MindMap, paren
     layoutOf(elements, map.mapId) === 'free'
       ? freeChildPosition(elements, map, parentId, side)
       : { x: parent.x + parent.width + LEVEL_GAP, y: parent.y }
-  const created = createNodeElements({ mapId: map.mapId, parentId, order, side, text, x: position.x, y: position.y, color: ROOT_COLOR, isRoot: false })
+  const created = createNodeElements({ mapId: map.mapId, parentId, order, side, text, x: position.x, y: position.y, color: ROOT_COLOR, isRoot: false, style: styleOf(elements, map.mapId) })
   const edge = createEdgeElement({ mapId: map.mapId, parent, child: created[0], color: ROOT_COLOR })
   const [childRect, ...childRest] = created
   const linked = elements.map((e) => (e.id === parentId ? update(withBoundEdge(e, edge.id), {}) : e))
@@ -260,7 +260,9 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
     if (!map.byId.has(e.id) || e.isDeleted) return e
     const meta = metaOf(e) as NodeMeta
     const position = positions.get(e.id)!
-    const color = meta.colorAuto ? branchColor.get(e.id)! : e.strokeColor
+    // Manual colors come from boxColors when present (captured when switching to lines style), so a
+    // hand-picked color survives the round trip and tints the lines-style decorations too.
+    const color = meta.colorAuto ? branchColor.get(e.id)! : (meta.boxColors?.strokeColor ?? e.strokeColor)
     nodeColor.set(e.id, color)
     const side = sides?.get(e.id) ?? meta.side
     const updated =
@@ -279,6 +281,7 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
             x: position.x,
             y: position.y,
             strokeColor: color,
+            backgroundColor: meta.colorAuto ? e.backgroundColor : (meta.boxColors?.backgroundColor ?? e.backgroundColor),
             customData: { ...e.customData, rabisco: { ...meta, side } },
           })
     moved.set(e.id, { dx: position.x - e.x, dy: position.y - e.y, rect: updated })

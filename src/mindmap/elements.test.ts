@@ -25,6 +25,13 @@ it('creates a link bound to both nodes, without arrowheads', () => {
   expect(metaOf(edge as never)).toMatchObject({ kind: 'edge', mapId: 'm', childId: child.id })
 })
 
+it('in lines style a node is transparent with left-aligned text', () => {
+  const [rect, text] = createNodeElements({ mapId: 'm', parentId: null, order: 0, side: null, text: 'B', x: 300, y: 0, color: '#1971c2', isRoot: false, style: 'lines' })
+  expect(rect.strokeColor).toBe('transparent')
+  expect(rect.backgroundColor).toBe('transparent')
+  expect((text as unknown as { textAlign: string }).textAlign).toBe('left')
+})
+
 it('the root carries layout and style; other nodes do not', () => {
   const [root] = createNodeElements({ mapId: 'm', parentId: null, order: 0, side: null, text: 'A', x: 0, y: 0, color: '#1e1e1e', isRoot: true })
   const [child] = createNodeElements({ mapId: 'm', parentId: root.id, order: 0, side: null, text: 'B', x: 300, y: 0, color: '#1971c2', isRoot: false })
