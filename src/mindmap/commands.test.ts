@@ -2,7 +2,7 @@ import 'vitest-canvas-mock'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import { parseScene, serializeScene } from '../editor/scene'
 import { MINDMAP_PALETTE, ROOT_COLOR } from './colors'
-import { addChild, addSibling, createMap, deleteBranch, findNodeOf, navigate, relayout } from './commands'
+import { addChild, addSibling, branchElementIds, createMap, findNodeOf, navigate, relayout } from './commands'
 import { metaOf, readMaps } from './model'
 
 type El = ExcalidrawElement & { text?: string; containerId?: string | null; strokeColor: string }
@@ -68,24 +68,20 @@ it('addSibling inserts right after the node and shifts the following ones', () =
   expect(addSibling(elements, root, 'X').elements.length).toBeGreaterThan(elements.length)
 })
 
-it('deleteBranch removes the node, its descendants and their links, and selects the parent', () => {
+it('lists every element of a branch (nodes, their texts and links) for Excalidraw to delete', () => {
   const t = threeChildren()
-  let r = addChild(t.elements, t.a, 'A1')
+  const r = addChild(t.elements, t.a, 'A1')
   const a1 = r.select!
-  r = deleteBranch(r.elements, t.a)
-  expect(r.select).toBe(t.root)
-  const map = readMaps(r.elements).values().next().value!
-  expect([...map.byId.keys()].sort()).toEqual([t.root, t.b, t.c].sort())
-  expect(textOf(r.elements, a1)).toBeUndefined()
-  expect(live(r.elements).filter((e) => metaOf(e)?.kind === 'edge')).toHaveLength(2)
-})
-
-it('deleting the root removes the whole map and nothing else', () => {
-  const t = threeChildren()
-  const free = { id: 'free', type: 'rectangle', x: 999, y: 999, width: 5, height: 5, isDeleted: false } as unknown as ExcalidrawElement
-  const r = deleteBranch([...t.elements, free], t.root)
-  expect(live(r.elements).map((e) => e.id)).toEqual(['free'])
-  expect(r.select).toBeNull()
+  const ids = new Set(branchElementIds(r.elements, t.a))
+  const expected = live(r.elements).filter((e) => {
+    const meta = metaOf(e)
+    return [t.a, a1].includes(e.id) || [t.a, a1].includes(e.containerId ?? '') || (meta?.kind === 'edge' && [t.a, a1].includes(meta.childId))
+  })
+  expect([...ids].sort()).toEqual(expected.map((e) => e.id).sort())
+  expect(ids.has(t.root)).toBe(false)
+  expect(ids.has(t.b)).toBe(false)
+  // The root's branch is the whole map.
+  expect(branchElementIds(r.elements, t.root)).toHaveLength(live(r.elements).length)
 })
 
 it('navigates by side, siblings and edges', () => {

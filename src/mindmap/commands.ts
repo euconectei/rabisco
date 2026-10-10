@@ -69,18 +69,22 @@ export function addSibling(elements: readonly ExcalidrawElement[], nodeId: strin
   return insertChild(shifted, map, current.parentId, current.order + 1, side, text)
 }
 
-export function deleteBranch(elements: readonly ExcalidrawElement[], nodeId: string): CommandResult {
+/**
+ * Every element of a branch: its nodes, their texts and their links (including the link to the
+ * parent). Rabisco selects these and lets Excalidraw delete them, so its own undo restores them.
+ */
+export function branchElementIds(elements: readonly ExcalidrawElement[], nodeId: string): string[] {
   const map = mapOfNode(elements, nodeId)
-  if (!map) return { elements: [...elements], select: null }
+  if (!map) return []
   const ids = new Set(branchIds(map, nodeId))
-  const parentId = map.byId.get(nodeId)!.parentId
-  const next = elements.map((e) => {
-    const meta = metaOf(e)
-    const container = (e as Mutable).containerId
-    const doomed = ids.has(e.id) || (container != null && ids.has(container)) || (meta?.kind === 'edge' && ids.has(meta.childId))
-    return doomed && !e.isDeleted ? update(e, { isDeleted: true }) : e
-  })
-  return { elements: parentId ? relayout(next, map.mapId) : next, select: parentId }
+  return elements
+    .filter((e) => {
+      if (e.isDeleted) return false
+      const meta = metaOf(e)
+      const container = (e as Mutable).containerId
+      return ids.has(e.id) || (container != null && ids.has(container)) || (meta?.kind === 'edge' && ids.has(meta.childId))
+    })
+    .map((e) => e.id)
 }
 
 export function navigate(elements: readonly ExcalidrawElement[], nodeId: string, key: NavigationKey): string | null {
