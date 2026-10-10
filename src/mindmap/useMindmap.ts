@@ -1,9 +1,11 @@
-import { CaptureUpdateAction, hashElementsVersion } from '@excalidraw/excalidraw'
+import { CaptureUpdateAction, hashElementsVersion, viewportCoordsToSceneCoords } from '@excalidraw/excalidraw'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import type { AppState } from '@excalidraw/excalidraw/types'
 import { useCallback, useEffect, useRef } from 'react'
+import { flushSync } from 'react-dom'
 import { addChild, addSibling, branchElementIds, createMap, findNodeOf, layoutDrift, navigate, relayout, type CommandResult } from './commands'
 import { expand, toggleCollapse } from './collapse'
+import { isFreeLayout, nodeAtPoint } from './dragBranch'
 import { importOutline } from './importMap'
 import { actionForKey, type MindmapAction } from './keyboard'
 import type { Point } from './layout'
@@ -221,7 +223,9 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
   const lastHealKey = useRef<number | null>(null)
   const heal = useCallback(
     (elements: readonly ExcalidrawElement[]) => {
-      if (!api) return
+      // The spike's free layout keeps the dragged branch where the user left it; Tarefa 4 makes this
+      // per-map (skip only maps whose `layout` is 'free').
+      if (!api || isFreeLayout()) return
       const key = hashElementsVersion(elements)
       if (key === lastHealKey.current) return
       lastHealKey.current = key
@@ -238,6 +242,38 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
   const editingNode = useRef<string | null>(null)
   // A drag in progress: when it ends over another node of the same map, the branch moves there.
   const dragging = useRef(false)
+  // The node under the pointer when a drag starts. In free layout the whole branch gets selected for
+  // the drag, so the dragged node is remembered here instead of being read from the selection (which,
+  // during the drag, is the whole branch). Stored in every layout; only the branch selection is free-only.
+  const draggedNodeId = useRef<string | null>(null)
+  // Whether the current drag selected a whole branch (free layout), so it can be undone in one step.
+  const draggingBranch = useRef(false)
+
+  // On pointerdown, before Excalidraw's own handler, remember the node under the pointer and (in free
+  // layout) select its whole branch so the branch drags as one unit and native undo undoes it at once.
+  // flushSync makes the new selection visible to Excalidraw's pointerdown handler in the same event.
+  const onDragPointerDown = useCallback(
+    (event: { clientX: number; clientY: number }) => {
+      if (!api) return
+      const appState = api.getAppState() as AppState
+      if (appState.editingTextElement) return
+      const scene = viewportCoordsToSceneCoords({ clientX: event.clientX, clientY: event.clientY }, appState)
+      const nodeId = nodeAtPoint(api.getSceneElements(), scene)
+      draggedNodeId.current = nodeId
+      draggingBranch.current = false
+      if (!nodeId || !isFreeLayout()) return
+      const ids = branchElementIds(api.getSceneElements(), nodeId)
+      draggingBranch.current = true
+      flushSync(() => {
+        api.updateScene({
+          appState: { selectedElementIds: Object.fromEntries(ids.map((id) => [id, true])) } as Partial<AppState>,
+          captureUpdate: CaptureUpdateAction.NEVER,
+        })
+      })
+    },
+    [api],
+  )
+
   const handleChange = useCallback(
     (
       elements: readonly ExcalidrawElement[],
@@ -247,6 +283,8 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
       const wasDragging = dragging.current
       dragging.current = !!appState.selectedElementsAreBeingDragged
       if (wasDragging && !dragging.current && api && !appState.editingTextElement) {
+        const branchDrag = draggingBranch.current
+        draggingBranch.current = false
         const dragged = findNodeOf(elements, appState.selectedElementIds ? selectedIds({ selectedElementIds: appState.selectedElementIds }) : [])
         const target = dragged ? dropTarget(elements, dragged.nodeId) : null
         if (dragged && target) {
@@ -257,6 +295,13 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
             captureUpdate: CaptureUpdateAction.IMMEDIATELY,
           })
           return
+        }
+        // A free-layout branch drag: leave the branch where it was dropped and select only the node.
+        if (branchDrag && draggedNodeId.current) {
+          api.updateScene({
+            appState: { selectedElementIds: { [draggedNodeId.current]: true } } as Partial<AppState>,
+            captureUpdate: CaptureUpdateAction.NEVER,
+          })
         }
       }
       const deleting = pendingDelete.current
@@ -321,5 +366,5 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
     [api, apply],
   )
 
-  return { handleChange, createMapAt, startEditing, pasteOutline, perform }
+  return { handleChange, createMapAt, startEditing, pasteOutline, perform, onDragPointerDown }
 }

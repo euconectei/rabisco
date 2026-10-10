@@ -13,6 +13,6 @@ export default defineConfig({
         port: 4173,
         reuseExistingServer: !process.env.CI,
         // Test-only Google identifiers: the E2E suite answers Google's endpoints with fakes.
-        env: { VITE_GOOGLE_CLIENT_ID: 'test-client-id', VITE_GOOGLE_API_KEY: 'test-api-key', VITE_GOOGLE_APP_ID: '123' },
+        env: { VITE_GOOGLE_CLIENT_ID: 'test-client-id', VITE_GOOGLE_API_KEY: 'test-api-key', VITE_GOOGLE_APP_ID: '123', VITE_E2E: '1' },
       },
 })

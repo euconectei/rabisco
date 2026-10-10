@@ -51,6 +51,31 @@ function EditorScreen({ fileId }: { fileId: string }) {
   const mindmap = useMindmap(api as unknown as MindmapApi | null, mindmapLabels)
   const onSceneChange = file.onSceneChange
   const handleMindmapChange = mindmap.handleChange
+  // Live branch drag (spike): on pointerdown, in capture phase on Excalidraw's container, let the
+  // mind map select the whole branch before Excalidraw starts its own drag. Tarefa 4 keeps this.
+  const onDragPointerDown = mindmap.onDragPointerDown
+  useEffect(() => {
+    if (!api) return
+    const container = document.querySelector<HTMLElement>('.excalidraw')
+    if (!container) return
+    const handler = (event: PointerEvent) => onDragPointerDown(event)
+    container.addEventListener('pointerdown', handler, true)
+    return () => container.removeEventListener('pointerdown', handler, true)
+  }, [api, onDragPointerDown])
+  // Test hook: only the E2E build (VITE_E2E=1) exposes the live scene, so the drag spec can read
+  // element positions in the middle of a gesture. Production builds never set the flag and Vite
+  // drops this block, keeping `__rabiscoScene` out of the bundle.
+  useEffect(() => {
+    if (import.meta.env.VITE_E2E !== '1') return
+    if (!api) return
+    window.__rabiscoScene = () => ({
+      elements: api.getSceneElements(),
+      selection: Object.entries(api.getAppState().selectedElementIds).flatMap(([id, on]) => (on ? [id] : [])),
+    })
+    return () => {
+      delete window.__rabiscoScene
+    }
+  }, [api])
   const onChange = useCallback<NonNullable<Parameters<typeof Excalidraw>[0]['onChange']>>(
     (elements, appState, files) => {
       onSceneChange(elements, appState, files)

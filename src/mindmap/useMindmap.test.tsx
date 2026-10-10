@@ -444,3 +444,85 @@ it('a pasted script with # comments stays text (strict outline rule)', () => {
   expect(taken).toBe(false)
   expect(api.updateScene).not.toHaveBeenCalled()
 })
+
+describe('live branch drag (free layout spike)', () => {
+  function branchMap() {
+    let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+    const root = r.select!
+    r = addChild(r.elements, root, 'A')
+    const a = r.select!
+    r = addChild(r.elements, a, 'A1')
+    return { elements: r.elements, root, a, a1: r.select! }
+  }
+
+  function dragApi(elements: ExcalidrawElement[]) {
+    const state = {
+      elements,
+      appState: {
+        selectedElementIds: {} as Record<string, boolean>,
+        editingTextElement: null as unknown,
+        scrollX: 0,
+        scrollY: 0,
+        zoom: { value: 1 },
+        offsetLeft: 0,
+        offsetTop: 0,
+      },
+    }
+    const api: MindmapApi & { updateScene: ReturnType<typeof vi.fn> } = {
+      getSceneElements: () => state.elements,
+      getAppState: () => state.appState as never,
+      updateScene: vi.fn((scene: { elements?: ExcalidrawElement[]; appState?: Record<string, unknown> }) => {
+        if (scene.elements) state.elements = scene.elements
+        if (scene.appState) state.appState = { ...state.appState, ...scene.appState } as typeof state.appState
+      }),
+    }
+    return { api, state }
+  }
+
+  const pointerAt = (e: ExcalidrawElement) => ({ clientX: e.x + 10, clientY: e.y + 10 })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    delete window.__rabiscoFreeLayout
+  })
+
+  it('in free layout, pointerdown on a node selects the whole branch', () => {
+    vi.stubEnv('VITE_E2E', '1')
+    window.__rabiscoFreeLayout = true
+    const t = branchMap()
+    const { api, state } = dragApi(t.elements)
+    const { result } = renderHook(() => useMindmap(api, labels))
+    const a = state.elements.find((e) => e.id === t.a)!
+    act(() => result.current.onDragPointerDown(pointerAt(a)))
+    const selected = Object.keys(state.appState.selectedElementIds)
+    expect(selected).toContain(t.a)
+    expect(selected).toContain(t.a1)
+    expect(selected).not.toContain(t.root)
+    expect(selected.length).toBeGreaterThan(3)
+    expect(api.updateScene).toHaveBeenCalledWith(expect.objectContaining({ captureUpdate: 'NEVER' }))
+  })
+
+  it('outside free layout, pointerdown leaves the selection alone', () => {
+    const t = branchMap()
+    const { api, state } = dragApi(t.elements)
+    const { result } = renderHook(() => useMindmap(api, labels))
+    const a = state.elements.find((e) => e.id === t.a)!
+    act(() => result.current.onDragPointerDown(pointerAt(a)))
+    expect(api.updateScene).not.toHaveBeenCalled()
+  })
+
+  it('after the drag ends, the selection goes back to just the node', () => {
+    vi.stubEnv('VITE_E2E', '1')
+    window.__rabiscoFreeLayout = true
+    const t = branchMap()
+    const { api, state } = dragApi(t.elements)
+    const { result } = renderHook(() => useMindmap(api, labels))
+    const a = state.elements.find((e) => e.id === t.a)!
+    act(() => result.current.onDragPointerDown(pointerAt(a)))
+    expect(Object.keys(state.appState.selectedElementIds)).toContain(t.a1)
+    const appState = { editingTextElement: null, selectedElementIds: state.appState.selectedElementIds }
+    act(() => result.current.handleChange(state.elements, { ...appState, selectedElementsAreBeingDragged: true } as never))
+    act(() => result.current.handleChange(state.elements, { ...appState, selectedElementsAreBeingDragged: false } as never))
+    expect(state.appState.selectedElementIds).toEqual({ [t.a]: true })
+  })
+})
