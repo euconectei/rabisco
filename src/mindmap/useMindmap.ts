@@ -3,6 +3,7 @@ import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import type { AppState } from '@excalidraw/excalidraw/types'
 import { useCallback, useEffect, useRef } from 'react'
 import { addChild, addSibling, branchElementIds, createMap, findNodeOf, layoutDrift, navigate, relayout, type CommandResult } from './commands'
+import { toggleCollapse } from './collapse'
 import { actionForKey } from './keyboard'
 import type { Point } from './layout'
 import { metaOf, readMaps } from './model'
@@ -182,6 +183,8 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
         }
         case 'editText':
           return startEditing(target.nodeId)
+        case 'toggleCollapse':
+          return apply(toggleCollapse(elements, target.nodeId), false)
         case 'navigate': {
           const next = navigate(elements, target.nodeId, action.key)
           if (next) api.updateScene({ appState: { selectedElementIds: { [next]: true } } as Partial<AppState> })

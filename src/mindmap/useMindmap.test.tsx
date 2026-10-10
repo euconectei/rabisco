@@ -308,3 +308,34 @@ it('cancels pending editor work when the editor goes away', async () => {
   container.remove()
   vi.useRealTimers()
 })
+
+function pressWith(k: string, mods: KeyboardEventInit) {
+  const event = new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true, ...mods })
+  window.dispatchEvent(event)
+  return event
+}
+
+it('Ctrl/Cmd + . collapses the selected node and then expands it, in one undo step each', () => {
+  let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+  const root = r.select!
+  r = addChild(r.elements, root, 'A')
+  const { api, state } = fakeApi(r.elements, [root])
+  renderHook(() => useMindmap(api, labels))
+  expect(pressWith('.', { ctrlKey: true }).defaultPrevented).toBe(true)
+  expect(nodeCount(state.elements)).toBe(1)
+  expect((metaOf(state.elements.find((e) => e.id === root)!) as { collapsed?: boolean }).collapsed).toBe(true)
+  expect(api.updateScene).toHaveBeenLastCalledWith(expect.objectContaining({ captureUpdate: 'IMMEDIATELY' }))
+  pressWith('.', { metaKey: true })
+  expect(nodeCount(state.elements)).toBe(2)
+  expect(state.appState.selectedElementIds).toEqual({ [root]: true })
+})
+
+it('Ctrl + . does nothing while a text is being edited', () => {
+  let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+  const root = r.select!
+  r = addChild(r.elements, root, 'A')
+  const { api } = fakeApi(r.elements, [root], { id: 'some-text' })
+  renderHook(() => useMindmap(api, labels))
+  expect(pressWith('.', { ctrlKey: true }).defaultPrevented).toBe(false)
+  expect(api.updateScene).not.toHaveBeenCalled()
+})

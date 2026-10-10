@@ -6,6 +6,7 @@ export type MindmapAction =
   | { type: 'delete' }
   | { type: 'navigate'; key: NavigationKey }
   | { type: 'editText' }
+  | { type: 'toggleCollapse' }
 
 interface KeyLike {
   key: string
@@ -19,6 +20,8 @@ const NAVIGATION = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'])
 
 /** Mind map shortcuts. Any modifier means "not ours": Excalidraw and the browser keep their shortcuts. */
 export function actionForKey(event: KeyLike): MindmapAction | null {
+  const ctrlOrCmd = event.ctrlKey || event.metaKey
+  if (ctrlOrCmd && !event.altKey && !event.shiftKey && event.key === '.') return { type: 'toggleCollapse' }
   if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return null
   if (event.key === 'Tab') return { type: 'addChild' }
   if (event.key === 'Enter') return { type: 'addSibling' }
