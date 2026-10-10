@@ -68,3 +68,9 @@ it('revokes tokens', async () => {
   await (await loading).revoke('tok')
   expect(gis.revoke).toHaveBeenCalledWith('tok', expect.any(Function))
 })
+
+it('asks for drive.install so Rabisco shows up in Drive\'s "Open with" menu', () => {
+  expect(SCOPES.split(' ')).toEqual(
+    expect.arrayContaining(['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive.install']),
+  )
+})
