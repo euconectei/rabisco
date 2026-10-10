@@ -290,3 +290,21 @@ describe('self-healing layout', () => {
     expect(api.updateScene).not.toHaveBeenCalled()
   })
 })
+
+it('cancels pending editor work when the editor goes away', async () => {
+  vi.useFakeTimers()
+  const map = createMap([], { x: 0, y: 0 }, 'Raiz')
+  const { api } = fakeApi(map.elements, [map.select!])
+  const { unmount } = renderHook(() => useMindmap(api, labels))
+  press('Tab') // schedules opening the new node's editor
+  unmount()
+  const container = document.createElement('div')
+  container.className = 'excalidraw'
+  const received: string[] = []
+  container.addEventListener('keydown', (e) => received.push(e.key))
+  document.body.appendChild(container)
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+  expect(received).toEqual([])
+  container.remove()
+  vi.useRealTimers()
+})

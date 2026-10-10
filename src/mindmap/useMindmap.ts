@@ -68,6 +68,23 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
   // An Esc pressed while keys are held closes the editor right after they are typed in.
   const closeAfterTyping = useRef(false)
 
+  // Timers for work that only makes sense while this editor is mounted (opening an editor, deleting).
+  const timers = useRef(new Set<ReturnType<typeof setTimeout>>())
+  const later = useCallback((work: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      timers.current.delete(id)
+      work()
+    }, ms)
+    timers.current.add(id)
+  }, [])
+  useEffect(() => {
+    const pending = timers.current
+    return () => {
+      for (const id of pending) clearTimeout(id)
+      pending.clear()
+    }
+  }, [])
+
   // A branch handed to Excalidraw for deletion: once it is gone, re-lay out the map and select the parent.
   const pendingDelete = useRef<{ nodeId: string; mapId: string; parentId: string | null } | null>(null)
 
@@ -86,7 +103,7 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
     closeAfterTyping.current = false
     // The previous node's editor may still be in the DOM right after Esc: never type into that one.
     const stale = document.querySelector(EDITOR_SELECTOR)
-    setTimeout(() => {
+    later(() => {
       sendToExcalidraw('Enter')
       const deadline = Date.now() + EDIT_WAIT_MS
       const poll = () => {
@@ -104,11 +121,11 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
           return
         }
         if (Date.now() >= deadline) heldKeys.current = null
-        else setTimeout(poll, POLL_MS)
+        else later(poll, POLL_MS)
       }
       poll()
     }, POLL_MS)
-  }, [api, sendToExcalidraw])
+  }, [api, later, sendToExcalidraw])
 
   const apply = useCallback(
     (result: CommandResult, edit: boolean) => {
@@ -160,7 +177,7 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
             appState: { selectedElementIds: Object.fromEntries(ids.map((id) => [id, true])) } as Partial<AppState>,
             captureUpdate: CaptureUpdateAction.NEVER,
           })
-          setTimeout(() => sendToExcalidraw('Delete'), POLL_MS)
+          later(() => sendToExcalidraw('Delete'), POLL_MS)
           return
         }
         case 'editText':
@@ -173,7 +190,7 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
     }
     window.addEventListener('keydown', onKeyDown, true)
     return () => window.removeEventListener('keydown', onKeyDown, true)
-  }, [api, apply, startEditing, sendToExcalidraw])
+  }, [api, apply, startEditing, sendToExcalidraw, later])
 
   // Layout is derived state: it never enters the undo history (CaptureUpdateAction.NEVER). Whenever
   // the scene changes for any reason (undo, redo, paste, a text edit), maps that drifted from their
