@@ -3,7 +3,39 @@ export const ptBR = {
     name: 'Rabisco',
     tagline: 'Mapas mentais e fluxos à mão no mesmo canvas, salvos no seu Google Drive.',
   },
-  landing: { start: 'Começar' },
+  landing: {
+    start: 'Começar, é grátis',
+    title: 'Pense no papel. Guarde no seu Drive.',
+    heroAlt: 'Editor do Rabisco com um mapa mental e um fluxo desenhado à mão no mesmo quadro',
+    featuresTitle: 'O que dá para fazer',
+    features: {
+      mindmap: {
+        title: 'Mapa mental pelo teclado',
+        text: 'Tab cria um tópico filho, Enter cria um irmão. O mapa se organiza sozinho e cada ramo ganha uma cor.',
+        alt: 'Mapa mental com ramos coloridos dos dois lados da ideia central',
+      },
+      draw: {
+        title: 'Traço à mão livre',
+        text: 'Fluxos, caixas, setas e rabiscos no mesmo quadro do mapa, com o jeito de desenho à mão do Excalidraw.',
+        alt: 'Fluxo desenhado à mão com caixas ligadas por setas',
+      },
+      files: {
+        title: 'Arquivos que são seus',
+        text: 'Cada desenho é um arquivo .excalidraw no seu Google Drive, que também abre no excalidraw.com.',
+        alt: 'Lista de desenhos salvos no Google Drive',
+      },
+    },
+    trustTitle: 'Seus desenhos são seus',
+    trust: {
+      drive: 'Seus desenhos ficam no seu Google Drive. O Rabisco não tem servidor que guarde o seu conteúdo.',
+      scope: 'O app enxerga só os arquivos que ele mesmo criou ou que você abriu nele. O resto do seu Drive fica fora do alcance.',
+      openSource: 'Código aberto',
+      openSourceText: '(licença MIT): qualquer pessoa pode ver como ele funciona.',
+      offline: 'Caiu a conexão no meio do desenho? Continue: as mudanças ficam neste aparelho e são salvas quando a internet voltar.',
+    },
+    ctaTitle: 'Comece um rabisco agora',
+    ctaText: 'Entre com a sua conta Google e crie o primeiro desenho em segundos.',
+  },
   files: {
     title: 'Meus arquivos',
     empty: 'Nenhum arquivo ainda.',
@@ -59,6 +91,7 @@ export const ptBR = {
     },
   },
   notFound: { title: 'Página não encontrada', backHome: 'Voltar ao início' },
+  footer: { madeBy: 'Feito pela comunidade com', love: 'amor' },
   language: { label: 'Idioma', 'pt-BR': 'Português', en: 'English' },
   mindmap: {
     button: 'Mapa mental',
@@ -88,6 +121,13 @@ export const ptBR = {
     linkUnseen: 'Novidades (há novidades)',
     menuItem: 'Novidades ({version})',
     sections: {
+      home: {
+        title: 'Página inicial nova',
+        items: [
+          'A página inicial agora mostra o Rabisco funcionando e explica onde ficam os seus desenhos: no seu Google Drive.',
+          'O botão "Mapa mental" ficava ilegível com o sistema no modo escuro e o quadro no claro (ou o contrário). Agora ele segue o tema do quadro.',
+        ],
+      },
       mindmap: {
         title: 'Mapas mentais no canvas',
         items: [

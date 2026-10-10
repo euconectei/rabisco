@@ -11,11 +11,11 @@ vi.mock('./editor/EditorPage', () => ({
   default: () => <div data-testid="editor-page" />,
 }))
 
-it('landing shows the name, tagline and leads to the files page', async () => {
+it('landing shows the title, tagline and leads to the files page', async () => {
   renderWithProviders(<AppRoutes />)
-  expect(screen.getByRole('heading', { name: 'Rabisco' })).toBeInTheDocument()
+  expect(screen.getByRole('heading', { level: 1, name: 'Pense no papel. Guarde no seu Drive.' })).toBeInTheDocument()
   expect(screen.getByText(/salvos no seu Google Drive/)).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('link', { name: 'Começar' }))
+  await userEvent.click(screen.getAllByRole('link', { name: 'Começar, é grátis' })[0])
   expect(screen.getByRole('heading', { name: 'Meus arquivos' })).toBeInTheDocument()
 })
 
@@ -28,14 +28,14 @@ it('files page shows the empty state and opens a new drawing', async () => {
 
 it('renders pages in English', () => {
   renderWithProviders(<AppRoutes />, { route: '/', lang: 'en' })
-  expect(screen.getByRole('link', { name: 'Get started' })).toBeInTheDocument()
+  expect(screen.getAllByRole('link', { name: "Get started, it's free" })[0]).toBeInTheDocument()
 })
 
 it('unknown routes show the 404 page with a way home', async () => {
   renderWithProviders(<AppRoutes />, { route: '/nope/really' })
   expect(screen.getByRole('heading', { name: 'Página não encontrada' })).toBeInTheDocument()
   await userEvent.click(screen.getByRole('link', { name: 'Voltar ao início' }))
-  expect(screen.getByRole('link', { name: 'Começar' })).toBeInTheDocument()
+  expect(screen.getAllByRole('link', { name: 'Começar, é grátis' })[0]).toBeInTheDocument()
 })
 
 it('asks to sign in before showing private pages', () => {
