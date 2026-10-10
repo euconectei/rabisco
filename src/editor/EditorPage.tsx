@@ -1,4 +1,4 @@
-import { Excalidraw, Footer, MainMenu, sceneCoordsToViewportCoords, viewportCoordsToSceneCoords } from '@excalidraw/excalidraw'
+import { CaptureUpdateAction, Excalidraw, Footer, MainMenu, newElementWith, sceneCoordsToViewportCoords, viewportCoordsToSceneCoords } from '@excalidraw/excalidraw'
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import '@excalidraw/excalidraw/index.css'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -9,6 +9,7 @@ import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
 import { useI18n } from '../i18n/useI18n'
 import { ExportImageDialog } from '../export/ExportImageDialog'
 import { exportableMap, mapToOutline, outlineToMarkdown } from '../mindmap/markdown'
+import { metaOf, readMaps, type MapLayout } from '../mindmap/model'
 import { toolbarPosition, touchTarget, TouchToolbar, useSettled, type TouchTarget } from '../mindmap/TouchToolbar'
 import { useMindmap, type MindmapApi } from '../mindmap/useMindmap'
 import { Dialog } from './Dialog'
@@ -72,8 +73,20 @@ function EditorScreen({ fileId }: { fileId: string }) {
       elements: api.getSceneElements(),
       selection: Object.entries(api.getAppState().selectedElementIds).flatMap(([id, on]) => (on ? [id] : [])),
     })
+    window.__rabiscoSetLayout = (layout: MapLayout) => {
+      const elements = api.getSceneElements()
+      const rootIds = new Set([...readMaps(elements).values()].map((map) => map.root.id))
+      const next = elements.map((element) => {
+        if (!rootIds.has(element.id)) return element
+        const meta = metaOf(element)
+        if (meta?.kind !== 'node') return element
+        return newElementWith(element, { customData: { ...element.customData, rabisco: { ...meta, layout } } })
+      })
+      api.updateScene({ elements: next, captureUpdate: CaptureUpdateAction.IMMEDIATELY })
+    }
     return () => {
       delete window.__rabiscoScene
+      delete window.__rabiscoSetLayout
     }
   }, [api])
   const onChange = useCallback<NonNullable<Parameters<typeof Excalidraw>[0]['onChange']>>(

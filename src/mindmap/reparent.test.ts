@@ -134,6 +134,22 @@ describe('reparent', () => {
   })
 })
 
+describe('free layout', () => {
+  it('reparent changes the parent without moving the branch', () => {
+    const s = sample()
+    const free = s.elements.map((e) =>
+      e.id === s.root
+        ? (newElementWith(e as never, { customData: { rabisco: { ...meta(s.elements, s.root), layout: 'free' } } } as never) as unknown as ExcalidrawElement)
+        : e,
+    )
+    // Move A by hand, then drop it on B: in free layout it stays where it was dropped.
+    const moved = free.map((e) => (e.id === s.a ? (newElementWith(e as never, { x: 1234, y: 567 } as never) as unknown as ExcalidrawElement) : e))
+    const { elements } = reparent(moved, s.a, s.b)
+    expect(map(elements).byId.get(s.a)!.parentId).toBe(s.b)
+    expect([rect(elements, s.a).x, rect(elements, s.a).y]).toEqual([1234, 567])
+  })
+})
+
 describe('collapsed targets', () => {
   it('dropping on a collapsed node expands it first: no hidden-and-visible mix, distinct orders, no badge left', () => {
     const s = sample()

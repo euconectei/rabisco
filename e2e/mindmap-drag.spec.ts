@@ -3,7 +3,7 @@ import { installFakeGoogle, type FakeDrive } from './fakes/google'
 
 test.use({ locale: 'pt-BR' })
 
-// The live branch drag relies on `window.__rabiscoScene` and `window.__rabiscoFreeLayout`, which only
+// The live branch drag relies on `window.__rabiscoScene` and `window.__rabiscoSetLayout`, which only
 // exist in the E2E build (VITE_E2E=1). Running against production (E2E_BASE_URL) skips this spec.
 test.skip(!!process.env.E2E_BASE_URL, 'the live branch drag runs against the E2E build only')
 
@@ -57,6 +57,13 @@ async function scene(page: Page): Promise<LiveScene> {
   })
 }
 
+/** Writes the layout to every map's root via the E2E-only hook (the "Organizar" control comes later). */
+async function setLayout(page: Page, layout: string) {
+  await page.evaluate((value) => {
+    ;(window as unknown as { __rabiscoSetLayout: (layout: string) => void }).__rabiscoSetLayout(value)
+  }, layout)
+}
+
 const nodes = (els: LiveElement[]) => els.filter((e) => e.customData?.rabisco?.kind === 'node')
 const textOf = (els: LiveElement[], id: string) => els.find((e) => e.containerId === id)?.text
 const byText = (els: LiveElement[], text: string) => nodes(els).find((n) => textOf(els, n.id) === text)
@@ -75,10 +82,8 @@ test('in free layout, dragging a node moves its whole branch live, undone in one
   await typeNode(page, 'Neto')
   await page.keyboard.press('Escape')
 
-  // Turn on the spike's free-layout flag (Tarefa 4 swaps it for the real `layout` field).
-  await page.evaluate(() => {
-    ;(window as unknown as { __rabiscoFreeLayout?: boolean }).__rabiscoFreeLayout = true
-  })
+  // Turn the map's layout to free (the "Organizar" control only lands in a later task).
+  await setLayout(page, 'free')
 
   const before = await scene(page)
   const filho = byText(before.elements, 'Filho')!
@@ -118,4 +123,61 @@ test('in free layout, dragging a node moves its whole branch live, undone in one
       )
     })
     .toBe(true)
+})
+
+test('in free layout, dropping a branch on empty canvas keeps it where it fell', async ({ page }) => {
+  await openNewDrawing(page)
+  await createMap(page)
+  await typeNode(page, 'Raiz')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Filho')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Neto')
+  await page.keyboard.press('Escape')
+
+  await setLayout(page, 'free')
+
+  const before = await scene(page)
+  const raiz = byText(before.elements, 'Raiz')!
+  const filho = byText(before.elements, 'Filho')!
+  const neto = byText(before.elements, 'Neto')!
+  const from = centerOf(filho)
+
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  await page.mouse.move(from.x, from.y + 240, { steps: 12 })
+  await page.mouse.up()
+
+  // After the save, the branch must still be where it was dropped (the heal does not undo it).
+  await expect(page.getByRole('status').filter({ hasText: 'Salvo' })).toBeVisible()
+
+  const after = await scene(page)
+  const droppedFilho = byId(after.elements, filho.id)!
+  const droppedNeto = byId(after.elements, neto.id)!
+  expect(droppedFilho.y - filho.y).toBeGreaterThan(100)
+  expect(droppedNeto.y - neto.y).toBeCloseTo(droppedFilho.y - filho.y, 0)
+  expect(droppedFilho.customData?.rabisco?.parentId).toBe(raiz.id)
+})
+
+test('in free layout, a click without dragging selects just the node, so Tab still adds a child', async ({ page }) => {
+  await openNewDrawing(page)
+  await createMap(page)
+  await typeNode(page, 'Raiz')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Filho')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Neto')
+  await page.keyboard.press('Escape')
+  await setLayout(page, 'free')
+
+  const before = await scene(page)
+  const filho = byText(before.elements, 'Filho')!
+  const from = centerOf(filho)
+  await page.mouse.click(from.x, from.y)
+  await expect.poll(async () => (await scene(page)).selection).toEqual([filho.id])
+
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Outro')
+  const after = await scene(page)
+  expect(byText(after.elements, 'Outro')).toBeDefined()
 })

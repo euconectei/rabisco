@@ -2,7 +2,7 @@ import { newElementWith } from '@excalidraw/excalidraw'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import { colorForBranch, ROOT_COLOR } from './colors'
 import { createEdgeElement, createNodeElements, newId, nodeSize, withBoundEdge } from './elements'
-import { assignedSides, layoutMap, SIBLING_GAP, type Point, type Size } from './layout'
+import { assignedSides, layoutMap, LEVEL_GAP, SIBLING_GAP, type Point, type Size } from './layout'
 import { branchIds, layoutOf, metaOf, readMaps, sideOf, styleOf, type MapStyle, type MindMap, type NodeMeta, type Side } from './model'
 
 export interface CommandResult {
@@ -30,6 +30,10 @@ export function mapOfNode(elements: readonly ExcalidrawElement[], nodeId: string
 }
 
 const BADGE_GAP = 8
+
+// A new (non-root) node's footprint, matching createNodeElements: used to find a clear spot for a
+// child in the free layout.
+const CHILD_NODE_SIZE: Size = { width: 140, height: 44 }
 
 export const byId = (elements: readonly ExcalidrawElement[], id: string) => elements.find((e) => e.id === id)
 
@@ -91,9 +95,37 @@ export function createMap(elements: readonly ExcalidrawElement[], at: Point, roo
   return { elements: [...elements, ...created], select: created[0].id }
 }
 
+/**
+ * Where a new child goes in the free layout: just outside the parent (on the branch side for maps
+ * that came from both sides, otherwise to the right), right below the last sibling, descending until
+ * the spot is clear of every other node of the map.
+ */
+export function freeChildPosition(elements: readonly ExcalidrawElement[], map: MindMap, parentId: string, side: Side | null): Point {
+  const parent = byId(elements, parentId)!
+  const left = (side ?? sideOf(map, parentId)) === 'left'
+  const { width, height } = CHILD_NODE_SIZE
+  const x = left ? parent.x - LEVEL_GAP - width : parent.x + parent.width + LEVEL_GAP
+  let y = parent.y
+  for (const child of map.byId.get(parentId)?.children ?? []) {
+    const rect = byId(elements, child.id)
+    if (rect) y = Math.max(y, rect.y + rect.height + SIBLING_GAP)
+  }
+  const nodes = elements.filter((e) => !e.isDeleted && map.byId.has(e.id))
+  const overlaps = (candidate: Point) =>
+    nodes.some((e) => candidate.x < e.x + e.width && e.x < candidate.x + width && candidate.y < e.y + e.height && e.y < candidate.y + height)
+  while (overlaps({ x, y })) y += height
+  return { x, y }
+}
+
 function insertChild(elements: readonly ExcalidrawElement[], map: MindMap, parentId: string, order: number, side: Side | null, text: string): CommandResult {
   const parent = byId(elements, parentId)!
-  const created = createNodeElements({ mapId: map.mapId, parentId, order, side, text, x: parent.x + parent.width + 80, y: parent.y, color: ROOT_COLOR, isRoot: false })
+  // Free layout keeps nodes where they are placed: the new child goes beside the parent (below the
+  // last sibling), not through the automatic layout.
+  const position =
+    layoutOf(elements, map.mapId) === 'free'
+      ? freeChildPosition(elements, map, parentId, side)
+      : { x: parent.x + parent.width + LEVEL_GAP, y: parent.y }
+  const created = createNodeElements({ mapId: map.mapId, parentId, order, side, text, x: position.x, y: position.y, color: ROOT_COLOR, isRoot: false })
   const edge = createEdgeElement({ mapId: map.mapId, parent, child: created[0], color: ROOT_COLOR })
   const [childRect, ...childRest] = created
   const linked = elements.map((e) => (e.id === parentId ? update(withBoundEdge(e, edge.id), {}) : e))
