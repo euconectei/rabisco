@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.9.0](https://github.com/euconectei/rabisco/compare/v0.8.0...v0.9.0) (2026-10-10)
+
+
+### Features
+
+* **mindmap:** free layout keeps positions and drags the branch live ([ca1788b](https://github.com/euconectei/rabisco/commit/ca1788b0cccd565b09b0b00ab7431b4b58764c83))
+* **mindmap:** lines style geometry with underlines, knobs and curved links ([1257740](https://github.com/euconectei/rabisco/commit/12577404115713128bf8c0db4e77761356c383f3))
+* **mindmap:** model layout/style and recognize line-style links and decorations ([faf5799](https://github.com/euconectei/rabisco/commit/faf57990b820a560709ad27e510fed9a19f0a334))
+* **mindmap:** organize panel for layout and style ([e4b7a66](https://github.com/euconectei/rabisco/commit/e4b7a66ce0df8f4ecae665d56bbe062854fa1f0e))
+* **mindmap:** right-side-only layout with a centered root ([9e850f2](https://github.com/euconectei/rabisco/commit/9e850f231e36427d34513f2c3823ecc62a0dfd61))
+* **mindmap:** switch between boxes and lines styles, keeping colors ([521141b](https://github.com/euconectei/rabisco/commit/521141bcc5be43ae5f1ed9b349908da8612494d2))
+
+
+### Bug Fixes
+
+* **mindmap:** keep replaced links in the scene as deleted and leave line links unbound ([d99eaf9](https://github.com/euconectei/rabisco/commit/d99eaf92f6a09a376b62a86dba1f8be42e554ede))
+
 ## [0.8.0](https://github.com/euconectei/rabisco/compare/v0.7.0...v0.8.0) (2026-10-10)
 
 
