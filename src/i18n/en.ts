@@ -136,6 +136,16 @@ export const en: Messages = {
     linkUnseen: 'News (something new)',
     menuItem: 'News ({version})',
     sections: {
+      mindmapExtras: {
+        title: 'More ways to work with mind maps',
+        items: [
+          'Collapse a branch with Ctrl + . (Cmd + . on a Mac) and expand it the same way: the "+N" badge shows how many topics are tucked away.',
+          'Drag a topic onto another to move it there, with everything below it.',
+          'Paste a markdown list or headings on the canvas and it becomes a map. From the menu, copy the map as text, download the .md or save the .md to Drive.',
+          'In "My files", "Import markdown" creates a new drawing from a .md file.',
+          'On a tablet, tap a topic: a bar with + child, + sibling, collapse and delete shows up above it.',
+        ],
+      },
       home: {
         title: 'A new home page',
         items: [

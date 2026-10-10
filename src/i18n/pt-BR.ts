@@ -134,6 +134,16 @@ export const ptBR = {
     linkUnseen: 'Novidades (há novidades)',
     menuItem: 'Novidades ({version})',
     sections: {
+      mindmapExtras: {
+        title: 'Mais jeitos de mexer no mapa mental',
+        items: [
+          'Recolha um ramo com Ctrl + . (Cmd + . no Mac) e expanda do mesmo jeito: o selo "+N" mostra quantos tópicos estão guardados.',
+          'Arraste um tópico para cima de outro para mudá-lo de lugar, com tudo o que está abaixo dele.',
+          'Cole uma lista ou títulos em markdown no quadro e ela vira um mapa. No menu, copie o mapa como texto, baixe o .md ou salve o .md no Drive.',
+          'Em "Meus arquivos", "Importar markdown" cria um desenho novo a partir de um arquivo .md.',
+          'No tablet, toque num tópico: uma barra com + filho, + irmão, recolher e apagar aparece acima dele.',
+        ],
+      },
       home: {
         title: 'Página inicial nova',
         items: [
