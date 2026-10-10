@@ -43,7 +43,11 @@ function insertText(textarea: HTMLTextAreaElement, text: string) {
   textarea.dispatchEvent(new Event('input', { bubbles: true }))
 }
 
-/** Keys typed in a field (title, color hex, library search, dialogs…) are never mind map commands. */
+/**
+ * Keys typed in a field (title, color hex, library search…), inside a dialog (such as the Organize
+ * panel) or on a control marked `data-own-keys` are never mind map commands. Other buttons keep them:
+ * focus stays on "Mapa mental" right after it is clicked.
+ */
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false
   return (
@@ -51,7 +55,8 @@ function isEditableTarget(target: EventTarget | null): boolean {
     target instanceof HTMLTextAreaElement ||
     target instanceof HTMLSelectElement ||
     target.isContentEditable ||
-    target.contentEditable === 'true'
+    target.contentEditable === 'true' ||
+    target.closest('[role="dialog"], [data-own-keys]') !== null
   )
 }
 

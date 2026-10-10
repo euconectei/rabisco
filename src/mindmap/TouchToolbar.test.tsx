@@ -5,7 +5,7 @@ import { collapse } from './collapse'
 import { addChild, createMap } from './commands'
 import { touchTarget, TouchToolbar, useSettled } from './TouchToolbar'
 
-const labels = { toolbar: 'Ações do mapa', addChild: '+ filho', addSibling: '+ irmão', collapse: 'Recolher', expand: 'Expandir', delete: 'Apagar' }
+const labels = { toolbar: 'Ações do mapa', addChild: '+ filho', addSibling: '+ irmão', collapse: 'Recolher', expand: 'Expandir', delete: 'Apagar', organize: 'Organizar' }
 
 function sample() {
   let r = createMap([], { x: 0, y: 0 }, 'Raiz')
@@ -39,7 +39,7 @@ describe('touchTarget', () => {
 })
 
 describe('TouchToolbar', () => {
-  const handlers = () => ({ onAddChild: vi.fn(), onAddSibling: vi.fn(), onToggleCollapse: vi.fn(), onDelete: vi.fn() })
+  const handlers = () => ({ onAddChild: vi.fn(), onAddSibling: vi.fn(), onToggleCollapse: vi.fn(), onDelete: vi.fn(), onOrganize: vi.fn() })
 
   it('shows big buttons that run the same commands as the keyboard', async () => {
     const h = handlers()
@@ -48,10 +48,12 @@ describe('TouchToolbar', () => {
     await userEvent.click(screen.getByRole('button', { name: '+ filho' }))
     await userEvent.click(screen.getByRole('button', { name: '+ irmão' }))
     await userEvent.click(screen.getByRole('button', { name: 'Recolher' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Organizar' }))
     await userEvent.click(screen.getByRole('button', { name: 'Apagar' }))
     expect(h.onAddChild).toHaveBeenCalledTimes(1)
     expect(h.onAddSibling).toHaveBeenCalledTimes(1)
     expect(h.onToggleCollapse).toHaveBeenCalledTimes(1)
+    expect(h.onOrganize).toHaveBeenCalledTimes(1)
     expect(h.onDelete).toHaveBeenCalledTimes(1)
   })
 
