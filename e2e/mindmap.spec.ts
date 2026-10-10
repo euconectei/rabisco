@@ -29,7 +29,7 @@ async function openNewDrawing(page: Page): Promise<FakeDrive> {
 
 async function savedElements(drive: FakeDrive, page: Page): Promise<SavedElement[]> {
   await expect(page.getByRole('status').filter({ hasText: 'Salvo' })).toBeVisible({ timeout: 10_000 })
-  const file = drive.byName('Sem título.excalidraw')!
+  const file = [...drive.files.values()].find((f) => f.name.endsWith('.excalidraw'))!
   return (JSON.parse(file.content) as { elements: SavedElement[] }).elements.filter((e) => !e.isDeleted)
 }
 
@@ -150,4 +150,41 @@ test('a long, multi-line node text re-lays out the map without overlaps', async 
   await page.keyboard.press('Escape')
   await expect.poll(async () => (await savedElements(drive, page)).some((e) => e.text?.includes('varias'))).toBe(true)
   expect(overlapping(await savedElements(drive, page))).toBe(false)
+})
+
+test('undoing a deletion brings the node back without overlapping its siblings', async ({ page }) => {
+  const drive = await openNewDrawing(page)
+  await createMap(page)
+  await typeNode(page, 'Raiz')
+  for (const [i, name] of ['Um', 'Dois', 'Tres', 'Quatro'].entries()) {
+    if (i === 0) await page.keyboard.press('Tab')
+    else {
+      await page.keyboard.press('Enter')
+    }
+    await typeNode(page, name)
+  }
+  await page.keyboard.press('ArrowUp') // Tres
+  await page.keyboard.press('Delete')
+  await expect.poll(async () => byText(await savedElements(drive, page), 'Tres')).toBeUndefined()
+  await page.keyboard.press(undoKey)
+  await expect.poll(async () => byText(await savedElements(drive, page), 'Tres'), { timeout: 10_000 }).toBeDefined()
+  await expect.poll(async () => overlapping(await savedElements(drive, page)), { timeout: 10_000 }).toBe(false)
+})
+
+test('typing in the title field never acts on the selected node', async ({ page }) => {
+  const drive = await openNewDrawing(page)
+  await createMap(page)
+  await typeNode(page, 'Raiz')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Filho') // Filho stays selected
+  const title = page.getByRole('textbox', { name: 'Nome do desenho' })
+  await title.click()
+  await page.keyboard.press('End')
+  await page.keyboard.press('Backspace')
+  await page.keyboard.press('ArrowLeft')
+  await page.keyboard.type('X')
+  await expect(title).toHaveValue('Sem títuXl')
+  await page.keyboard.press('Enter')
+  const els = await savedElements(drive, page)
+  expect(nodes(els)).toHaveLength(2)
 })

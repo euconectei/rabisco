@@ -1,8 +1,8 @@
-import { CaptureUpdateAction } from '@excalidraw/excalidraw'
+import { CaptureUpdateAction, hashElementsVersion } from '@excalidraw/excalidraw'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import type { AppState } from '@excalidraw/excalidraw/types'
 import { useCallback, useEffect, useRef } from 'react'
-import { addChild, addSibling, branchElementIds, createMap, findNodeOf, navigate, relayout, type CommandResult } from './commands'
+import { addChild, addSibling, branchElementIds, createMap, findNodeOf, layoutDrift, navigate, relayout, type CommandResult } from './commands'
 import { actionForKey } from './keyboard'
 import type { Point } from './layout'
 import { metaOf, readMaps } from './model'
@@ -175,10 +175,32 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
     return () => window.removeEventListener('keydown', onKeyDown, true)
   }, [api, apply, startEditing, sendToExcalidraw])
 
+  // Layout is derived state: it never enters the undo history (CaptureUpdateAction.NEVER). Whenever
+  // the scene changes for any reason (undo, redo, paste, a text edit), maps that drifted from their
+  // layout are put back. Not while a node is dragged or a text is being edited.
+  const lastHealKey = useRef<number | null>(null)
+  const heal = useCallback(
+    (elements: readonly ExcalidrawElement[]) => {
+      if (!api) return
+      const key = hashElementsVersion(elements)
+      if (key === lastHealKey.current) return
+      lastHealKey.current = key
+      let next: readonly ExcalidrawElement[] = elements
+      for (const mapId of readMaps(elements).keys()) {
+        if (layoutDrift(next, mapId)) next = relayout(next, mapId)
+      }
+      if (next !== elements) api.updateScene({ elements: next, captureUpdate: CaptureUpdateAction.NEVER })
+    },
+    [api],
+  )
+
   // When editing a node's text ends, its size may have changed: re-lay out that map.
   const editingNode = useRef<string | null>(null)
   const handleChange = useCallback(
-    (elements: readonly ExcalidrawElement[], appState: Pick<AppState, 'editingTextElement'>) => {
+    (
+      elements: readonly ExcalidrawElement[],
+      appState: Pick<AppState, 'editingTextElement'> & Partial<Pick<AppState, 'selectedElementsAreBeingDragged'>>,
+    ) => {
       const deleting = pendingDelete.current
       if (deleting && api) {
         const node = elements.find((e) => e.id === deleting.nodeId)
@@ -188,20 +210,24 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
             api.updateScene({
               elements: relayout(elements, deleting.mapId),
               appState: { selectedElementIds: { [deleting.parentId]: true } } as Partial<AppState>,
-              captureUpdate: CaptureUpdateAction.EVENTUALLY,
+              captureUpdate: CaptureUpdateAction.NEVER,
             })
           }
           return
         }
       }
-      const container = containerOf(appState.editingTextElement)
-      if (container) {
-        editingNode.current = container
+      if (appState.editingTextElement) {
+        const container = containerOf(appState.editingTextElement)
+        if (container) editingNode.current = container
         return
       }
       const finished = editingNode.current
       editingNode.current = null
-      if (!finished || !api) return
+      if (!finished) {
+        if (!appState.selectedElementsAreBeingDragged) heal(elements)
+        return
+      }
+      if (!api) return
       const node = elements.find((e) => e.id === finished)
       const meta = node ? metaOf(node) : null
       if (meta?.kind !== 'node') return
@@ -210,10 +236,10 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
         // Excalidraw clears the selection when text editing ends; keep the node selected so the
         // keyboard flow continues (Tab, type, Esc, Tab…).
         appState: { selectedElementIds: { [finished]: true } } as Partial<AppState>,
-        captureUpdate: CaptureUpdateAction.EVENTUALLY,
+        captureUpdate: CaptureUpdateAction.NEVER,
       })
     },
-    [api],
+    [api, heal],
   )
 
   const createMapAt = useCallback(

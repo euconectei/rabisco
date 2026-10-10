@@ -249,3 +249,44 @@ it('does not hold keys typed in a field while a new node is opening', () => {
   input.remove()
   vi.useRealTimers()
 })
+
+describe('self-healing layout', () => {
+  function drifted() {
+    let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+    const root = r.select!
+    r = addChild(r.elements, root, 'A')
+    const a = r.select!
+    r = addChild(r.elements, root, 'B')
+    const shifted = r.elements.map((e) => (e.id === a ? ({ ...e, y: e.y + 50, versionNonce: 99 } as ExcalidrawElement) : e))
+    return { elements: shifted, a }
+  }
+
+  it('re-lays out a map that drifted (undo, redo, paste), outside the undo history', () => {
+    const { elements, a } = drifted()
+    const { api } = fakeApi(elements)
+    const { result } = renderHook(() => useMindmap(api, labels))
+    act(() => result.current.handleChange(elements, { editingTextElement: null, selectedElementsAreBeingDragged: false } as never))
+    expect(api.updateScene).toHaveBeenCalledTimes(1)
+    const call = api.updateScene.mock.calls[0][0]
+    expect(call.captureUpdate).toBe('NEVER')
+    expect(call.elements.find((e: ExcalidrawElement) => e.id === a).y).toBe(elements.find((e) => e.id === a)!.y - 50)
+  })
+
+  it('leaves a map alone while a node is dragged or a text is edited', () => {
+    const { elements } = drifted()
+    const { api } = fakeApi(elements)
+    const { result } = renderHook(() => useMindmap(api, labels))
+    act(() => result.current.handleChange(elements, { editingTextElement: null, selectedElementsAreBeingDragged: true } as never))
+    act(() => result.current.handleChange(elements, { editingTextElement: { id: 't' }, selectedElementsAreBeingDragged: false } as never))
+    expect(api.updateScene).not.toHaveBeenCalled()
+  })
+
+  it('does not touch a map that is already laid out', () => {
+    let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+    r = addChild(r.elements, r.select!, 'A')
+    const { api } = fakeApi(r.elements)
+    const { result } = renderHook(() => useMindmap(api, labels))
+    act(() => result.current.handleChange(r.elements, { editingTextElement: null, selectedElementsAreBeingDragged: false } as never))
+    expect(api.updateScene).not.toHaveBeenCalled()
+  })
+})

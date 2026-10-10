@@ -187,6 +187,21 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
   })
 }
 
+/** Whether a map's nodes are away from where the layout puts them (undo, redo, paste, external edits). */
+export function layoutDrift(elements: readonly ExcalidrawElement[], mapId: string): boolean {
+  const map = readMaps(elements).get(mapId)
+  if (!map) return false
+  const rects = new Map(elements.filter((e) => map.byId.has(e.id) && !e.isDeleted).map((e) => [e.id, e]))
+  const root = rects.get(map.root.id)
+  if (!root) return false
+  const positions = layoutMap(map, new Map([...rects].map(([id, e]) => [id, nodeSize(e)])), { x: root.x, y: root.y })
+  for (const [id, position] of positions) {
+    const current = rects.get(id)
+    if (current && (Math.abs(current.x - position.x) > 0.5 || Math.abs(current.y - position.y) > 0.5)) return true
+  }
+  return false
+}
+
 /** The map node behind the current selection: exactly one node (its own text may be selected too). */
 export function findNodeOf(elements: readonly ExcalidrawElement[], selectedIds: readonly string[]): { mapId: string; nodeId: string } | null {
   if (selectedIds.length === 0) return null

@@ -2,7 +2,7 @@ import 'vitest-canvas-mock'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import { parseScene, serializeScene } from '../editor/scene'
 import { MINDMAP_PALETTE, ROOT_COLOR } from './colors'
-import { addChild, addSibling, branchElementIds, createMap, findNodeOf, navigate, relayout } from './commands'
+import { addChild, addSibling, branchElementIds, createMap, findNodeOf, layoutDrift, navigate, relayout } from './commands'
 import { metaOf, readMaps } from './model'
 
 type El = ExcalidrawElement & { text?: string; containerId?: string | null; strokeColor: string }
@@ -155,4 +155,12 @@ it('ignores copied links that still carry the original metadata (Ctrl+D, copy/pa
   const after = relayout(elements, mapId)
   expect(after.find((e) => e.id === 'copied-edge')).toBe(copy)
   expect(branchElementIds(elements, t.a)).not.toContain('copied-edge')
+})
+
+it('detects when a map drifted from its layout (e.g. after an undo)', () => {
+  const t = threeChildren()
+  const mapId = metaOf(rect(t.elements, t.root))!.mapId
+  expect(layoutDrift(t.elements, mapId)).toBe(false)
+  const moved = t.elements.map((e) => (e.id === t.b ? ({ ...e, y: e.y + 37 } as ExcalidrawElement) : e))
+  expect(layoutDrift(moved, mapId)).toBe(true)
 })
