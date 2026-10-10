@@ -2,9 +2,9 @@ import 'vitest-canvas-mock'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import { parseScene, serializeScene } from '../editor/scene'
 import { MINDMAP_PALETTE, ROOT_COLOR } from './colors'
-import { addChild, addSibling, branchElementIds, createMap, findNodeOf, isLinkOf, layoutDrift, navigate, relayout } from './commands'
+import { addChild, addSibling, branchElementIds, createMap, findNodeOf, freeChildPosition, isLinkOf, layoutDrift, navigate, relayout } from './commands'
 import { metaOf, readMaps } from './model'
-import { edge, knob, underline } from './testElements'
+import { edge, knob, node, underline } from './testElements'
 
 type El = ExcalidrawElement & { text?: string; containerId?: string | null; strokeColor: string }
 
@@ -255,4 +255,77 @@ it('right layout: navigate goes to the first child and back to the parent', () =
   expect(navigate(right, a1, 'ArrowLeft')).toBe(t.a)
   expect(navigate(right, t.a, 'ArrowLeft')).toBe(t.root)
   expect(navigate(right, t.root, 'ArrowLeft')).toBeNull()
+})
+
+describe('free layout', () => {
+  function freeMap() {
+    const r = createMap([], { x: 0, y: 0 }, 'Raiz')
+    return { elements: withLayout(r.elements, r.select!, 'free'), root: r.select! }
+  }
+
+  it('relayout keeps every node where it is and reports no drift', () => {
+    const m = freeMap()
+    const first = addChild(m.elements, m.root, 'A')
+    const a = first.select!
+    const second = addChild(first.elements, m.root, 'B')
+    const b = second.select!
+    const mapId = metaOf(rect(second.elements, m.root))!.mapId
+    const moved = second.elements.map((e) => (e.id === a ? ({ ...e, x: e.x + 111, y: e.y + 7 } as ExcalidrawElement) : e))
+    expect(layoutDrift(moved, mapId)).toBe(false)
+    const after = relayout(moved, mapId)
+    for (const id of [m.root, a, b]) {
+      expect([rect(after, id).x, rect(after, id).y]).toEqual([rect(moved, id).x, rect(moved, id).y])
+    }
+  })
+
+  it('a new child goes beside the parent, below the last sibling', () => {
+    const m = freeMap()
+    const first = addChild(m.elements, m.root, 'A')
+    const a = first.select!
+    const second = addChild(first.elements, m.root, 'B')
+    const b = second.select!
+    const root = rect(second.elements, m.root)
+    const aRect = rect(second.elements, a)
+    const bRect = rect(second.elements, b)
+    expect(aRect.x).toBeGreaterThan(root.x + root.width)
+    expect(bRect.x).toBeGreaterThan(root.x + root.width)
+    expect(bRect.y).toBeGreaterThan(aRect.y + aRect.height)
+  })
+
+  it('freeChildPosition descends past an obstacle so the child never overlaps', () => {
+    const root = { ...node('r', null), x: 0, y: 0, width: 180, height: 56 } as ExcalidrawElement
+    const a = { ...node('a', 'r', 0), x: 260, y: 0, width: 140, height: 44 } as ExcalidrawElement
+    const obstacle = { ...node('obs', 'a', 0), x: 260, y: 60, width: 140, height: 44 } as ExcalidrawElement
+    const elements = [root, a, obstacle]
+    const map = readMaps(elements).get('m1')!
+    const position = freeChildPosition(elements, map, 'r', null)
+    const child = { x: position.x, y: position.y, width: 140, height: 44 }
+    expect(child.x).toBeGreaterThan(root.x + root.width)
+    for (const e of elements) {
+      const overlap = child.x < e.x + e.width && e.x < child.x + child.width && child.y < e.y + e.height && e.y < child.y + child.height
+      expect(overlap).toBe(false)
+    }
+  })
+
+  it('freeChildPosition honors the branch side for maps that came from both sides', () => {
+    const root = { ...node('r', null), x: 0, y: 0, width: 180, height: 56 } as ExcalidrawElement
+    const map = readMaps([root]).get('m1')!
+    const right = freeChildPosition([root], map, 'r', 'right')
+    const left = freeChildPosition([root], map, 'r', 'left')
+    expect(right.x).toBeGreaterThan(root.x + root.width)
+    expect(left.x).toBeLessThan(root.x)
+  })
+
+  it('navigate in free goes to the first child and back to the parent', () => {
+    const m = freeMap()
+    const first = addChild(m.elements, m.root, 'A')
+    const a = first.select!
+    const second = addChild(first.elements, a, 'A1')
+    const a1 = second.select!
+    expect(navigate(second.elements, m.root, 'ArrowRight')).toBe(a)
+    expect(navigate(second.elements, a, 'ArrowRight')).toBe(a1)
+    expect(navigate(second.elements, a1, 'ArrowLeft')).toBe(a)
+    expect(navigate(second.elements, a, 'ArrowLeft')).toBe(m.root)
+    expect(navigate(second.elements, m.root, 'ArrowLeft')).toBeNull()
+  })
 })

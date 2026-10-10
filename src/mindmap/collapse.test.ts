@@ -167,6 +167,31 @@ describe('copies of a collapsed node (Ctrl+D, copy/paste keep customData with th
   })
 })
 
+describe('free layout', () => {
+  const withLayout = (els: readonly ExcalidrawElement[], rootId: string, layout: string): ExcalidrawElement[] =>
+    els.map((e) => (e.id === rootId ? ({ ...e, customData: { rabisco: { ...metaOf(e), layout } } } as ExcalidrawElement) : e))
+
+  it('collapse → expand restores each node to its exact position', () => {
+    let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+    const root = r.select!
+    r = addChild(withLayout(r.elements, root, 'free'), root, 'A')
+    const a = r.select!
+    r = addChild(r.elements, a, 'A1')
+    const a1 = r.select!
+    // Move the branch by hand: in free layout nothing snaps it back.
+    const moved = r.elements.map((e) =>
+      e.id === a ? ({ ...e, x: e.x + 40, y: e.y + 25 } as ExcalidrawElement) : e.id === a1 ? ({ ...e, x: e.x - 10, y: e.y + 60 } as ExcalidrawElement) : e,
+    )
+    const positions = new Map(live(moved).filter((e) => metaOf(e)?.kind === 'node').map((e) => [e.id, { x: e.x, y: e.y }]))
+    const collapsed = collapse(moved, a).elements
+    const expanded = expand(collapsed, a).elements
+    for (const [id, p] of positions) {
+      const e = live(expanded).find((e) => e.id === id)!
+      expect([e.x, e.y]).toEqual([p.x, p.y])
+    }
+  })
+})
+
 describe('lines-style branch decorations', () => {
   /** r(lines) → a → a1, with a line link to each child and an underline + knob on a1. */
   function linesMap() {

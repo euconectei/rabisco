@@ -5,12 +5,12 @@ import { useCallback, useEffect, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { addChild, addSibling, branchElementIds, createMap, findNodeOf, layoutDrift, navigate, relayout, type CommandResult } from './commands'
 import { expand, toggleCollapse } from './collapse'
-import { isFreeLayout, nodeAtPoint } from './dragBranch'
+import { nodeAtPoint } from './dragBranch'
 import { importOutline } from './importMap'
 import { actionForKey, type MindmapAction } from './keyboard'
 import type { Point } from './layout'
 import { parseMarkdownOutline } from './markdown'
-import { metaOf, readMaps } from './model'
+import { layoutOf, metaOf, readMaps } from './model'
 import { dropTarget, reparent } from './reparent'
 
 /** The slice of Excalidraw's imperative API the mind map needs (easy to fake in tests). */
@@ -223,14 +223,14 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
   const lastHealKey = useRef<number | null>(null)
   const heal = useCallback(
     (elements: readonly ExcalidrawElement[]) => {
-      // The spike's free layout keeps the dragged branch where the user left it; Tarefa 4 makes this
-      // per-map (skip only maps whose `layout` is 'free').
-      if (!api || isFreeLayout()) return
+      if (!api) return
       const key = hashElementsVersion(elements)
       if (key === lastHealKey.current) return
       lastHealKey.current = key
       let next: readonly ExcalidrawElement[] = elements
       for (const mapId of readMaps(elements).keys()) {
+        // Free maps keep the user's positions; heal only the automatic layouts.
+        if (layoutOf(elements, mapId) === 'free') continue
         if (layoutDrift(next, mapId)) next = relayout(next, mapId)
       }
       if (next !== elements) api.updateScene({ elements: next, captureUpdate: CaptureUpdateAction.NEVER })
@@ -257,12 +257,15 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
       if (!api) return
       const appState = api.getAppState() as AppState
       if (appState.editingTextElement) return
+      const elements = api.getSceneElements()
       const scene = viewportCoordsToSceneCoords({ clientX: event.clientX, clientY: event.clientY }, appState)
-      const nodeId = nodeAtPoint(api.getSceneElements(), scene)
+      const nodeId = nodeAtPoint(elements, scene)
       draggedNodeId.current = nodeId
       draggingBranch.current = false
-      if (!nodeId || !isFreeLayout()) return
-      const ids = branchElementIds(api.getSceneElements(), nodeId)
+      if (!nodeId) return
+      const meta = metaOf(elements.find((e) => e.id === nodeId)!)
+      if (meta?.kind !== 'node' || layoutOf(elements, meta.mapId) !== 'free') return
+      const ids = branchElementIds(elements, nodeId)
       draggingBranch.current = true
       flushSync(() => {
         api.updateScene({
@@ -285,21 +288,21 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
       if (wasDragging && !dragging.current && api && !appState.editingTextElement) {
         const branchDrag = draggingBranch.current
         draggingBranch.current = false
-        const dragged = findNodeOf(elements, appState.selectedElementIds ? selectedIds({ selectedElementIds: appState.selectedElementIds }) : [])
-        const target = dragged ? dropTarget(elements, dragged.nodeId) : null
-        if (dragged && target) {
-          const result = reparent(elements, dragged.nodeId, target)
+        const draggedId = draggedNodeId.current
+        const target = draggedId ? dropTarget(elements, draggedId) : null
+        if (draggedId && target) {
+          const result = reparent(elements, draggedId, target)
           api.updateScene({
             elements: result.elements,
-            appState: { selectedElementIds: { [dragged.nodeId]: true } } as Partial<AppState>,
+            appState: { selectedElementIds: { [draggedId]: true } } as Partial<AppState>,
             captureUpdate: CaptureUpdateAction.IMMEDIATELY,
           })
           return
         }
         // A free-layout branch drag: leave the branch where it was dropped and select only the node.
-        if (branchDrag && draggedNodeId.current) {
+        if (branchDrag && draggedId) {
           api.updateScene({
-            appState: { selectedElementIds: { [draggedNodeId.current]: true } } as Partial<AppState>,
+            appState: { selectedElementIds: { [draggedId]: true } } as Partial<AppState>,
             captureUpdate: CaptureUpdateAction.NEVER,
           })
         }

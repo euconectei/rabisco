@@ -8,7 +8,18 @@ import { useMindmap, type MindmapApi } from './useMindmap'
 const labels = { rootText: 'Ideia central', nodeText: 'Tópico' }
 
 function fakeApi(elements: ExcalidrawElement[], selected: string[] = [], editing: unknown = null) {
-  const state = { elements, appState: { selectedElementIds: Object.fromEntries(selected.map((id) => [id, true])), editingTextElement: editing } }
+  const state = {
+    elements,
+    appState: {
+      selectedElementIds: Object.fromEntries(selected.map((id) => [id, true])),
+      editingTextElement: editing,
+      scrollX: 0,
+      scrollY: 0,
+      zoom: { value: 1 },
+      offsetLeft: 0,
+      offsetTop: 0,
+    },
+  }
   const api: MindmapApi & { updateScene: ReturnType<typeof vi.fn> } = {
     getSceneElements: () => state.elements,
     getAppState: () => state.appState as never,
@@ -289,6 +300,24 @@ describe('self-healing layout', () => {
     act(() => result.current.handleChange(r.elements, { editingTextElement: null, selectedElementsAreBeingDragged: false } as never))
     expect(api.updateScene).not.toHaveBeenCalled()
   })
+
+  it('heals the automatic map but leaves the free map alone', () => {
+    let m1 = createMap([], { x: 0, y: 0 }, 'R1')
+    const root1 = m1.select!
+    m1 = addChild(m1.elements, root1, 'A1')
+    const a1 = m1.select!
+    let m2 = createMap(m1.elements, { x: 2000, y: 2000 }, 'R2')
+    const root2 = m2.select!
+    m2 = addChild(m2.elements, root2, 'A2')
+    const a2 = m2.select!
+    const free = m2.elements.map((e) => (e.id === root2 ? ({ ...e, customData: { rabisco: { ...metaOf(e), layout: 'free' } } } as ExcalidrawElement) : e))
+    const drifted = free.map((e) => (e.id === a1 || e.id === a2 ? ({ ...e, y: e.y + 50 } as ExcalidrawElement) : e))
+    const { api, state } = fakeApi(drifted)
+    const { result } = renderHook(() => useMindmap(api, labels))
+    act(() => result.current.handleChange(drifted, { editingTextElement: null, selectedElementsAreBeingDragged: false } as never))
+    expect(state.elements.find((e) => e.id === a1)!.y).toBe(drifted.find((e) => e.id === a1)!.y - 50)
+    expect(state.elements.find((e) => e.id === a2)!.y).toBe(drifted.find((e) => e.id === a2)!.y)
+  })
 })
 
 it('cancels pending editor work when the editor goes away', async () => {
@@ -358,6 +387,10 @@ describe('dragging a node', () => {
     act(() => result.current.handleChange(els, { ...appState, selectedElementsAreBeingDragged: true } as never))
     act(() => result.current.handleChange(els, { ...appState, selectedElementsAreBeingDragged: false } as never))
   }
+  const pointerDown = (result: { current: ReturnType<typeof useMindmap> }, els: readonly ExcalidrawElement[], id: string) => {
+    const node = els.find((e) => e.id === id)!
+    act(() => result.current.onDragPointerDown({ clientX: node.x + 5, clientY: node.y + 5 }))
+  }
 
   it('dropped on another node, moves the branch there in one undo step', () => {
     const t = twoBranches()
@@ -365,6 +398,7 @@ describe('dragging a node', () => {
     const dropped = moveTo(t.elements, t.c, target.x + 5, target.y + 2)
     const { api, state } = fakeApi(dropped, [t.c])
     const { result } = renderHook(() => useMindmap(api, labels))
+    pointerDown(result, dropped, t.c)
     dragEnd(result, dropped, t.c)
     expect(api.updateScene).toHaveBeenCalledTimes(1)
     expect(api.updateScene).toHaveBeenCalledWith(expect.objectContaining({ captureUpdate: 'IMMEDIATELY' }))
@@ -378,6 +412,7 @@ describe('dragging a node', () => {
     const dropped = moveTo(t.elements, t.c, 3000, 3000)
     const { api, state } = fakeApi(dropped, [t.c])
     const { result } = renderHook(() => useMindmap(api, labels))
+    pointerDown(result, dropped, t.c)
     dragEnd(result, dropped, t.c)
     const after = state.elements.find((e) => e.id === t.c)!
     expect([after.x, after.y]).toEqual([before.x, before.y])
@@ -445,7 +480,7 @@ it('a pasted script with # comments stays text (strict outline rule)', () => {
   expect(api.updateScene).not.toHaveBeenCalled()
 })
 
-describe('live branch drag (free layout spike)', () => {
+describe('live branch drag (free layout)', () => {
   function branchMap() {
     let r = createMap([], { x: 0, y: 0 }, 'Raiz')
     const root = r.select!
@@ -479,18 +514,14 @@ describe('live branch drag (free layout spike)', () => {
     return { api, state }
   }
 
+  const withLayout = (els: readonly ExcalidrawElement[], rootId: string, layout: string): ExcalidrawElement[] =>
+    els.map((e) => (e.id === rootId ? ({ ...e, customData: { rabisco: { ...metaOf(e), layout } } } as ExcalidrawElement) : e))
+
   const pointerAt = (e: ExcalidrawElement) => ({ clientX: e.x + 10, clientY: e.y + 10 })
 
-  afterEach(() => {
-    vi.unstubAllEnvs()
-    delete window.__rabiscoFreeLayout
-  })
-
   it('in free layout, pointerdown on a node selects the whole branch', () => {
-    vi.stubEnv('VITE_E2E', '1')
-    window.__rabiscoFreeLayout = true
     const t = branchMap()
-    const { api, state } = dragApi(t.elements)
+    const { api, state } = dragApi(withLayout(t.elements, t.root, 'free'))
     const { result } = renderHook(() => useMindmap(api, labels))
     const a = state.elements.find((e) => e.id === t.a)!
     act(() => result.current.onDragPointerDown(pointerAt(a)))
@@ -512,10 +543,8 @@ describe('live branch drag (free layout spike)', () => {
   })
 
   it('after the drag ends, the selection goes back to just the node', () => {
-    vi.stubEnv('VITE_E2E', '1')
-    window.__rabiscoFreeLayout = true
     const t = branchMap()
-    const { api, state } = dragApi(t.elements)
+    const { api, state } = dragApi(withLayout(t.elements, t.root, 'free'))
     const { result } = renderHook(() => useMindmap(api, labels))
     const a = state.elements.find((e) => e.id === t.a)!
     act(() => result.current.onDragPointerDown(pointerAt(a)))
