@@ -45,6 +45,7 @@ export const en: Messages = {
     untitled: 'Untitled',
     listLabel: 'Your drawings',
     openFromDrive: 'Open from Drive',
+    importMarkdown: 'Import markdown',
     loading: 'Loading your files…',
     loadFailed: 'Could not load your files.',
     retry: 'Try again',
@@ -100,6 +101,10 @@ export const en: Messages = {
     placeHint: 'Click where the map should start (Esc cancels)',
     rootText: 'Central idea',
     nodeText: 'Topic',
+    defaultRoot: 'Map',
+    copyAsText: 'Copy map as text',
+    downloadMarkdown: 'Download .md',
+    saveMarkdownToDrive: 'Save .md to Drive',
   },
   auth: {
     signIn: 'Sign in with Google',

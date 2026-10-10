@@ -43,6 +43,7 @@ export const ptBR = {
     untitled: 'Sem título',
     listLabel: 'Seus desenhos',
     openFromDrive: 'Abrir do Drive',
+    importMarkdown: 'Importar markdown',
     loading: 'Carregando seus arquivos…',
     loadFailed: 'Não foi possível carregar seus arquivos.',
     retry: 'Tentar de novo',
@@ -98,6 +99,10 @@ export const ptBR = {
     placeHint: 'Clique onde o mapa deve começar (Esc cancela)',
     rootText: 'Ideia central',
     nodeText: 'Tópico',
+    defaultRoot: 'Mapa',
+    copyAsText: 'Copiar mapa como texto',
+    downloadMarkdown: 'Baixar .md',
+    saveMarkdownToDrive: 'Salvar .md no Drive',
   },
   auth: {
     signIn: 'Entrar com Google',

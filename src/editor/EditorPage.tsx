@@ -7,6 +7,7 @@ import { useDrive } from '../drive/useDrive'
 import { format } from '../i18n/format'
 import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
 import { useI18n } from '../i18n/useI18n'
+import { exportableMap, mapToOutline, outlineToMarkdown } from '../mindmap/markdown'
 import { useMindmap, type MindmapApi } from '../mindmap/useMindmap'
 import { Dialog } from './Dialog'
 import { MindmapPlacement } from './MindmapPlacement'
@@ -28,6 +29,8 @@ function EditorScreen({ fileId }: { fileId: string }) {
   const [actionFailed, setActionFailed] = useState(false)
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null)
   const [placing, setPlacing] = useState(false)
+  // The map the export items act on (null: they are disabled).
+  const [exportMapId, setExportMapId] = useState<string | null>(null)
   const mindmapLabels = useMemo(() => ({ rootText: t.mindmap.rootText, nodeText: t.mindmap.nodeText }), [t])
   // Excalidraw types updateScene's appState as a generic Pick; MindmapApi only needs a partial update.
   const mindmap = useMindmap(api as unknown as MindmapApi | null, mindmapLabels)
@@ -37,6 +40,8 @@ function EditorScreen({ fileId }: { fileId: string }) {
     (elements, appState, files) => {
       onSceneChange(elements, appState, files)
       handleMindmapChange(elements, appState)
+      const selected = Object.keys(appState.selectedElementIds).filter((id) => appState.selectedElementIds[id])
+      setExportMapId(exportableMap(elements, selected))
     },
     [onSceneChange, handleMindmapChange],
   )
@@ -47,6 +52,37 @@ function EditorScreen({ fileId }: { fileId: string }) {
     mindmap.createMapAt(viewportCoordsToSceneCoords(client, api.getAppState()))
   }
   const baseName = file.meta?.name.replace(/\.excalidraw$/i, '') ?? ''
+  const fallbackRoot = baseName || t.mindmap.defaultRoot
+
+  function mapMarkdown(): string | null {
+    return api && exportMapId ? outlineToMarkdown(mapToOutline(api.getSceneElements(), exportMapId)) : null
+  }
+
+  function downloadMarkdown() {
+    const markdown = mapMarkdown()
+    if (!markdown) return
+    const url = URL.createObjectURL(new Blob([markdown], { type: 'text/markdown' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${baseName || t.mindmap.defaultRoot}.md`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function saveMarkdownToDrive() {
+    const markdown = mapMarkdown()
+    if (markdown) await drive.createSibling(`${baseName || t.mindmap.defaultRoot}.md`, markdown, 'text/markdown', fileId)
+  }
+
+  const pasteOutline = mindmap.pasteOutline
+  const onPaste = useCallback<NonNullable<Parameters<typeof Excalidraw>[0]['onPaste']>>(
+    (data) => {
+      if (!api || !data.text || data.elements?.length) return true
+      const center = viewportCoordsToSceneCoords({ clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 }, api.getAppState())
+      return !pasteOutline(data.text, center, fallbackRoot)
+    },
+    [api, pasteOutline, fallbackRoot],
+  )
 
   async function attempt(action: () => Promise<unknown>) {
     setActionFailed(false)
@@ -99,6 +135,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
         initialData={{ elements: scene.elements, appState: scene.appState, files: scene.files, scrollToContent: true }}
         excalidrawAPI={setApi}
         onChange={onChange}
+        onPaste={onPaste}
         renderTopRightUI={() => (
           <div className="editor-top-right">
             <button type="button" className="button-secondary mindmap-button" onClick={() => setPlacing(true)}>
@@ -113,6 +150,16 @@ function EditorScreen({ fileId }: { fileId: string }) {
           <MainMenu.Item onSelect={() => navigate('/app')}>{t.editor.backToFiles}</MainMenu.Item>
           <MainMenu.Item onSelect={() => navigate('/whats-new')}>
             {format(t.whatsNew.menuItem, { version: `v${__APP_VERSION__}` })}
+          </MainMenu.Item>
+          <MainMenu.Separator />
+          <MainMenu.Item disabled={!exportMapId} onSelect={() => void attempt(async () => navigator.clipboard.writeText(mapMarkdown() ?? ''))}>
+            {t.mindmap.copyAsText}
+          </MainMenu.Item>
+          <MainMenu.Item disabled={!exportMapId} onSelect={downloadMarkdown}>
+            {t.mindmap.downloadMarkdown}
+          </MainMenu.Item>
+          <MainMenu.Item disabled={!exportMapId} onSelect={() => void attempt(saveMarkdownToDrive)}>
+            {t.mindmap.saveMarkdownToDrive}
           </MainMenu.Item>
           <MainMenu.Separator />
           <MainMenu.DefaultItems.ToggleTheme />

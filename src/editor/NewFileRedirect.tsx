@@ -1,14 +1,28 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useDrive } from '../drive/useDrive'
 import { useI18n } from '../i18n/useI18n'
-import { emptySceneJson } from './scene'
+import { importOutline } from '../mindmap/importMap'
+import { parseMarkdownOutline } from '../mindmap/markdown'
+import { emptySceneJson, serializeScene } from './scene'
+
+interface ImportState {
+  importMarkdown?: { name: string; text: string }
+}
+
+/** A drawing holding the markdown as a mind map (a text with no list or heading becomes a lone root). */
+function importedSceneJson(name: string, text: string): string {
+  const outline = parseMarkdownOutline(text, name) ?? { text: name, children: [] }
+  const { elements } = importOutline([], outline, { x: 0, y: 0 })
+  return serializeScene({ elements, appState: {}, files: {} })
+}
 
 // /edit/new: creates the file in Drive first, then replaces the URL with /edit/<id>.
 export default function NewFileRedirect() {
   const drive = useDrive()
   const { t } = useI18n()
   const navigate = useNavigate()
+  const imported = (useLocation().state as ImportState | null)?.importMarkdown
   const [failed, setFailed] = useState(false)
   const started = useRef(false)
   const untitled = t.files.untitled
@@ -20,13 +34,15 @@ export default function NewFileRedirect() {
     void (async () => {
       try {
         const folderId = await drive.ensureFolder()
-        const created = await drive.createFile(untitled, emptySceneJson(), folderId)
+        const created = imported
+          ? await drive.createFile(imported.name, importedSceneJson(imported.name, imported.text), folderId)
+          : await drive.createFile(untitled, emptySceneJson(), folderId)
         navigate(`/edit/${created.id}`, { replace: true })
       } catch {
         setFailed(true)
       }
     })()
-  }, [drive, navigate, untitled])
+  }, [drive, navigate, untitled, imported])
 
   if (failed) {
     return (

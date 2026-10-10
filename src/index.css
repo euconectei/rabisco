@@ -50,6 +50,9 @@ html, body, #root { height: 100%; margin: 0; }
 .save-status-error { opacity: 1; color: #c92a2a; }
 .title-field { width: 12rem; padding: 0.35rem 0.6rem; border: 1px solid transparent; border-radius: 0.5rem; background: transparent; color: inherit; font: inherit; }
 .title-field:hover, .title-field:focus { border-color: #6965db88; outline: none; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+label.button-secondary { display: inline-block; }
+label.button-secondary:focus-within { outline: 3px solid var(--accent-text); outline-offset: 2px; }
 .files-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 1rem 0 1.5rem; }
 .files-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.25rem; }
 .files-list a { display: flex; justify-content: space-between; gap: 1rem; padding: 0.7rem 0.9rem; border-radius: 0.5rem; color: inherit; text-decoration: none; }

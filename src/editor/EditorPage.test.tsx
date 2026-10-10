@@ -15,7 +15,7 @@ import { renderWithProviders, signedInAuth } from '../test/renderWithProviders'
 import { serializeAsJSON } from '@excalidraw/excalidraw'
 import { deleteDraft, getDraft, putDraft } from './drafts'
 
-const mounts = vi.hoisted(() => ({ count: 0 }))
+const mounts = vi.hoisted(() => ({ count: 0, onPaste: null as null | ((data: { text?: string; elements?: unknown[] }, event: null) => boolean) }))
 
 vi.mock('@excalidraw/excalidraw', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@excalidraw/excalidraw')>()
@@ -25,9 +25,13 @@ vi.mock('@excalidraw/excalidraw', async (importOriginal) => {
     onChange?: (elements: unknown[], appState: object, files: object) => void
     renderTopRightUI?: () => ReactNode
     excalidrawAPI?: (api: unknown) => void
+    onPaste?: (data: { text?: string; elements?: unknown[] }, event: null) => boolean
     children?: ReactNode
   }
-  function Excalidraw({ langCode, initialData, onChange, renderTopRightUI, excalidrawAPI, children }: Props) {
+  function Excalidraw({ langCode, initialData, onChange, renderTopRightUI, excalidrawAPI, onPaste, children }: Props) {
+    useEffect(() => {
+      mounts.onPaste = onPaste ?? null
+    }, [onPaste])
     useEffect(() => {
       mounts.count += 1
       let current = (initialData?.elements ?? []) as unknown[]
@@ -63,8 +67,8 @@ vi.mock('@excalidraw/excalidraw', async (importOriginal) => {
     )
   }
   const MainMenu = ({ children }: { children: ReactNode }) => <nav>{children}</nav>
-  MainMenu.Item = ({ children, onSelect }: { children: ReactNode; onSelect: () => void }) => (
-    <button type="button" onClick={onSelect}>{children}</button>
+  MainMenu.Item = ({ children, onSelect, disabled }: { children: ReactNode; onSelect: () => void; disabled?: boolean }) => (
+    <button type="button" onClick={onSelect} disabled={disabled}>{children}</button>
   )
   MainMenu.Separator = () => <hr />
   MainMenu.DefaultItems = { ToggleTheme: () => null, ChangeCanvasBackground: () => null }
@@ -107,6 +111,7 @@ vi.setConfig({ testTimeout: 30_000 })
 
 beforeEach(async () => {
   mounts.count = 0
+  Object.defineProperty(navigator, 'clipboard', { value: { writeText: vi.fn(async () => {}) }, configurable: true })
   for (const id of ['f1', 'file-1', 'file-2']) await deleteDraft(id)
 })
 afterEach(() => vi.useRealTimers())
@@ -241,6 +246,54 @@ describe('mind map', () => {
     const saved = JSON.parse(drive.client.save.mock.calls.at(-1)![1]) as { elements: Array<{ customData?: { rabisco?: { kind: string } }; text?: string }> }
     expect(saved.elements.some((e) => e.customData?.rabisco?.kind === 'node')).toBe(true)
     expect(saved.elements.some((e) => e.text === 'Ideia central')).toBe(true)
+  })
+
+  async function placeMap() {
+    await userEvent.click(screen.getByRole('button', { name: 'Mapa mental' }))
+    fireEvent.pointerDown(screen.getByTestId('mindmap-placement'), { clientX: 300, clientY: 200 })
+  }
+
+  it('pasting a list of 2+ lines creates a map and stops the normal paste', async () => {
+    open()
+    await canvas()
+    // Until the editor hands over its API, a paste is left to Excalidraw (and changes nothing).
+    await waitFor(() => {
+      let handled: boolean | undefined
+      act(() => {
+        handled = mounts.onPaste!({ text: '- Viagem\n  - Roteiro\n  - Malas' }, null)
+      })
+      expect(handled).toBe(false)
+    })
+    await userEvent.click(screen.getByRole('button', { name: 'Copiar mapa como texto' }))
+    await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledWith('- Viagem\n  - Roteiro\n  - Malas\n'))
+  })
+
+  it('pasting a phrase, a URL or a one-line item keeps Excalidraw\'s normal paste', async () => {
+    open()
+    await canvas()
+    for (const text of ['uma frase qualquer', 'https://example.com', '- só um item']) {
+      expect(mounts.onPaste!({ text }, null)).toBe(true)
+    }
+    expect(mounts.onPaste!({ text: '- a\n- b', elements: [{}] }, null)).toBe(true)
+    expect(screen.getByRole('button', { name: 'Copiar mapa como texto' })).toBeDisabled()
+  })
+
+  it('exports the map: copy as text, download .md and save .md next to the drawing on Drive', async () => {
+    const drive = open()
+    await canvas()
+    expect(screen.getByRole('button', { name: 'Baixar .md' })).toBeDisabled()
+    await placeMap()
+    await userEvent.click(screen.getByRole('button', { name: 'Copiar mapa como texto' }))
+    await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledWith('- Ideia central\n'))
+    const createObjectURL = vi.fn(() => 'blob:md')
+    Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() })
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    await userEvent.click(screen.getByRole('button', { name: 'Baixar .md' }))
+    expect(click).toHaveBeenCalled()
+    expect((click.mock.instances[0] as unknown as HTMLAnchorElement).download).toBe('Mapa.md')
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar .md no Drive' }))
+    await waitFor(() => expect(drive.client.createSibling).toHaveBeenCalledWith('Mapa.md', '- Ideia central\n', 'text/markdown', 'f1'))
+    click.mockRestore()
   })
 
   it('Esc cancels placing a map', async () => {
@@ -487,6 +540,17 @@ describe('new drawings', () => {
   it('names new files in the current language', async () => {
     const drive = open(memoryDrive(), { route: '/edit/new', lang: 'en' })
     await waitFor(() => expect(drive.client.createFile).toHaveBeenCalledWith('Untitled', expect.any(String), 'folder-1'))
+  })
+
+  it('imports a markdown file from the files page as a new drawing with a mind map', async () => {
+    const drive = open(memoryDrive(), { route: '/app' })
+    const input = await screen.findByLabelText('Importar markdown')
+    await userEvent.upload(input, new File(['# Plano\n- passo um\n- passo dois\n'], 'Notas da semana.md', { type: 'text/markdown' }))
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/edit/file-1'))
+    expect(drive.client.createFile).toHaveBeenCalledWith('Notas da semana', expect.any(String), 'folder-1')
+    const saved = JSON.parse(drive.client.createFile.mock.calls[0][1]) as { elements: Array<{ text?: string; customData?: { rabisco?: { kind: string } } }> }
+    expect(saved.elements.filter((e) => e.customData?.rabisco?.kind === 'node')).toHaveLength(3)
+    expect(saved.elements.some((e) => e.text === 'passo dois')).toBe(true)
   })
 
   it('explains when the file cannot be created', async () => {

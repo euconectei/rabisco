@@ -4,8 +4,10 @@ import type { AppState } from '@excalidraw/excalidraw/types'
 import { useCallback, useEffect, useRef } from 'react'
 import { addChild, addSibling, branchElementIds, createMap, findNodeOf, layoutDrift, navigate, relayout, type CommandResult } from './commands'
 import { toggleCollapse } from './collapse'
+import { importOutline } from './importMap'
 import { actionForKey } from './keyboard'
 import type { Point } from './layout'
+import { parseMarkdownOutline } from './markdown'
 import { metaOf, readMaps } from './model'
 import { dropTarget, reparent } from './reparent'
 
@@ -289,5 +291,18 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
     [api, apply],
   )
 
-  return { handleChange, createMapAt, startEditing }
+  /** Pasted lists and headings (2+ lines) become a map at `at`. Returns whether the paste was taken. */
+  const pasteOutline = useCallback(
+    (text: string, at: Point, fallbackRoot: string): boolean => {
+      if (!api || api.getAppState().editingTextElement) return false
+      if (text.split(/\r?\n/).filter((line) => line.trim()).length < 2) return false
+      const outline = parseMarkdownOutline(text, fallbackRoot)
+      if (!outline) return false
+      apply(importOutline(api.getSceneElements(), outline, at), false)
+      return true
+    },
+    [api, apply],
+  )
+
+  return { handleChange, createMapAt, startEditing, pasteOutline }
 }
