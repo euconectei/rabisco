@@ -10,7 +10,8 @@ import { exportFileName, renderImage, type ExportOptions, type ExportScale } fro
 
 const SCALES: ExportScale[] = [1, 2, 3]
 
-type DriveState = { kind: 'idle' } | { kind: 'saving' } | { kind: 'saved'; name: string } | { kind: 'failed' }
+// renderFailed: the image itself could not be made (e.g. too large a canvas at 3×); failed: Drive refused it.
+type Status = { kind: 'idle' } | { kind: 'saving' } | { kind: 'saved'; name: string } | { kind: 'failed' } | { kind: 'renderFailed' }
 
 export function ExportImageDialog({ api, baseName, fileId, onClose }: { api: ExcalidrawImperativeAPI; baseName: string; fileId: string; onClose: () => void }) {
   const { t } = useI18n()
@@ -22,7 +23,7 @@ export function ExportImageDialog({ api, baseName, fileId, onClose }: { api: Exc
     const saved = loadExportOptions()
     return hasSelection ? saved : { ...saved, scope: 'scene' }
   })
-  const [driveState, setDriveState] = useState<DriveState>({ kind: 'idle' })
+  const [status, setStatus] = useState<Status>({ kind: 'idle' })
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -46,19 +47,30 @@ export function ExportImageDialog({ api, baseName, fileId, onClose }: { api: Exc
 
   const fileName = exportFileName(baseName, options.format, t.files.untitled)
 
+  async function renderOrReport() {
+    try {
+      return await render()
+    } catch {
+      setStatus({ kind: 'renderFailed' })
+      return null
+    }
+  }
+
   async function download() {
-    const { blob } = await render()
-    downloadBlob(blob, fileName)
+    setStatus({ kind: 'idle' })
+    const image = await renderOrReport()
+    if (image) downloadBlob(image.blob, fileName)
   }
 
   async function saveToDrive() {
-    setDriveState({ kind: 'saving' })
+    setStatus({ kind: 'saving' })
+    const image = await renderOrReport()
+    if (!image) return
     try {
-      const { blob, mimeType } = await render()
-      const created = await drive.createSibling(fileName, blob, mimeType, fileId)
-      setDriveState({ kind: 'saved', name: created.name })
+      const created = await drive.createSibling(fileName, image.blob, image.mimeType, fileId)
+      setStatus({ kind: 'saved', name: created.name })
     } catch {
-      setDriveState({ kind: 'failed' })
+      setStatus({ kind: 'failed' })
     }
   }
 
@@ -114,14 +126,15 @@ export function ExportImageDialog({ api, baseName, fileId, onClose }: { api: Exc
         </label>
         <p className="export-hint">{labels.embedSceneHint}</p>
       </div>
-      {driveState.kind === 'saved' && <p role="status">{formatMessage(labels.saved, { name: driveState.name })}</p>}
-      {driveState.kind === 'failed' && <p role="alert">{labels.failed}</p>}
+      {status.kind === 'saved' && <p role="status">{formatMessage(labels.saved, { name: status.name })}</p>}
+      {status.kind === 'failed' && <p role="alert">{labels.failed}</p>}
+      {status.kind === 'renderFailed' && <p role="alert">{labels.renderFailed}</p>}
       <div className="dialog-actions">
         <button type="button" className="button" onClick={() => void download()}>
           {labels.download}
         </button>
-        <button type="button" className="button-secondary" disabled={driveState.kind === 'saving'} onClick={() => void saveToDrive()}>
-          {driveState.kind === 'saving' ? labels.saving : labels.saveToDrive}
+        <button type="button" className="button-secondary" disabled={status.kind === 'saving'} onClick={() => void saveToDrive()}>
+          {status.kind === 'saving' ? labels.saving : labels.saveToDrive}
         </button>
         <button type="button" className="button-secondary" onClick={onClose}>
           {labels.close}

@@ -112,6 +112,7 @@ export const ptBR = {
     saving: 'Salvando no Drive…',
     saved: 'Salvo no Drive como {name}.',
     failed: 'Não deu certo. Verifique sua conexão e tente de novo.',
+    renderFailed: 'Não foi possível gerar a imagem. Tente um tamanho menor.',
     close: 'Fechar',
   },
   mindmap: {

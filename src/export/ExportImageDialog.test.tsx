@@ -133,3 +133,15 @@ it('closes with the button and with Escape', async () => {
   await userEvent.keyboard('{Escape}')
   expect(onClose).toHaveBeenCalledTimes(2)
 })
+
+it('says the image could not be made when rendering fails, for both download and Drive', async () => {
+  const { drive } = open()
+  const tooBig = new Error('Canvas exceeds max size')
+  vi.mocked(renderImage).mockRejectedValueOnce(tooBig).mockRejectedValueOnce(tooBig)
+  await userEvent.click(screen.getByRole('button', { name: 'Baixar' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível gerar a imagem. Tente um tamanho menor.')
+  expect(downloadBlob).not.toHaveBeenCalled()
+  await userEvent.click(screen.getByRole('button', { name: 'Salvar no Drive' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível gerar a imagem. Tente um tamanho menor.')
+  expect(drive.client.createSibling).not.toHaveBeenCalled()
+})

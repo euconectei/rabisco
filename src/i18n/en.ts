@@ -114,6 +114,7 @@ export const en: Messages = {
     saving: 'Saving to Drive…',
     saved: 'Saved to Drive as {name}.',
     failed: "That didn't work. Check your connection and try again.",
+    renderFailed: "Couldn't make the image. Try a smaller size.",
     close: 'Close',
   },
   mindmap: {
