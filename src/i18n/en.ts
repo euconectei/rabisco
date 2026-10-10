@@ -156,13 +156,22 @@ export const en: Messages = {
     linkUnseen: 'News (something new)',
     menuItem: 'News ({version})',
     sections: {
+      imageExport: {
+        title: 'Export as an image',
+        items: [
+          'In the editor menu, "Export image…" makes a PNG or SVG of the whole drawing or just the selection.',
+          'Pick the size (1×, 2× or 3×), with or without a background, in the light or dark theme.',
+          'Download the image or save it to Drive, in the same folder as the drawing. If the name is taken, Rabisco numbers it: "Map (2).png".',
+          'Tick "Include editable data" to reopen the image later: in "My files", "Import" turns the PNG or SVG back into an editable drawing.',
+        ],
+      },
       mindmapExtras: {
         title: 'More ways to work with mind maps',
         items: [
           'Collapse a branch with Ctrl + . (Cmd + . on a Mac) and expand it the same way: the "+N" badge shows how many topics are tucked away.',
           'Drag a topic onto another to move it there, with everything below it.',
           'Paste a markdown list or headings on the canvas and it becomes a map. From the menu, copy the map as text, download the .md or save the .md to Drive.',
-          'In "My files", "Import markdown" creates a new drawing from a .md file.',
+          'In "My files", "Import" creates a new drawing from a .md file.',
           'On a tablet, tap a topic: a bar with + child, + sibling, collapse and delete shows up above it.',
         ],
       },

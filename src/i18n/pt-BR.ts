@@ -154,13 +154,22 @@ export const ptBR = {
     linkUnseen: 'Novidades (há novidades)',
     menuItem: 'Novidades ({version})',
     sections: {
+      imageExport: {
+        title: 'Exportar como imagem',
+        items: [
+          'No menu do editor, "Exportar imagem…" gera um PNG ou SVG do desenho inteiro ou só do que estiver selecionado.',
+          'Escolha o tamanho (1×, 2× ou 3×), com ou sem fundo, e o tema claro ou escuro.',
+          'Baixe a imagem ou salve no Drive, na mesma pasta do desenho. Se o nome já existir, o Rabisco numera: "Mapa (2).png".',
+          'Marque "Incluir dados editáveis" para poder reabrir a imagem depois: em "Meus arquivos", "Importar" transforma o PNG ou SVG num desenho editável de novo.',
+        ],
+      },
       mindmapExtras: {
         title: 'Mais jeitos de mexer no mapa mental',
         items: [
           'Recolha um ramo com Ctrl + . (Cmd + . no Mac) e expanda do mesmo jeito: o selo "+N" mostra quantos tópicos estão guardados.',
           'Arraste um tópico para cima de outro para mudá-lo de lugar, com tudo o que está abaixo dele.',
           'Cole uma lista ou títulos em markdown no quadro e ela vira um mapa. No menu, copie o mapa como texto, baixe o .md ou salve o .md no Drive.',
-          'Em "Meus arquivos", "Importar markdown" cria um desenho novo a partir de um arquivo .md.',
+          'Em "Meus arquivos", "Importar" cria um desenho novo a partir de um arquivo .md.',
           'No tablet, toque num tópico: uma barra com + filho, + irmão, recolher e apagar aparece acima dele.',
         ],
       },

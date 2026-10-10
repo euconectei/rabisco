@@ -11,19 +11,11 @@ export const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   embedScene: false,
 }
 
-const VALID: { [K in keyof ExportOptions]: readonly ExportOptions[K][] } = {
-  format: ['png', 'svg'],
-  scope: ['scene', 'selection'],
-  background: [true, false],
-  darkMode: [true, false],
-  scale: [1, 2, 3],
-  embedScene: [true, false],
+function oneOf<T>(value: unknown, allowed: readonly T[], fallback: T): T {
+  return allowed.includes(value as T) ? (value as T) : fallback
 }
 
-function pick<K extends keyof ExportOptions>(saved: Record<string, unknown>, key: K): ExportOptions[K] {
-  const value = saved[key] as ExportOptions[K]
-  return VALID[key].includes(value) ? value : DEFAULT_EXPORT_OPTIONS[key]
-}
+const BOOLEANS = [true, false] as const
 
 /** The options used last time in this browser; anything missing or invalid falls back to the default. */
 export function loadExportOptions(): ExportOptions {
@@ -34,13 +26,14 @@ export function loadExportOptions(): ExportOptions {
   } catch {
     // Unreadable or unavailable storage: start from the defaults.
   }
+  const d = DEFAULT_EXPORT_OPTIONS
   return {
-    format: pick(saved, 'format'),
-    scope: pick(saved, 'scope'),
-    background: pick(saved, 'background'),
-    darkMode: pick(saved, 'darkMode'),
-    scale: pick(saved, 'scale'),
-    embedScene: pick(saved, 'embedScene'),
+    format: oneOf(saved.format, ['png', 'svg'] as const, d.format),
+    scope: oneOf(saved.scope, ['scene', 'selection'] as const, d.scope),
+    background: oneOf(saved.background, BOOLEANS, d.background),
+    darkMode: oneOf(saved.darkMode, BOOLEANS, d.darkMode),
+    scale: oneOf(saved.scale, [1, 2, 3] as const, d.scale),
+    embedScene: oneOf(saved.embedScene, BOOLEANS, d.embedScene),
   }
 }
 
