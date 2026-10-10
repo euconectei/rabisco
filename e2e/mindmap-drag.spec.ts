@@ -17,7 +17,8 @@ interface LiveElement {
   text?: string
   containerId?: string | null
   isDeleted?: boolean
-  customData?: { rabisco?: { kind: string; parentId?: string | null; order?: number } }
+  points?: [number, number][]
+  customData?: { rabisco?: { kind: string; parentId?: string | null; order?: number; nodeId?: string; childId?: string } }
 }
 
 interface LiveScene {
@@ -63,6 +64,18 @@ async function setLayout(page: Page, layout: string) {
     ;(window as unknown as { __rabiscoSetLayout: (layout: string) => void }).__rabiscoSetLayout(value)
   }, layout)
 }
+
+/** Writes the style to every map's root and re-lays out each map via the E2E-only hook. */
+async function setStyle(page: Page, style: string) {
+  await page.evaluate((value) => {
+    ;(window as unknown as { __rabiscoSetStyle: (style: string) => void }).__rabiscoSetStyle(value)
+  }, style)
+}
+
+const underlineOf = (els: LiveElement[], nodeId: string) =>
+  els.find((e) => e.customData?.rabisco?.kind === 'underline' && e.customData.rabisco.nodeId === nodeId)
+const edgeOf = (els: LiveElement[], childId: string) =>
+  els.find((e) => e.customData?.rabisco?.kind === 'edge' && e.customData.rabisco.childId === childId)
 
 const nodes = (els: LiveElement[]) => els.filter((e) => e.customData?.rabisco?.kind === 'node')
 const textOf = (els: LiveElement[], id: string) => els.find((e) => e.containerId === id)?.text
@@ -180,4 +193,99 @@ test('in free layout, a click without dragging selects just the node, so Tab sti
   await typeNode(page, 'Outro')
   const after = await scene(page)
   expect(byText(after.elements, 'Outro')).toBeDefined()
+})
+
+test('in lines style, dragging a branch live moves its underlines and re-anchors the parent link', async ({ page }) => {
+  await openNewDrawing(page)
+  await createMap(page)
+  await typeNode(page, 'Raiz')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Filho')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Neto')
+  await page.keyboard.press('Escape')
+
+  await setLayout(page, 'free')
+  await setStyle(page, 'lines')
+
+  const before = await scene(page)
+  const filho = byText(before.elements, 'Filho')!
+  const neto = byText(before.elements, 'Neto')!
+  const filhoUnderline = underlineOf(before.elements, filho.id)!
+  const netoUnderline = underlineOf(before.elements, neto.id)!
+  const parentLink = edgeOf(before.elements, filho.id)!
+  const from = centerOf(filho)
+
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  await page.mouse.move(from.x + 160, from.y + 90, { steps: 12 })
+
+  // Mid-gesture, before mouse.up, the underlines moved with their nodes and the parent link still
+  // ends at the start of the dragged node's underline.
+  const mid = await scene(page)
+  const midFilho = byId(mid.elements, filho.id)!
+  const midNeto = byId(mid.elements, neto.id)!
+  const midFilhoUnderline = byId(mid.elements, filhoUnderline.id)!
+  const midNetoUnderline = byId(mid.elements, netoUnderline.id)!
+  const midParentLink = byId(mid.elements, parentLink.id)!
+
+  expect(midFilhoUnderline.x - filhoUnderline.x).toBeCloseTo(midFilho.x - filho.x, 0)
+  expect(midFilhoUnderline.y - filhoUnderline.y).toBeCloseTo(midFilho.y - filho.y, 0)
+  expect(midNetoUnderline.x - netoUnderline.x).toBeCloseTo(midNeto.x - neto.x, 0)
+  expect(midNetoUnderline.y - netoUnderline.y).toBeCloseTo(midNeto.y - neto.y, 0)
+
+  const last = midParentLink.points![midParentLink.points!.length - 1]
+  const endX = midParentLink.x + last[0]
+  const endY = midParentLink.y + last[1]
+  expect(Math.abs(endX - midFilhoUnderline.x)).toBeLessThanOrEqual(2)
+  expect(Math.abs(endY - midFilhoUnderline.y)).toBeLessThanOrEqual(2)
+
+  await page.mouse.up()
+
+  // A single undo puts the whole branch (and its decorations) back where it was.
+  await page.keyboard.press(undoKey)
+  await expect
+    .poll(async () => {
+      const els = (await scene(page)).elements
+      const f = byId(els, filho.id)!
+      const n = byId(els, neto.id)!
+      const fu = byId(els, filhoUnderline.id)
+      return (
+        fu != null &&
+        Math.abs(f.x - filho.x) < 1 &&
+        Math.abs(f.y - filho.y) < 1 &&
+        Math.abs(n.x - neto.x) < 1 &&
+        Math.abs(n.y - neto.y) < 1 &&
+        Math.abs(fu.x - filhoUnderline.x) < 1
+      )
+    })
+    .toBe(true)
+})
+
+test('lines style, to the right: screenshot for visual review', async ({ page }) => {
+  await openNewDrawing(page)
+  await createMap(page)
+  await typeNode(page, 'Raiz')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'A')
+  await page.keyboard.press('Enter')
+  await typeNode(page, 'B')
+  await page.keyboard.press('Enter')
+  await typeNode(page, 'C')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'A1')
+  await page.keyboard.press('Enter')
+  await typeNode(page, 'A2')
+  await page.keyboard.press('Escape')
+
+  await setStyle(page, 'lines')
+  await setLayout(page, 'right')
+
+  await expect
+    .poll(async () => (await scene(page)).elements.filter((e) => e.customData?.rabisco?.kind === 'underline').length)
+    .toBe(5)
+  // Fit the whole map on screen before capturing it.
+  await page.keyboard.press('Shift+1')
+  await page.waitForTimeout(500)
+  await page.screenshot({ path: 'test-results/lines-style.png' })
 })

@@ -10,5 +10,7 @@ declare global {
     __rabiscoScene?: () => { elements: readonly unknown[]; selection: string[] }
     /** Test-only layout setter exposed by the E2E build (never present in production). */
     __rabiscoSetLayout?: (layout: 'both' | 'right' | 'free') => void
+    /** Test-only style setter exposed by the E2E build (never present in production). */
+    __rabiscoSetStyle?: (style: 'boxes' | 'lines') => void
   }
 }
