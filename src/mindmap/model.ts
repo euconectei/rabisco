@@ -22,6 +22,11 @@ export interface NodeMeta {
   hidden?: ExcalidrawElement[]
   /** The id of this node's own "+N" badge: copies of a badge (Ctrl+D, paste) are plain texts. */
   badgeId?: string
+  /**
+   * The box colors Rabisco itself last gave this node (boxes style, while automatic). A node whose
+   * colors differ from these was painted by hand (see manualColor.ts). Missing in older files.
+   */
+  appliedColor?: { strokeColor: string; backgroundColor: string }
   /** Only with colorAuto: false, in lines style: the box colors to restore back in boxes style. */
   boxColors?: { strokeColor: string; backgroundColor: string }
   /** Root only; missing means the map predates the layouts revision (both). */

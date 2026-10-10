@@ -585,3 +585,19 @@ describe('live branch drag (free layout)', () => {
     expect(state.appState.selectedElementIds).toEqual({ [t.a]: true })
   })
 })
+
+it('a node painted by hand turns manual right away, outside the undo history, and keeps its color', () => {
+  let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+  const root = r.select!
+  r = addChild(r.elements, root, 'A')
+  const a = r.select!
+  const { api, state } = fakeApi(r.elements)
+  const { result } = renderHook(() => useMindmap(api, labels))
+  const painted = state.elements.map((e) => (e.id === a ? ({ ...e, strokeColor: '#ff00ff' } as ExcalidrawElement) : e))
+  act(() => result.current.handleChange(painted, { editingTextElement: null } as never))
+  expect(api.updateScene).toHaveBeenCalledTimes(1)
+  expect(api.updateScene.mock.calls[0][0].captureUpdate).toBe('NEVER')
+  const node = state.elements.find((e) => e.id === a)!
+  expect((metaOf(node) as { colorAuto: boolean }).colorAuto).toBe(false)
+  expect(node.strokeColor).toBe('#ff00ff')
+})

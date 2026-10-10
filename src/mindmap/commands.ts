@@ -277,13 +277,18 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
             boundElements: (e.boundElements ?? []).filter((b) => b.type !== 'arrow'),
             customData: { ...e.customData, rabisco: { ...meta, side } },
           })
-        : update(e, {
-            x: position.x,
-            y: position.y,
-            strokeColor: color,
-            backgroundColor: meta.colorAuto ? e.backgroundColor : (meta.boxColors?.backgroundColor ?? e.backgroundColor),
-            customData: { ...e.customData, rabisco: { ...meta, side } },
-          })
+        : (() => {
+            const backgroundColor = meta.colorAuto ? e.backgroundColor : (meta.boxColors?.backgroundColor ?? e.backgroundColor)
+            // Remember what an automatic node was given, so a later hand-picked color can be told apart.
+            const appliedColor = meta.colorAuto ? { strokeColor: color, backgroundColor } : meta.appliedColor
+            return update(e, {
+              x: position.x,
+              y: position.y,
+              strokeColor: color,
+              backgroundColor,
+              customData: { ...e.customData, rabisco: { ...meta, side, appliedColor } },
+            })
+          })()
     moved.set(e.id, { dx: position.x - e.x, dy: position.y - e.y, rect: updated })
     return updated
   })

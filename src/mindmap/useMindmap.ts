@@ -9,6 +9,7 @@ import { nodeAtPoint } from './dragBranch'
 import { importOutline } from './importMap'
 import { actionForKey, type MindmapAction } from './keyboard'
 import type { Point } from './layout'
+import { markManualColors } from './manualColor'
 import { parseMarkdownOutline } from './markdown'
 import { layoutOf, metaOf, readMaps } from './model'
 import { dropTarget, reparent } from './reparent'
@@ -225,6 +226,7 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
   // Layout is derived state: it never enters the undo history (CaptureUpdateAction.NEVER). Whenever
   // the scene changes for any reason (undo, redo, paste, a text edit), maps that drifted from their
   // layout are put back. Not while a node is dragged or a text is being edited.
+  // Hand-picked node colors are detected here too (spec 5.5).
   const lastHealKey = useRef<number | null>(null)
   const heal = useCallback(
     (elements: readonly ExcalidrawElement[]) => {
@@ -232,7 +234,8 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
       const key = hashElementsVersion(elements)
       if (key === lastHealKey.current) return
       lastHealKey.current = key
-      let next: readonly ExcalidrawElement[] = elements
+      // A node painted by hand turns manual first, so the relayout below keeps its color.
+      let next: readonly ExcalidrawElement[] = markManualColors(elements)
       for (const mapId of readMaps(elements).keys()) {
         // Free maps keep the user's positions; heal only the automatic layouts.
         if (layoutOf(elements, mapId) === 'free') continue
