@@ -105,6 +105,14 @@ export const en: Messages = {
     copyAsText: 'Copy map as text',
     downloadMarkdown: 'Download .md',
     saveMarkdownToDrive: 'Save .md to Drive',
+    touch: {
+      toolbar: 'Mind map actions',
+      addChild: '+ child',
+      addSibling: '+ sibling',
+      collapse: 'Collapse',
+      expand: 'Expand',
+      delete: 'Delete',
+    },
   },
   auth: {
     signIn: 'Sign in with Google',

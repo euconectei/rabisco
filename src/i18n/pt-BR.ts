@@ -103,6 +103,14 @@ export const ptBR = {
     copyAsText: 'Copiar mapa como texto',
     downloadMarkdown: 'Baixar .md',
     saveMarkdownToDrive: 'Salvar .md no Drive',
+    touch: {
+      toolbar: 'Ações do mapa mental',
+      addChild: '+ filho',
+      addSibling: '+ irmão',
+      collapse: 'Recolher',
+      expand: 'Expandir',
+      delete: 'Apagar',
+    },
   },
   auth: {
     signIn: 'Entrar com Google',

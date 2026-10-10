@@ -1,13 +1,14 @@
-import { Excalidraw, Footer, MainMenu, viewportCoordsToSceneCoords } from '@excalidraw/excalidraw'
+import { Excalidraw, Footer, MainMenu, sceneCoordsToViewportCoords, viewportCoordsToSceneCoords } from '@excalidraw/excalidraw'
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import '@excalidraw/excalidraw/index.css'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useDrive } from '../drive/useDrive'
 import { format } from '../i18n/format'
 import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
 import { useI18n } from '../i18n/useI18n'
 import { exportableMap, mapToOutline, outlineToMarkdown } from '../mindmap/markdown'
+import { toolbarPosition, touchTarget, TouchToolbar, useSettled, type TouchTarget } from '../mindmap/TouchToolbar'
 import { useMindmap, type MindmapApi } from '../mindmap/useMindmap'
 import { Dialog } from './Dialog'
 import { MindmapPlacement } from './MindmapPlacement'
@@ -31,6 +32,17 @@ function EditorScreen({ fileId }: { fileId: string }) {
   const [placing, setPlacing] = useState(false)
   // The map the export items act on (null: they are disabled).
   const [exportMapId, setExportMapId] = useState<string | null>(null)
+  // Touch toolbar: the last pointer kind, the node it acts on, and the view (it hides while scrolling or zooming).
+  const [pointerType, setPointerType] = useState('mouse')
+  const [touch, setTouch] = useState<TouchTarget | null>(null)
+  const [viewKey, setViewKey] = useState('')
+  const [theme, setTheme] = useState('light')
+  const viewSettled = useSettled(viewKey, 200)
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => setPointerType(event.pointerType || 'mouse')
+    window.addEventListener('pointerdown', onPointerDown, true)
+    return () => window.removeEventListener('pointerdown', onPointerDown, true)
+  }, [])
   const mindmapLabels = useMemo(() => ({ rootText: t.mindmap.rootText, nodeText: t.mindmap.nodeText }), [t])
   // Excalidraw types updateScene's appState as a generic Pick; MindmapApi only needs a partial update.
   const mindmap = useMindmap(api as unknown as MindmapApi | null, mindmapLabels)
@@ -42,6 +54,10 @@ function EditorScreen({ fileId }: { fileId: string }) {
       handleMindmapChange(elements, appState)
       const selected = Object.keys(appState.selectedElementIds).filter((id) => appState.selectedElementIds[id])
       setExportMapId(exportableMap(elements, selected))
+      const target = touchTarget(elements, appState)
+      setTouch((previous) => (JSON.stringify(previous) === JSON.stringify(target) ? previous : target))
+      setViewKey(`${appState.scrollX}:${appState.scrollY}:${appState.zoom.value}`)
+      setTheme(appState.theme ?? 'light')
     },
     [onSceneChange, handleMindmapChange],
   )
@@ -170,6 +186,22 @@ function EditorScreen({ fileId }: { fileId: string }) {
         </Footer>
       </Excalidraw>
       {placing && <MindmapPlacement onPlace={placeMap} onCancel={cancelPlacing} />}
+      {api && touch && viewSettled && (pointerType === 'touch' || pointerType === 'pen') && (
+        <TouchToolbar
+            theme={theme}
+            position={(() => {
+              const { x, y } = sceneCoordsToViewportCoords({ sceneX: touch.x, sceneY: touch.y }, api.getAppState())
+              return toolbarPosition(x, y)
+            })()}
+            collapsed={touch.collapsed}
+            canCollapse={touch.hasChildren}
+            labels={t.mindmap.touch}
+            onAddChild={() => mindmap.perform({ type: 'addChild' })}
+            onAddSibling={() => mindmap.perform({ type: 'addSibling' })}
+            onToggleCollapse={() => mindmap.perform({ type: 'toggleCollapse' })}
+            onDelete={() => mindmap.perform({ type: 'delete' })}
+          />
+      )}
       {actionFailed && file.status !== 'conflict' && (
         <p className="action-error" role="alert">
           {t.editor.actionFailed}

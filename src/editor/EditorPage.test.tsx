@@ -296,6 +296,18 @@ describe('mind map', () => {
     click.mockRestore()
   })
 
+  it('shows the touch toolbar for a selected node after a touch, never after a mouse click', async () => {
+    open()
+    await canvas()
+    await placeMap()
+    fireEvent.pointerDown(window, { pointerType: 'mouse' })
+    expect(screen.queryByRole('toolbar', { name: 'Ações do mapa mental' })).not.toBeInTheDocument()
+    fireEvent.pointerDown(window, { pointerType: 'touch' })
+    const bar = await screen.findByRole('toolbar', { name: 'Ações do mapa mental' }, { timeout: 2000 })
+    expect(bar).toHaveAttribute('data-theme', 'light')
+    expect(screen.getByRole('button', { name: '+ filho' })).toBeInTheDocument()
+  })
+
   it('Esc cancels placing a map', async () => {
     open()
     await canvas()

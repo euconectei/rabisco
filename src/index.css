@@ -115,3 +115,11 @@ label.button-secondary:focus-within { outline: 3px solid var(--accent-text); out
   .landing-features, .landing-trust ul { grid-template-columns: 1fr; }
   .landing-section { padding-block: 2.5rem; }
 }
+
+/* Touch toolbar (tablets): outside Excalidraw's container, so it follows the editor theme by data-theme. */
+.touch-toolbar { --tt-bg: #ffffff; --tt-text: #1b1b1f; --tt-border: #d0d0d8; }
+.touch-toolbar[data-theme='dark'] { --tt-bg: #232329; --tt-text: #e3e3e8; --tt-border: #45454f; }
+.touch-toolbar { position: fixed; z-index: 11; display: flex; gap: 0.25rem; padding: 0.3rem; border: 1px solid var(--tt-border); border-radius: 0.75rem; background: var(--tt-bg); color: var(--tt-text); box-shadow: 0 6px 24px #0003; }
+.touch-toolbar button { min-width: 44px; min-height: 44px; padding: 0 0.7rem; border: 0; border-radius: 0.55rem; background: transparent; color: inherit; font: inherit; font-size: 0.95rem; white-space: nowrap; touch-action: manipulation; }
+.touch-toolbar button:active { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.touch-toolbar button:disabled { opacity: 0.4; }

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { addChild, addSibling, branchElementIds, createMap, findNodeOf, layoutDrift, navigate, relayout, type CommandResult } from './commands'
 import { toggleCollapse } from './collapse'
 import { importOutline } from './importMap'
-import { actionForKey } from './keyboard'
+import { actionForKey, type MindmapAction } from './keyboard'
 import type { Point } from './layout'
 import { parseMarkdownOutline } from './markdown'
 import { metaOf, readMaps } from './model'
@@ -144,6 +144,52 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
     [api, startEditing],
   )
 
+  /** Runs a command on the selected map node; false when there is none (or a text is being edited). */
+  const perform = useCallback(
+    (action: MindmapAction): boolean => {
+      if (!api) return false
+      const appState = api.getAppState()
+      if (appState.editingTextElement) return false
+      const elements = api.getSceneElements()
+      const target = findNodeOf(elements, selectedIds(appState))
+      if (!target) return false
+      const { nodeText } = labelsRef.current
+      switch (action.type) {
+        case 'addChild':
+          apply(addChild(elements, target.nodeId, nodeText), true)
+          break
+        case 'addSibling':
+          apply(addSibling(elements, target.nodeId, nodeText), true)
+          break
+        case 'delete': {
+          // Excalidraw's own delete keeps undo whole (deleting through updateScene left the node's
+          // rectangle out of the undo history). Select the branch, then let Excalidraw delete it.
+          const ids = branchElementIds(elements, target.nodeId)
+          const parentId = readMaps(elements).get(target.mapId)?.byId.get(target.nodeId)?.parentId ?? null
+          pendingDelete.current = { nodeId: target.nodeId, mapId: target.mapId, parentId }
+          api.updateScene({
+            appState: { selectedElementIds: Object.fromEntries(ids.map((id) => [id, true])) } as Partial<AppState>,
+            captureUpdate: CaptureUpdateAction.NEVER,
+          })
+          later(() => sendToExcalidraw('Delete'), POLL_MS)
+          break
+        }
+        case 'editText':
+          startEditing(target.nodeId)
+          break
+        case 'toggleCollapse':
+          apply(toggleCollapse(elements, target.nodeId), false)
+          break
+        case 'navigate': {
+          const next = navigate(elements, target.nodeId, action.key)
+          if (next) api.updateScene({ appState: { selectedElementIds: { [next]: true } } as Partial<AppState> })
+        }
+      }
+      return true
+    },
+    [api, apply, startEditing, sendToExcalidraw, later],
+  )
+
   useEffect(() => {
     if (!api) return
     const onKeyDown = (event: KeyboardEvent) => {
@@ -157,46 +203,13 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
         return
       }
       const action = actionForKey(event)
-      if (!action) return
-      const appState = api.getAppState()
-      if (appState.editingTextElement) return
-      const elements = api.getSceneElements()
-      const target = findNodeOf(elements, selectedIds(appState))
-      if (!target) return
+      if (!action || !perform(action)) return
       event.preventDefault()
       event.stopPropagation()
-      const { nodeText } = labelsRef.current
-      switch (action.type) {
-        case 'addChild':
-          return apply(addChild(elements, target.nodeId, nodeText), true)
-        case 'addSibling':
-          return apply(addSibling(elements, target.nodeId, nodeText), true)
-        case 'delete': {
-          // Excalidraw's own delete keeps undo whole (deleting through updateScene left the node's
-          // rectangle out of the undo history). Select the branch, then let Excalidraw delete it.
-          const ids = branchElementIds(elements, target.nodeId)
-          const parentId = readMaps(elements).get(target.mapId)?.byId.get(target.nodeId)?.parentId ?? null
-          pendingDelete.current = { nodeId: target.nodeId, mapId: target.mapId, parentId }
-          api.updateScene({
-            appState: { selectedElementIds: Object.fromEntries(ids.map((id) => [id, true])) } as Partial<AppState>,
-            captureUpdate: CaptureUpdateAction.NEVER,
-          })
-          later(() => sendToExcalidraw('Delete'), POLL_MS)
-          return
-        }
-        case 'editText':
-          return startEditing(target.nodeId)
-        case 'toggleCollapse':
-          return apply(toggleCollapse(elements, target.nodeId), false)
-        case 'navigate': {
-          const next = navigate(elements, target.nodeId, action.key)
-          if (next) api.updateScene({ appState: { selectedElementIds: { [next]: true } } as Partial<AppState> })
-        }
-      }
     }
     window.addEventListener('keydown', onKeyDown, true)
     return () => window.removeEventListener('keydown', onKeyDown, true)
-  }, [api, apply, startEditing, sendToExcalidraw, later])
+  }, [api, perform])
 
   // Layout is derived state: it never enters the undo history (CaptureUpdateAction.NEVER). Whenever
   // the scene changes for any reason (undo, redo, paste, a text edit), maps that drifted from their
@@ -304,5 +317,5 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
     [api, apply],
   )
 
-  return { handleChange, createMapAt, startEditing, pasteOutline }
+  return { handleChange, createMapAt, startEditing, pasteOutline, perform }
 }

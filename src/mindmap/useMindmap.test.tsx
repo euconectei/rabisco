@@ -396,3 +396,24 @@ describe('dragging a node', () => {
     expect([movedA.x - a.x, movedA.y - a.y]).toEqual([300, 100])
   })
 })
+
+it('perform runs a keyboard command on the selected node (touch toolbar)', () => {
+  let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+  const root = r.select!
+  r = addChild(r.elements, root, 'A')
+  const { api, state } = fakeApi(r.elements, [root])
+  const { result } = renderHook(() => useMindmap(api, labels))
+  act(() => result.current.perform({ type: 'toggleCollapse' }))
+  expect(nodeCount(state.elements)).toBe(1)
+  act(() => result.current.perform({ type: 'toggleCollapse' }))
+  act(() => result.current.perform({ type: 'addChild' }))
+  expect(nodeCount(state.elements)).toBe(3)
+})
+
+it('perform does nothing without a selected node or while a text is edited', () => {
+  const map = createMap([], { x: 0, y: 0 }, 'Raiz')
+  const { api } = fakeApi(map.elements, [map.select!], { id: 't' })
+  const { result } = renderHook(() => useMindmap(api, labels))
+  act(() => result.current.perform({ type: 'addChild' }))
+  expect(api.updateScene).not.toHaveBeenCalled()
+})
