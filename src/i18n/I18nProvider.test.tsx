@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { I18nProvider } from './I18nProvider'
 import { LanguageSwitcher } from './LanguageSwitcher'
@@ -38,7 +38,7 @@ it('falls back to the browser language', () => {
 
 it('switches language, persists it and updates <html lang>', async () => {
   setup('pt-BR')
-  await userEvent.selectOptions(screen.getByLabelText('Idioma'), 'en')
+  await userEvent.click(within(screen.getByRole('group', { name: 'Idioma' })).getByRole('button', { name: 'English' }))
   expect(screen.getByTestId('probe')).toHaveTextContent('en:Get started')
   expect(localStorage.getItem('rabisco.lang')).toBe('en')
   expect(document.documentElement.lang).toBe('en')
@@ -54,7 +54,7 @@ it('still switches language when storage is unavailable', async () => {
   vi.spyOn(navigator, 'language', 'get').mockReturnValue('en-US')
   setup()
   expect(screen.getByTestId('probe')).toHaveTextContent('en:Get started')
-  await userEvent.selectOptions(screen.getByLabelText('Language'), 'pt-BR')
+  await userEvent.click(within(screen.getByRole('group', { name: 'Language' })).getByRole('button', { name: 'Português' }))
   expect(screen.getByTestId('probe')).toHaveTextContent('pt-BR:Começar')
 })
 
