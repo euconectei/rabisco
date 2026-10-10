@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/euconectei/rabisco/compare/v0.3.0...v0.4.0) (2026-10-10)
+
+
+### Features
+
+* open Rabisco from Google Drive's Open with menu ([#8](https://github.com/euconectei/rabisco/issues/8)) ([e161c51](https://github.com/euconectei/rabisco/commit/e161c51b9fd646138b5bdcb3d9d8e9a21098d781))
+
 ## [0.3.0](https://github.com/euconectei/rabisco/compare/v0.2.0...v0.3.0) (2026-10-10)
 
 
