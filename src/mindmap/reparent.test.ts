@@ -6,6 +6,7 @@ import { MINDMAP_PALETTE } from './colors'
 import { addChild, createMap } from './commands'
 import { metaOf, readMaps, type NodeMeta } from './model'
 import { dropTarget, reparent } from './reparent'
+import { setStyle } from './switchStyle'
 
 type El = ExcalidrawElement & { text?: string; containerId?: string | null; startBinding?: { elementId: string } | null }
 
@@ -83,6 +84,16 @@ describe('reparent', () => {
     expect(link.startBinding?.elementId).toBe(s.b)
     expect(rect(elements, s.b).boundElements?.some((b) => b.id === link.id)).toBe(true)
     expect(rect(elements, s.root).boundElements?.some((b) => b.id === link.id)).toBe(false)
+  })
+
+  it('in lines style, moves the loose curved link without binding it to any node', () => {
+    const s = sample()
+    const mapId = meta(s.elements, s.root).mapId
+    const lines = setStyle(s.elements, mapId, 'lines').elements
+    const { elements } = reparent(lines, s.a, s.b)
+    const link = live(elements).find((e) => (metaOf(e) as { kind?: string; childId?: string } | null)?.kind === 'edge' && (metaOf(e) as { childId?: string }).childId === s.a)!
+    expect(link.startBinding ?? null).toBeNull()
+    expect(rect(elements, s.b).boundElements?.some((b) => b.id === link.id) ?? false).toBe(false)
   })
 
   it('takes the colors of the new branch and drops its own side below the first level', () => {

@@ -120,3 +120,12 @@ it('switching back to boxes keeps deleted elements in the scene and marks old de
   expect(boxes.find((e) => e.id === 'erased-drawing')?.isDeleted).toBe(true)
   for (const id of decorations) expect(boxes.find((e) => e.id === id)?.isDeleted).toBe(true)
 })
+
+it('switching to lines keeps the old arrows in the scene as deleted, including arrows deleted earlier (undo keeps working)', () => {
+  const s = sample()
+  const arrows = kind(s.elements, 'edge').map((e) => e.id)
+  const [erasedArrow] = arrows
+  const before = s.elements.map((e) => (e.id === erasedArrow ? ({ ...e, isDeleted: true } as ExcalidrawElement) : e))
+  const lines = setStyle(before, s.mapId, 'lines').elements
+  for (const id of arrows) expect(lines.find((e) => e.id === id)?.isDeleted).toBe(true)
+})
