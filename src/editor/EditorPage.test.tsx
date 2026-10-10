@@ -12,7 +12,8 @@ import { I18nProvider } from '../i18n/I18nProvider'
 import { AppRoutes } from '../routes'
 import { memoryDrive } from '../test/memoryDrive'
 import { renderWithProviders, signedInAuth } from '../test/renderWithProviders'
-import { serializeAsJSON } from '@excalidraw/excalidraw'
+import { exportToSvg, serializeAsJSON } from '@excalidraw/excalidraw'
+import { encodePngMetadata } from '../export/png'
 import { deleteDraft, getDraft, putDraft } from './drafts'
 
 const mounts = vi.hoisted(() => ({ count: 0, onPaste: null as null | ((data: { text?: string; elements?: unknown[] }, event: null) => boolean) }))
@@ -574,13 +575,48 @@ describe('new drawings', () => {
 
   it('imports a markdown file from the files page as a new drawing with a mind map', async () => {
     const drive = open(memoryDrive(), { route: '/app' })
-    const input = await screen.findByLabelText('Importar markdown')
+    const input = await screen.findByLabelText('Importar')
     await userEvent.upload(input, new File(['# Plano\n- passo um\n- passo dois\n'], 'Notas da semana.md', { type: 'text/markdown' }))
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/edit/file-1'))
     expect(drive.client.createFile).toHaveBeenCalledWith('Notas da semana', expect.any(String), 'folder-1')
     const saved = JSON.parse(drive.client.createFile.mock.calls[0][1]) as { elements: Array<{ text?: string; customData?: { rabisco?: { kind: string } } }> }
     expect(saved.elements.filter((e) => e.customData?.rabisco?.kind === 'node')).toHaveLength(3)
     expect(saved.elements.some((e) => e.text === 'passo dois')).toBe(true)
+  })
+
+  // A real 1x1 PNG; the scene is embedded the way "Include editable data" does it.
+  const PNG_1X1 = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='), (c) => c.charCodeAt(0))
+  const sceneWith = (text: string) => {
+    const restored = JSON.parse(fixture) as { elements: Array<{ type: string; text?: string; originalText?: string }> }
+    for (const element of restored.elements) if (element.type === 'text') Object.assign(element, { text, originalText: text })
+    return JSON.stringify(restored)
+  }
+
+  it('reopens an exported PNG with editable data as a new drawing', async () => {
+    const drive = open(memoryDrive(), { route: '/app' })
+    const png = await encodePngMetadata(new Blob([PNG_1X1], { type: 'image/png' }), sceneWith('Ação 😀'))
+    await userEvent.upload(await screen.findByLabelText('Importar'), new File([png], 'Plano.excalidraw.png', { type: 'image/png' }))
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/edit/file-1'))
+    expect(drive.client.createFile).toHaveBeenCalledWith('Plano', expect.any(String), 'folder-1')
+    const saved = JSON.parse(drive.client.createFile.mock.calls[0][1]) as { type: string; elements: Array<{ text?: string }> }
+    expect(saved.type).toBe('excalidraw')
+    expect(saved.elements.some((e) => e.text === 'Ação 😀')).toBe(true)
+  })
+
+  it('reopens an exported SVG with editable data as a new drawing', async () => {
+    const drive = open(memoryDrive(), { route: '/app' })
+    const { elements } = JSON.parse(sceneWith('Fluxo')) as { elements: never[] }
+    const svg = await exportToSvg({ elements, appState: { exportEmbedScene: true }, files: {} })
+    await userEvent.upload(await screen.findByLabelText('Importar'), new File([svg.outerHTML], 'Fluxo.svg', { type: 'image/svg+xml' }))
+    await waitFor(() => expect(drive.client.createFile).toHaveBeenCalledWith('Fluxo', expect.stringContaining('"Fluxo"'), 'folder-1'))
+  })
+
+  it('explains that an image without editable data cannot be reopened, and creates nothing', async () => {
+    const drive = open(memoryDrive(), { route: '/app' })
+    await userEvent.upload(await screen.findByLabelText('Importar'), new File([PNG_1X1], 'Foto.png', { type: 'image/png' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Esta imagem não tem um desenho editável dentro.')
+    expect(drive.client.createFile).not.toHaveBeenCalled()
+    expect(screen.getByTestId('location')).toHaveTextContent('/app')
   })
 
   it('explains when the file cannot be created', async () => {

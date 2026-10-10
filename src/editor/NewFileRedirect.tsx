@@ -8,6 +8,8 @@ import { emptySceneJson, serializeScene } from './scene'
 
 interface ImportState {
   importMarkdown?: { name: string; text: string }
+  /** A scene recovered from an exported image, already serialized. */
+  importScene?: { name: string; json: string }
 }
 
 /** A drawing holding the markdown as a mind map (a text with no list or heading becomes a lone root). */
@@ -22,7 +24,9 @@ export default function NewFileRedirect() {
   const drive = useDrive()
   const { t } = useI18n()
   const navigate = useNavigate()
-  const imported = (useLocation().state as ImportState | null)?.importMarkdown
+  const state = useLocation().state as ImportState | null
+  const imported = state?.importMarkdown
+  const importedScene = state?.importScene
   const [failed, setFailed] = useState(false)
   const started = useRef(false)
   const untitled = t.files.untitled
@@ -34,15 +38,17 @@ export default function NewFileRedirect() {
     void (async () => {
       try {
         const folderId = await drive.ensureFolder()
-        const created = imported
-          ? await drive.createFile(imported.name, importedSceneJson(imported.name, imported.text), folderId)
-          : await drive.createFile(untitled, emptySceneJson(), folderId)
+        const created = importedScene
+          ? await drive.createFile(importedScene.name, importedScene.json, folderId)
+          : imported
+            ? await drive.createFile(imported.name, importedSceneJson(imported.name, imported.text), folderId)
+            : await drive.createFile(untitled, emptySceneJson(), folderId)
         navigate(`/edit/${created.id}`, { replace: true })
       } catch {
         setFailed(true)
       }
     })()
-  }, [drive, navigate, untitled, imported])
+  }, [drive, navigate, untitled, imported, importedScene])
 
   if (failed) {
     return (

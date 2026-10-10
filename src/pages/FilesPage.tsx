@@ -12,12 +12,25 @@ import { AccountMenu } from './AccountMenu'
 
 type ListState = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; files: DriveFileMeta[] }
 
+/** The scene embedded in an exported PNG/SVG ("Include editable data"), or null if there is none. */
+async function sceneFromImage(file: File): Promise<string | null> {
+  // Loaded on demand: Excalidraw is heavy and /app does not need it otherwise.
+  const { loadFromBlob, serializeAsJSON } = await import('@excalidraw/excalidraw')
+  try {
+    const scene = await loadFromBlob(file, null, null)
+    return serializeAsJSON(scene.elements, {}, scene.files, 'local')
+  } catch {
+    return null
+  }
+}
+
 export function FilesPage() {
   const { lang, t } = useI18n()
   const navigate = useNavigate()
   const drive = useDrive()
   const pick = useFilePicker()
   const [list, setList] = useState<ListState>({ kind: 'loading' })
+  const [importFailed, setImportFailed] = useState(false)
 
   const fetchFiles = useCallback(async (): Promise<ListState> => {
     try {
@@ -43,10 +56,17 @@ export function FilesPage() {
   }
 
   // The editor side (lazy, with Excalidraw) builds the map: see NewFileRedirect.
-  async function importMarkdown(input: HTMLInputElement) {
+  async function importFile(input: HTMLInputElement) {
     const picked = input.files?.[0]
     input.value = ''
     if (!picked) return
+    setImportFailed(false)
+    if (/\.(png|svg)$/i.test(picked.name)) {
+      const json = await sceneFromImage(picked)
+      if (!json) return setImportFailed(true)
+      const name = picked.name.replace(/(\.excalidraw)?\.(png|svg)$/i, '')
+      return navigate('/edit/new', { state: { importScene: { name, json } } })
+    }
     const name = picked.name.replace(/\.(md|markdown|txt)$/i, '')
     navigate('/edit/new', { state: { importMarkdown: { name, text: await picked.text() } } })
   }
@@ -70,15 +90,16 @@ export function FilesPage() {
           {t.files.openFromDrive}
         </button>
         <label className="button-secondary">
-          {t.files.importMarkdown}
+          {t.files.importFile}
           <input
             type="file"
-            accept=".md,.markdown,.txt,text/markdown,text/plain"
+            accept=".md,.markdown,.txt,text/markdown,text/plain,.png,.svg,image/png,image/svg+xml"
             className="visually-hidden"
-            onChange={(event) => void importMarkdown(event.currentTarget)}
+            onChange={(event) => void importFile(event.currentTarget)}
           />
         </label>
       </div>
+      {importFailed && <p role="alert">{t.files.importImageFailed}</p>}
       {list.kind === 'loading' && <p>{t.files.loading}</p>}
       {list.kind === 'error' && (
         <p role="alert">
