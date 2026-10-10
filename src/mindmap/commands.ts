@@ -397,9 +397,15 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
     const color = nodeColor.get(m.nodeId) ?? e.strokeColor
     derived.push(m.kind === 'underline' ? update(e, { ...underlineGeometry(node), strokeColor: color }) : update(e, { ...knobGeometry(node, knobSide(m.nodeId)), strokeColor: color }))
   }
-  const kept = positioned.filter((e) => {
+  // Links and decorations of this map that were not reused stay in the scene marked deleted (like
+  // every other removal), so undo can bring back the arrows of the boxes style and earlier deletions.
+  const reused = new Set(derived.map((e) => e.id))
+  const kept = positioned.flatMap((e) => {
     const m = metaOf(e)
-    return !m || m.mapId !== mapId || (m.kind !== 'edge' && m.kind !== 'underline' && m.kind !== 'knob')
+    const derivedKind = m?.mapId === mapId && (m.kind === 'edge' || m.kind === 'underline' || m.kind === 'knob')
+    if (!derivedKind) return [e]
+    if (reused.has(e.id)) return []
+    return [e.isDeleted ? e : update(e, { isDeleted: true })]
   })
   return [...derived, ...kept]
 }

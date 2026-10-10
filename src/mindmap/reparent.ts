@@ -60,7 +60,9 @@ export function reparent(original: readonly ExcalidrawElement[], nodeId: string,
   if (parent.parentId === null) side = center(byId(elements, nodeId)!).x < center(byId(elements, newParentId)!).x ? 'left' : 'right'
 
   const style = styleOf(elements, map.mapId)
-  const link = elements.find((e) => !e.isDeleted && isLinkOf(e, new Set([nodeId]), style) === nodeId)
+  // Only boxes-style arrows are bound to the nodes; a lines-style link is a loose curve that relayout
+  // re-derives from the new parent, so it is left alone here.
+  const link = style === 'boxes' ? elements.find((e) => !e.isDeleted && isLinkOf(e, new Set([nodeId]), style) === nodeId) : undefined
   const oldParentId = current.parentId
   const next = elements.map((e) => {
     if (e.id === nodeId) {
