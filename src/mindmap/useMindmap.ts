@@ -37,6 +37,18 @@ function insertText(textarea: HTMLTextAreaElement, text: string) {
   textarea.dispatchEvent(new Event('input', { bubbles: true }))
 }
 
+/** Keys typed in a field (title, color hex, library search, dialogs…) are never mind map commands. */
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    target.isContentEditable ||
+    target.contentEditable === 'true'
+  )
+}
+
 const isPrintable = (event: KeyboardEvent) => event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey
 
 const selectedIds = (appState: Pick<AppState, 'selectedElementIds'>) =>
@@ -115,6 +127,7 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
     if (!api) return
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event as unknown as Record<symbol, unknown>)[SYNTHETIC]) return
+      if (isEditableTarget(event.target)) return
       if (heldKeys.current !== null && (isPrintable(event) || event.key === 'Escape')) {
         event.preventDefault()
         event.stopPropagation()

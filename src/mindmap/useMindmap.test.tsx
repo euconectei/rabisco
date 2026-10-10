@@ -212,3 +212,40 @@ it('applies an Esc pressed while keys are held after typing them', async () => {
   textarea.remove()
   vi.useRealTimers()
 })
+
+it.each([
+  ['input', () => document.createElement('input')],
+  ['textarea', () => document.createElement('textarea')],
+  ['select', () => document.createElement('select')],
+  ['contenteditable', () => Object.assign(document.createElement('div'), { contentEditable: 'true' })],
+])('never takes keys typed in a %s (title field, color picker, search…)', (_label, make) => {
+  let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+  r = addChild(r.elements, r.select!, 'A')
+  const { api, state } = fakeApi(r.elements, [r.select!])
+  renderHook(() => useMindmap(api, labels))
+  const field = make()
+  document.body.appendChild(field)
+  for (const key of ['Backspace', 'Delete', 'Enter', 'Tab', 'ArrowLeft']) {
+    const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+    field.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(false)
+  }
+  expect(api.updateScene).not.toHaveBeenCalled()
+  expect(nodeCount(state.elements)).toBe(2)
+  field.remove()
+})
+
+it('does not hold keys typed in a field while a new node is opening', () => {
+  vi.useFakeTimers()
+  const map = createMap([], { x: 0, y: 0 }, 'Raiz')
+  const { api } = fakeApi(map.elements, [map.select!])
+  renderHook(() => useMindmap(api, labels))
+  press('Tab')
+  const input = document.createElement('input')
+  document.body.appendChild(input)
+  const event = new KeyboardEvent('keydown', { key: 'a', bubbles: true, cancelable: true })
+  input.dispatchEvent(event)
+  expect(event.defaultPrevented).toBe(false)
+  input.remove()
+  vi.useRealTimers()
+})
