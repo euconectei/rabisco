@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/euconectei/rabisco/compare/v0.6.0...v0.6.1) (2026-10-10)
+
+
+### Bug Fixes
+
+* a PT | EN toggle instead of the browser's language select ([#16](https://github.com/euconectei/rabisco/issues/16)) ([8ae79fd](https://github.com/euconectei/rabisco/commit/8ae79fdd4e318a4be22ffd1c0af96c964646c8e7))
+
 ## [0.6.0](https://github.com/euconectei/rabisco/compare/v0.5.0...v0.6.0) (2026-10-10)
 
 
