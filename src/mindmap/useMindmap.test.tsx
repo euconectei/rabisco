@@ -229,6 +229,23 @@ it.each([
   ['textarea', () => document.createElement('textarea')],
   ['select', () => document.createElement('select')],
   ['contenteditable', () => Object.assign(document.createElement('div'), { contentEditable: 'true' })],
+  [
+    'dialog (such as the Organize panel)',
+    () => {
+      const dialog = document.createElement('div')
+      dialog.setAttribute('role', 'dialog')
+      dialog.appendChild(document.createElement('button'))
+      return dialog
+    },
+  ],
+  [
+    'button that keeps its own keys',
+    () => {
+      const button = document.createElement('button')
+      button.dataset.ownKeys = ''
+      return button
+    },
+  ],
 ])('never takes keys typed in a %s (title field, color picker, search…)', (_label, make) => {
   let r = createMap([], { x: 0, y: 0 }, 'Raiz')
   r = addChild(r.elements, r.select!, 'A')
@@ -244,6 +261,19 @@ it.each([
   expect(api.updateScene).not.toHaveBeenCalled()
   expect(nodeCount(state.elements)).toBe(2)
   field.remove()
+})
+
+it('still takes keys pressed while an ordinary toolbar button has focus (e.g. right after "Mapa mental")', () => {
+  const map = createMap([], { x: 0, y: 0 }, 'Raiz')
+  const { api, state } = fakeApi(map.elements, [map.select!])
+  renderHook(() => useMindmap(api, labels))
+  const button = document.createElement('button')
+  document.body.appendChild(button)
+  const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })
+  button.dispatchEvent(event)
+  expect(event.defaultPrevented).toBe(true)
+  expect(nodeCount(state.elements)).toBe(2)
+  button.remove()
 })
 
 it('does not hold keys typed in a field while a new node is opening', () => {

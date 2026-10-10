@@ -124,6 +124,18 @@ export const ptBR = {
     copyAsText: 'Copiar mapa como texto',
     downloadMarkdown: 'Baixar .md',
     saveMarkdownToDrive: 'Salvar .md no Drive',
+    organize: {
+      button: 'Organizar',
+      title: 'Organizar',
+      close: 'Fechar',
+      layout: 'Organização',
+      layoutBoth: 'Dois lados',
+      layoutRight: 'Para a direita',
+      layoutFree: 'Livre',
+      style: 'Estilo',
+      styleBoxes: 'Caixas',
+      styleLines: 'Linhas',
+    },
     touch: {
       toolbar: 'Ações do mapa mental',
       addChild: '+ filho',
@@ -131,6 +143,7 @@ export const ptBR = {
       collapse: 'Recolher',
       expand: 'Expandir',
       delete: 'Apagar',
+      organize: 'Organizar',
     },
   },
   auth: {

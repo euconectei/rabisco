@@ -2,15 +2,17 @@ import { CaptureUpdateAction, Excalidraw, Footer, MainMenu, sceneCoordsToViewpor
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import '@excalidraw/excalidraw/index.css'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useDrive } from '../drive/useDrive'
 import { format } from '../i18n/format'
 import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
 import { useI18n } from '../i18n/useI18n'
 import { ExportImageDialog } from '../export/ExportImageDialog'
+import { findNodeOf, type CommandResult } from '../mindmap/commands'
 import { exportableMap, mapToOutline, outlineToMarkdown } from '../mindmap/markdown'
-import { readMaps, type MapLayout, type MapStyle } from '../mindmap/model'
+import { layoutOf, readMaps, styleOf, type MapLayout, type MapStyle } from '../mindmap/model'
+import { OrganizePanel } from '../mindmap/OrganizePanel'
 import { setLayout, setStyle } from '../mindmap/switchStyle'
 import { toolbarPosition, touchTarget, TouchToolbar, useSettled, type TouchTarget } from '../mindmap/TouchToolbar'
 import { useMindmap, type MindmapApi } from '../mindmap/useMindmap'
@@ -44,6 +46,12 @@ function EditorScreen({ fileId }: { fileId: string }) {
   const [viewKey, setViewKey] = useState('')
   const [theme, setTheme] = useState('light')
   const viewSettled = useSettled(viewKey, 200)
+  // Organize panel: the selected node (and its map) it acts on, and whether it is open.
+  const [organizeNode, setOrganizeNode] = useState<{ mapId: string; nodeId: string } | null>(null)
+  const [organizeOpen, setOrganizeOpen] = useState(false)
+  const organizeButtonRef = useRef<HTMLButtonElement>(null)
+  // The node the panel last opened for, so a deselection (or selecting another node) closes it.
+  const organizeNodeRef = useRef<string | null>(null)
   useEffect(() => {
     const onPointerDown = (event: PointerEvent) => setPointerType(event.pointerType || 'mouse')
     window.addEventListener('pointerdown', onPointerDown, true)
@@ -97,6 +105,12 @@ function EditorScreen({ fileId }: { fileId: string }) {
       handleMindmapChange(elements, appState)
       const selected = Object.keys(appState.selectedElementIds).filter((id) => appState.selectedElementIds[id])
       setExportMapId(exportableMap(elements, selected))
+      const node = appState.editingTextElement ? null : findNodeOf(elements, selected)
+      if (node?.nodeId !== organizeNodeRef.current) setOrganizeOpen(false)
+      organizeNodeRef.current = node?.nodeId ?? null
+      // findNodeOf returns a new object on every change; keep the old one when it is the same node, or
+      // every onChange re-renders the editor, which fires onChange again (React #185).
+      setOrganizeNode((previous) => (previous?.nodeId === node?.nodeId && previous?.mapId === node?.mapId ? previous : node))
       const target = touchTarget(elements, appState)
       setTouch((previous) => (JSON.stringify(previous) === JSON.stringify(target) ? previous : target))
       setViewKey(`${appState.scrollX}:${appState.scrollY}:${appState.zoom.value}`)
@@ -106,6 +120,24 @@ function EditorScreen({ fileId }: { fileId: string }) {
   )
   const cancelPlacing = useCallback(() => setPlacing(false), [])
   const closeExport = useCallback(() => setExportingImage(false), [])
+  const closeOrganize = useCallback(() => {
+    setOrganizeOpen(false)
+    organizeButtonRef.current?.focus()
+  }, [])
+  // One layout/style switch is one undo step: one updateScene with CaptureUpdateAction.IMMEDIATELY,
+  // keeping the selection on the node the panel was opened from.
+  const runOrganize = useCallback(
+    (result: CommandResult) => {
+      if (!api || !organizeNode) return
+      api.updateScene({
+        elements: result.elements,
+        appState: { selectedElementIds: Object.fromEntries([[organizeNode.nodeId, true]] as const) },
+        captureUpdate: CaptureUpdateAction.IMMEDIATELY,
+      })
+      closeOrganize()
+    },
+    [api, organizeNode, closeOrganize],
+  )
   function placeMap(client: { clientX: number; clientY: number }) {
     setPlacing(false)
     if (!api) return
@@ -196,6 +228,11 @@ function EditorScreen({ fileId }: { fileId: string }) {
             <button type="button" className="button-secondary mindmap-button" onClick={() => setPlacing(true)}>
               {t.mindmap.button}
             </button>
+            {organizeNode && (
+              <button ref={organizeButtonRef} type="button" className="button-secondary mindmap-button" data-own-keys onClick={() => setOrganizeOpen(true)}>
+                {t.mindmap.organize.button}
+              </button>
+            )}
             <TitleField key={baseName} name={baseName} onRename={file.rename} />
             <LanguageSwitcher />
           </div>
@@ -241,7 +278,19 @@ function EditorScreen({ fileId }: { fileId: string }) {
             onAddSibling={() => mindmap.perform({ type: 'addSibling' })}
             onToggleCollapse={() => mindmap.perform({ type: 'toggleCollapse' })}
             onDelete={() => mindmap.perform({ type: 'delete' })}
+            onOrganize={() => setOrganizeOpen(true)}
           />
+      )}
+      {api && organizeOpen && organizeNode && (
+        <OrganizePanel
+          mapId={organizeNode.mapId}
+          layout={layoutOf(api.getSceneElements(), organizeNode.mapId)}
+          style={styleOf(api.getSceneElements(), organizeNode.mapId)}
+          onLayout={(layout) => runOrganize(setLayout(api.getSceneElements(), organizeNode.mapId, layout))}
+          onStyle={(style) => runOrganize(setStyle(api.getSceneElements(), organizeNode.mapId, style))}
+          onClose={closeOrganize}
+          theme={theme}
+        />
       )}
       {actionFailed && file.status !== 'conflict' && (
         <p className="action-error" role="alert">

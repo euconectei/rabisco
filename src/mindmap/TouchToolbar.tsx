@@ -59,6 +59,7 @@ export interface TouchToolbarLabels {
   collapse: string
   expand: string
   delete: string
+  organize: string
 }
 
 export function TouchToolbar({
@@ -71,6 +72,7 @@ export function TouchToolbar({
   onAddSibling,
   onToggleCollapse,
   onDelete,
+  onOrganize,
 }: {
   /** The editor's theme (Excalidraw's own, which can differ from the system's). */
   theme?: string
@@ -82,6 +84,7 @@ export function TouchToolbar({
   onAddSibling: () => void
   onToggleCollapse: () => void
   onDelete: () => void
+  onOrganize: () => void
 }) {
   const left = Math.max(EDGE, Math.min(position.left, window.innerWidth - TOOLBAR_WIDTH - EDGE))
   const top = Math.max(EDGE, position.top)
@@ -95,6 +98,9 @@ export function TouchToolbar({
       </button>
       <button type="button" onClick={onToggleCollapse} disabled={!canCollapse}>
         {collapsed ? labels.expand : labels.collapse}
+      </button>
+      <button type="button" onClick={onOrganize}>
+        {labels.organize}
       </button>
       <button type="button" onClick={onDelete}>
         {labels.delete}

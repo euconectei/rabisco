@@ -1,6 +1,6 @@
 import 'vitest-canvas-mock'
 import 'fake-indexeddb/auto'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useEffect, type ReactNode } from 'react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
@@ -325,6 +325,28 @@ describe('mind map', () => {
     const bar = await screen.findByRole('toolbar', { name: 'Ações do mapa mental' }, { timeout: 2000 })
     expect(bar).toHaveAttribute('data-theme', 'light')
     expect(screen.getByRole('button', { name: '+ filho' })).toBeInTheDocument()
+  })
+
+  it('shows an Organize button with a node selected, opens the panel, and applies the choice', async () => {
+    open()
+    await canvas()
+    expect(screen.queryByRole('button', { name: 'Organizar' })).not.toBeInTheDocument()
+    await placeMap()
+    await userEvent.click(await screen.findByRole('button', { name: 'Organizar' }))
+    expect(screen.getByRole('dialog', { name: 'Organizar' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Dois lados' })).toBeChecked()
+    await userEvent.click(screen.getByRole('radio', { name: 'Para a direita' }))
+    expect(screen.queryByRole('dialog', { name: 'Organizar' })).not.toBeInTheDocument()
+  })
+
+  it('opens the organize panel from the touch toolbar', async () => {
+    open()
+    await canvas()
+    await placeMap()
+    fireEvent.pointerDown(window, { pointerType: 'touch' })
+    const bar = await screen.findByRole('toolbar', { name: 'Ações do mapa mental' }, { timeout: 2000 })
+    fireEvent.click(within(bar).getByRole('button', { name: 'Organizar' }))
+    expect(screen.getByRole('dialog', { name: 'Organizar' })).toBeInTheDocument()
   })
 
   it('Esc cancels placing a map', async () => {

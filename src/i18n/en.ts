@@ -126,6 +126,18 @@ export const en: Messages = {
     copyAsText: 'Copy map as text',
     downloadMarkdown: 'Download .md',
     saveMarkdownToDrive: 'Save .md to Drive',
+    organize: {
+      button: 'Organize',
+      title: 'Organize',
+      close: 'Close',
+      layout: 'Arrangement',
+      layoutBoth: 'Both sides',
+      layoutRight: 'To the right',
+      layoutFree: 'Free',
+      style: 'Style',
+      styleBoxes: 'Boxes',
+      styleLines: 'Lines',
+    },
     touch: {
       toolbar: 'Mind map actions',
       addChild: '+ child',
@@ -133,6 +145,7 @@ export const en: Messages = {
       collapse: 'Collapse',
       expand: 'Expand',
       delete: 'Delete',
+      organize: 'Organize',
     },
   },
   auth: {
