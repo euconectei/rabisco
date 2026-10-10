@@ -3,9 +3,13 @@ import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import type { AppState } from '@excalidraw/excalidraw/types'
 import { useCallback, useEffect, useRef } from 'react'
 import { addChild, addSibling, branchElementIds, createMap, findNodeOf, layoutDrift, navigate, relayout, type CommandResult } from './commands'
-import { actionForKey } from './keyboard'
+import { expand, toggleCollapse } from './collapse'
+import { importOutline } from './importMap'
+import { actionForKey, type MindmapAction } from './keyboard'
 import type { Point } from './layout'
+import { parseMarkdownOutline } from './markdown'
 import { metaOf, readMaps } from './model'
+import { dropTarget, reparent } from './reparent'
 
 /** The slice of Excalidraw's imperative API the mind map needs (easy to fake in tests). */
 export interface MindmapApi {
@@ -140,6 +144,56 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
     [api, startEditing],
   )
 
+  /** Runs a command on the selected map node; false when there is none (or a text is being edited). */
+  const perform = useCallback(
+    (action: MindmapAction): boolean => {
+      if (!api) return false
+      const appState = api.getAppState()
+      if (appState.editingTextElement) return false
+      const elements = api.getSceneElements()
+      const target = findNodeOf(elements, selectedIds(appState))
+      if (!target) return false
+      const { nodeText } = labelsRef.current
+      // A new child of a collapsed node goes after the hidden ones: expand it first.
+      const expanded = () => expand(elements, target.nodeId).elements
+      const isRoot = readMaps(elements).get(target.mapId)?.root.id === target.nodeId
+      switch (action.type) {
+        case 'addChild':
+          apply(addChild(expanded(), target.nodeId, nodeText), true)
+          break
+        case 'addSibling':
+          // On the root, Enter adds a child too.
+          apply(addSibling(isRoot ? expanded() : elements, target.nodeId, nodeText), true)
+          break
+        case 'delete': {
+          // Excalidraw's own delete keeps undo whole (deleting through updateScene left the node's
+          // rectangle out of the undo history). Select the branch, then let Excalidraw delete it.
+          const ids = branchElementIds(elements, target.nodeId)
+          const parentId = readMaps(elements).get(target.mapId)?.byId.get(target.nodeId)?.parentId ?? null
+          pendingDelete.current = { nodeId: target.nodeId, mapId: target.mapId, parentId }
+          api.updateScene({
+            appState: { selectedElementIds: Object.fromEntries(ids.map((id) => [id, true])) } as Partial<AppState>,
+            captureUpdate: CaptureUpdateAction.NEVER,
+          })
+          later(() => sendToExcalidraw('Delete'), POLL_MS)
+          break
+        }
+        case 'editText':
+          startEditing(target.nodeId)
+          break
+        case 'toggleCollapse':
+          apply(toggleCollapse(elements, target.nodeId), false)
+          break
+        case 'navigate': {
+          const next = navigate(elements, target.nodeId, action.key)
+          if (next) api.updateScene({ appState: { selectedElementIds: { [next]: true } } as Partial<AppState> })
+        }
+      }
+      return true
+    },
+    [api, apply, startEditing, sendToExcalidraw, later],
+  )
+
   useEffect(() => {
     if (!api) return
     const onKeyDown = (event: KeyboardEvent) => {
@@ -153,44 +207,13 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
         return
       }
       const action = actionForKey(event)
-      if (!action) return
-      const appState = api.getAppState()
-      if (appState.editingTextElement) return
-      const elements = api.getSceneElements()
-      const target = findNodeOf(elements, selectedIds(appState))
-      if (!target) return
+      if (!action || !perform(action)) return
       event.preventDefault()
       event.stopPropagation()
-      const { nodeText } = labelsRef.current
-      switch (action.type) {
-        case 'addChild':
-          return apply(addChild(elements, target.nodeId, nodeText), true)
-        case 'addSibling':
-          return apply(addSibling(elements, target.nodeId, nodeText), true)
-        case 'delete': {
-          // Excalidraw's own delete keeps undo whole (deleting through updateScene left the node's
-          // rectangle out of the undo history). Select the branch, then let Excalidraw delete it.
-          const ids = branchElementIds(elements, target.nodeId)
-          const parentId = readMaps(elements).get(target.mapId)?.byId.get(target.nodeId)?.parentId ?? null
-          pendingDelete.current = { nodeId: target.nodeId, mapId: target.mapId, parentId }
-          api.updateScene({
-            appState: { selectedElementIds: Object.fromEntries(ids.map((id) => [id, true])) } as Partial<AppState>,
-            captureUpdate: CaptureUpdateAction.NEVER,
-          })
-          later(() => sendToExcalidraw('Delete'), POLL_MS)
-          return
-        }
-        case 'editText':
-          return startEditing(target.nodeId)
-        case 'navigate': {
-          const next = navigate(elements, target.nodeId, action.key)
-          if (next) api.updateScene({ appState: { selectedElementIds: { [next]: true } } as Partial<AppState> })
-        }
-      }
     }
     window.addEventListener('keydown', onKeyDown, true)
     return () => window.removeEventListener('keydown', onKeyDown, true)
-  }, [api, apply, startEditing, sendToExcalidraw, later])
+  }, [api, perform])
 
   // Layout is derived state: it never enters the undo history (CaptureUpdateAction.NEVER). Whenever
   // the scene changes for any reason (undo, redo, paste, a text edit), maps that drifted from their
@@ -213,11 +236,29 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
 
   // When editing a node's text ends, its size may have changed: re-lay out that map.
   const editingNode = useRef<string | null>(null)
+  // A drag in progress: when it ends over another node of the same map, the branch moves there.
+  const dragging = useRef(false)
   const handleChange = useCallback(
     (
       elements: readonly ExcalidrawElement[],
-      appState: Pick<AppState, 'editingTextElement'> & Partial<Pick<AppState, 'selectedElementsAreBeingDragged'>>,
+      appState: Pick<AppState, 'editingTextElement'> &
+        Partial<Pick<AppState, 'selectedElementsAreBeingDragged' | 'selectedElementIds'>>,
     ) => {
+      const wasDragging = dragging.current
+      dragging.current = !!appState.selectedElementsAreBeingDragged
+      if (wasDragging && !dragging.current && api && !appState.editingTextElement) {
+        const dragged = findNodeOf(elements, appState.selectedElementIds ? selectedIds({ selectedElementIds: appState.selectedElementIds }) : [])
+        const target = dragged ? dropTarget(elements, dragged.nodeId) : null
+        if (dragged && target) {
+          const result = reparent(elements, dragged.nodeId, target)
+          api.updateScene({
+            elements: result.elements,
+            appState: { selectedElementIds: { [dragged.nodeId]: true } } as Partial<AppState>,
+            captureUpdate: CaptureUpdateAction.IMMEDIATELY,
+          })
+          return
+        }
+      }
       const deleting = pendingDelete.current
       if (deleting && api) {
         const node = elements.find((e) => e.id === deleting.nodeId)
@@ -267,5 +308,18 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
     [api, apply],
   )
 
-  return { handleChange, createMapAt, startEditing }
+  /** Pasted lists and headings (2+ lines) become a map at `at`. Returns whether the paste was taken. */
+  const pasteOutline = useCallback(
+    (text: string, at: Point, fallbackRoot: string): boolean => {
+      if (!api || api.getAppState().editingTextElement) return false
+      if (text.split(/\r?\n/).filter((line) => line.trim()).length < 2) return false
+      const outline = parseMarkdownOutline(text, fallbackRoot, { strict: true })
+      if (!outline) return false
+      apply(importOutline(api.getSceneElements(), outline, at), false)
+      return true
+    },
+    [api, apply],
+  )
+
+  return { handleChange, createMapAt, startEditing, pasteOutline, perform }
 }

@@ -42,6 +42,15 @@ export function FilesPage() {
     setList(await fetchFiles())
   }
 
+  // The editor side (lazy, with Excalidraw) builds the map: see NewFileRedirect.
+  async function importMarkdown(input: HTMLInputElement) {
+    const picked = input.files?.[0]
+    input.value = ''
+    if (!picked) return
+    const name = picked.name.replace(/\.(md|markdown|txt)$/i, '')
+    navigate('/edit/new', { state: { importMarkdown: { name, text: await picked.text() } } })
+  }
+
   async function openFromDrive() {
     const picked = await pick().catch(() => null)
     if (picked) navigate(`/edit/${encodeURIComponent(picked.id)}`)
@@ -60,6 +69,15 @@ export function FilesPage() {
         <button className="button-secondary" type="button" onClick={() => void openFromDrive()}>
           {t.files.openFromDrive}
         </button>
+        <label className="button-secondary">
+          {t.files.importMarkdown}
+          <input
+            type="file"
+            accept=".md,.markdown,.txt,text/markdown,text/plain"
+            className="visually-hidden"
+            onChange={(event) => void importMarkdown(event.currentTarget)}
+          />
+        </label>
       </div>
       {list.kind === 'loading' && <p>{t.files.loading}</p>}
       {list.kind === 'error' && (

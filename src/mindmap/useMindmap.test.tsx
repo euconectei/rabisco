@@ -308,3 +308,139 @@ it('cancels pending editor work when the editor goes away', async () => {
   container.remove()
   vi.useRealTimers()
 })
+
+function pressWith(k: string, mods: KeyboardEventInit) {
+  const event = new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true, ...mods })
+  window.dispatchEvent(event)
+  return event
+}
+
+it('Ctrl/Cmd + . collapses the selected node and then expands it, in one undo step each', () => {
+  let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+  const root = r.select!
+  r = addChild(r.elements, root, 'A')
+  const { api, state } = fakeApi(r.elements, [root])
+  renderHook(() => useMindmap(api, labels))
+  expect(pressWith('.', { ctrlKey: true }).defaultPrevented).toBe(true)
+  expect(nodeCount(state.elements)).toBe(1)
+  expect((metaOf(state.elements.find((e) => e.id === root)!) as { collapsed?: boolean }).collapsed).toBe(true)
+  expect(api.updateScene).toHaveBeenLastCalledWith(expect.objectContaining({ captureUpdate: 'IMMEDIATELY' }))
+  pressWith('.', { metaKey: true })
+  expect(nodeCount(state.elements)).toBe(2)
+  expect(state.appState.selectedElementIds).toEqual({ [root]: true })
+})
+
+it('Ctrl + . does nothing while a text is being edited', () => {
+  let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+  const root = r.select!
+  r = addChild(r.elements, root, 'A')
+  const { api } = fakeApi(r.elements, [root], { id: 'some-text' })
+  renderHook(() => useMindmap(api, labels))
+  expect(pressWith('.', { ctrlKey: true }).defaultPrevented).toBe(false)
+  expect(api.updateScene).not.toHaveBeenCalled()
+})
+
+describe('dragging a node', () => {
+  function twoBranches() {
+    let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+    const root = r.select!
+    r = addChild(r.elements, root, 'A')
+    const a = r.select!
+    r = addChild(r.elements, root, 'B')
+    const b = r.select!
+    r = addChild(r.elements, root, 'C')
+    return { elements: r.elements, root, a, b, c: r.select! }
+  }
+  const moveTo = (els: readonly ExcalidrawElement[], id: string, x: number, y: number) =>
+    els.map((e) => (e.id === id ? ({ ...e, x, y, version: e.version + 1 } as ExcalidrawElement) : e))
+  const dragEnd = (result: { current: ReturnType<typeof useMindmap> }, els: readonly ExcalidrawElement[], selected: string) => {
+    const appState = { editingTextElement: null, selectedElementIds: { [selected]: true } }
+    act(() => result.current.handleChange(els, { ...appState, selectedElementsAreBeingDragged: true } as never))
+    act(() => result.current.handleChange(els, { ...appState, selectedElementsAreBeingDragged: false } as never))
+  }
+
+  it('dropped on another node, moves the branch there in one undo step', () => {
+    const t = twoBranches()
+    const target = t.elements.find((e) => e.id === t.b)!
+    const dropped = moveTo(t.elements, t.c, target.x + 5, target.y + 2)
+    const { api, state } = fakeApi(dropped, [t.c])
+    const { result } = renderHook(() => useMindmap(api, labels))
+    dragEnd(result, dropped, t.c)
+    expect(api.updateScene).toHaveBeenCalledTimes(1)
+    expect(api.updateScene).toHaveBeenCalledWith(expect.objectContaining({ captureUpdate: 'IMMEDIATELY' }))
+    const map = [...readMaps(state.elements).values()][0]
+    expect(map.byId.get(t.c)!.parentId).toBe(t.b)
+  })
+
+  it('dropped on empty canvas, goes back to its place', () => {
+    const t = twoBranches()
+    const before = t.elements.find((e) => e.id === t.c)!
+    const dropped = moveTo(t.elements, t.c, 3000, 3000)
+    const { api, state } = fakeApi(dropped, [t.c])
+    const { result } = renderHook(() => useMindmap(api, labels))
+    dragEnd(result, dropped, t.c)
+    const after = state.elements.find((e) => e.id === t.c)!
+    expect([after.x, after.y]).toEqual([before.x, before.y])
+    expect([...readMaps(state.elements).values()][0].byId.get(t.c)!.parentId).toBe(t.root)
+  })
+
+  it('dragging the root brings the whole map to the new position', () => {
+    const t = twoBranches()
+    const root = t.elements.find((e) => e.id === t.root)!
+    const a = t.elements.find((e) => e.id === t.a)!
+    const dropped = moveTo(t.elements, t.root, root.x + 300, root.y + 100)
+    const { api, state } = fakeApi(dropped, [t.root])
+    const { result } = renderHook(() => useMindmap(api, labels))
+    dragEnd(result, dropped, t.root)
+    const movedA = state.elements.find((e) => e.id === t.a)!
+    expect([movedA.x - a.x, movedA.y - a.y]).toEqual([300, 100])
+  })
+})
+
+it('perform runs a keyboard command on the selected node (touch toolbar)', () => {
+  let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+  const root = r.select!
+  r = addChild(r.elements, root, 'A')
+  const { api, state } = fakeApi(r.elements, [root])
+  const { result } = renderHook(() => useMindmap(api, labels))
+  act(() => result.current.perform({ type: 'toggleCollapse' }))
+  expect(nodeCount(state.elements)).toBe(1)
+  act(() => result.current.perform({ type: 'toggleCollapse' }))
+  act(() => result.current.perform({ type: 'addChild' }))
+  expect(nodeCount(state.elements)).toBe(3)
+})
+
+it('perform does nothing without a selected node or while a text is edited', () => {
+  const map = createMap([], { x: 0, y: 0 }, 'Raiz')
+  const { api } = fakeApi(map.elements, [map.select!], { id: 't' })
+  const { result } = renderHook(() => useMindmap(api, labels))
+  act(() => result.current.perform({ type: 'addChild' }))
+  expect(api.updateScene).not.toHaveBeenCalled()
+})
+
+it('Tab on a collapsed node expands it and adds the child after the hidden ones', () => {
+  let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+  const root = r.select!
+  r = addChild(r.elements, root, 'A')
+  const a = r.select!
+  const { api, state } = fakeApi(r.elements, [root])
+  const { result } = renderHook(() => useMindmap(api, labels))
+  act(() => result.current.perform({ type: 'toggleCollapse' }))
+  act(() => result.current.perform({ type: 'addChild' }))
+  const tree = [...readMaps(state.elements).values()][0]
+  expect(tree.root.children.map((c) => c.id)[0]).toBe(a)
+  expect(tree.root.children).toHaveLength(2)
+  expect(new Set(tree.root.children.map((c) => c.order)).size).toBe(2)
+  expect((metaOf(state.elements.find((e) => e.id === root)!) as { collapsed?: boolean }).collapsed).toBeFalsy()
+})
+
+it('a pasted script with # comments stays text (strict outline rule)', () => {
+  const { api } = fakeApi([], [])
+  const { result } = renderHook(() => useMindmap(api, labels))
+  let taken = true
+  act(() => {
+    taken = result.current.pasteOutline('# install deps\nnpm i\n# run\nnpm start', { x: 0, y: 0 }, 'F')
+  })
+  expect(taken).toBe(false)
+  expect(api.updateScene).not.toHaveBeenCalled()
+})

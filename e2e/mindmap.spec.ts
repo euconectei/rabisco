@@ -188,3 +188,102 @@ test('typing in the title field never acts on the selected node', async ({ page 
   const els = await savedElements(drive, page)
   expect(nodes(els)).toHaveLength(2)
 })
+
+const collapseKey = 'ControlOrMeta+Period'
+type NodeData = { parentId?: string | null; collapsed?: boolean; hidden?: unknown[] }
+const dataOf = (e: SavedElement) => e.customData!.rabisco as unknown as NodeData
+const centerOf = (e: SavedElement) => ({ x: e.x + e.width / 2, y: e.y + e.height / 2 })
+
+test('Ctrl/Cmd + . collapses a branch that survives a reload, and expands it back', async ({ page }) => {
+  const drive = await openNewDrawing(page)
+  await createMap(page)
+  await typeNode(page, 'Raiz')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Filho')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Neto')
+  await page.keyboard.press('ArrowLeft')
+  await page.keyboard.press('ArrowLeft')
+  await page.keyboard.press(collapseKey)
+  await expect.poll(async () => nodes(await savedElements(drive, page))).toHaveLength(1)
+  const root = nodes(await savedElements(drive, page))[0]
+  expect(dataOf(root).collapsed).toBe(true)
+  expect(dataOf(root).hidden!.length).toBeGreaterThanOrEqual(6) // 2 nodes, 2 texts, 2 links
+
+  await page.reload()
+  await page.getByRole('button', { name: 'Continuar como Tester' }).click()
+  await expect(page.locator('.excalidraw')).toBeVisible()
+  // The reopened drawing is scrolled to its content: the collapsed root sits in the middle.
+  const viewport = page.viewportSize()!
+  await page.mouse.click(viewport.width / 2 - 20, viewport.height / 2)
+  await page.keyboard.press(collapseKey)
+  await expect.poll(async () => byText(await savedElements(drive, page), 'Neto'), { timeout: 10_000 }).toBeDefined()
+  expect(nodes(await savedElements(drive, page))).toHaveLength(3)
+})
+
+test('dragging a node onto another moves its branch there, without overlaps', async ({ page }) => {
+  const drive = await openNewDrawing(page)
+  await createMap(page)
+  await typeNode(page, 'Raiz')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Um')
+  await page.keyboard.press('Enter')
+  await typeNode(page, 'Dois')
+  await page.keyboard.press('Enter')
+  await typeNode(page, 'Tres')
+  await page.keyboard.press('Escape')
+  const els = await savedElements(drive, page)
+  const from = centerOf(byText(els, 'Tres')!)
+  const to = centerOf(byText(els, 'Um')!)
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  await page.mouse.move(to.x, to.y, { steps: 12 })
+  await page.mouse.up()
+  await expect.poll(async () => {
+    const now = await savedElements(drive, page)
+    return dataOf(byText(now, 'Tres')!).parentId === byText(now, 'Um')!.id
+  }, { timeout: 10_000 }).toBe(true)
+  expect(overlapping(await savedElements(drive, page))).toBe(false)
+})
+
+async function paste(page: Page, text: string) {
+  await page.evaluate((value) => {
+    const data = new DataTransfer()
+    data.setData('text/plain', value)
+    document.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true }))
+  }, text)
+}
+
+test('pasting a 3-level list makes a map; pasting a phrase makes a plain text', async ({ page }) => {
+  const drive = await openNewDrawing(page)
+  await page.mouse.click(640, 360)
+  await paste(page, '- Viagem\n  - Roteiro\n    - Lisboa\n  - Malas')
+  await expect.poll(async () => nodes(await savedElements(drive, page)).length, { timeout: 10_000 }).toBe(4)
+  const els = await savedElements(drive, page)
+  expect(dataOf(byText(els, 'Lisboa')!).parentId).toBe(byText(els, 'Roteiro')!.id)
+
+  await page.mouse.click(200, 650)
+  await paste(page, 'uma frase qualquer')
+  await expect.poll(async () => (await savedElements(drive, page)).some((e) => e.type === 'text' && e.text === 'uma frase qualquer' && !e.containerId), { timeout: 10_000 }).toBe(true)
+  expect(nodes(await savedElements(drive, page))).toHaveLength(4)
+})
+
+test.describe('tablet', () => {
+  test.use({ hasTouch: true })
+
+  test('a tap on a node shows the touch toolbar, and "+ filho" adds a child', async ({ page }) => {
+    const drive = await openNewDrawing(page)
+    await createMap(page)
+    await typeNode(page, 'Raiz')
+    await page.keyboard.press('Escape')
+    const root = centerOf(nodes(await savedElements(drive, page))[0])
+    await page.mouse.click(200, 650) // deselect
+    await expect(page.getByRole('toolbar', { name: 'Ações do mapa mental' })).toHaveCount(0)
+    await page.touchscreen.tap(root.x, root.y)
+    const bar = page.getByRole('toolbar', { name: 'Ações do mapa mental' })
+    await expect(bar).toBeVisible()
+    await bar.getByRole('button', { name: '+ filho' }).tap()
+    await typeNode(page, 'Filho')
+    await expect.poll(async () => nodes(await savedElements(drive, page)).length, { timeout: 10_000 }).toBe(2)
+  })
+})

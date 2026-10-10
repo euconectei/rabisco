@@ -43,6 +43,7 @@ export const ptBR = {
     untitled: 'Sem título',
     listLabel: 'Seus desenhos',
     openFromDrive: 'Abrir do Drive',
+    importMarkdown: 'Importar markdown',
     loading: 'Carregando seus arquivos…',
     loadFailed: 'Não foi possível carregar seus arquivos.',
     retry: 'Tentar de novo',
@@ -98,6 +99,18 @@ export const ptBR = {
     placeHint: 'Clique onde o mapa deve começar (Esc cancela)',
     rootText: 'Ideia central',
     nodeText: 'Tópico',
+    defaultRoot: 'Mapa',
+    copyAsText: 'Copiar mapa como texto',
+    downloadMarkdown: 'Baixar .md',
+    saveMarkdownToDrive: 'Salvar .md no Drive',
+    touch: {
+      toolbar: 'Ações do mapa mental',
+      addChild: '+ filho',
+      addSibling: '+ irmão',
+      collapse: 'Recolher',
+      expand: 'Expandir',
+      delete: 'Apagar',
+    },
   },
   auth: {
     signIn: 'Entrar com Google',
@@ -121,6 +134,16 @@ export const ptBR = {
     linkUnseen: 'Novidades (há novidades)',
     menuItem: 'Novidades ({version})',
     sections: {
+      mindmapExtras: {
+        title: 'Mais jeitos de mexer no mapa mental',
+        items: [
+          'Recolha um ramo com Ctrl + . (Cmd + . no Mac) e expanda do mesmo jeito: o selo "+N" mostra quantos tópicos estão guardados.',
+          'Arraste um tópico para cima de outro para mudá-lo de lugar, com tudo o que está abaixo dele.',
+          'Cole uma lista ou títulos em markdown no quadro e ela vira um mapa. No menu, copie o mapa como texto, baixe o .md ou salve o .md no Drive.',
+          'Em "Meus arquivos", "Importar markdown" cria um desenho novo a partir de um arquivo .md.',
+          'No tablet, toque num tópico: uma barra com + filho, + irmão, recolher e apagar aparece acima dele.',
+        ],
+      },
       home: {
         title: 'Página inicial nova',
         items: [

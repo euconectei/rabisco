@@ -24,19 +24,21 @@ function withMeta(element: ExcalidrawElement, changes: Partial<NodeMeta>): Excal
   return update(element, { customData: { ...element.customData, rabisco: { ...meta, ...changes } } })
 }
 
-function mapOfNode(elements: readonly ExcalidrawElement[], nodeId: string): MindMap | null {
+export function mapOfNode(elements: readonly ExcalidrawElement[], nodeId: string): MindMap | null {
   for (const map of readMaps(elements).values()) if (map.byId.has(nodeId)) return map
   return null
 }
 
-const byId = (elements: readonly ExcalidrawElement[], id: string) => elements.find((e) => e.id === id)
+const BADGE_GAP = 8
+
+export const byId = (elements: readonly ExcalidrawElement[], id: string) => elements.find((e) => e.id === id)
 
 /**
  * A map link must really end at the child its metadata names. Copies (Ctrl+D, copy/paste, edits on
  * excalidraw.com) keep the original customData but Excalidraw binds them to the copied nodes, so
  * they are treated as plain arrows instead of hijacking the original map's links.
  */
-function isLinkOf(element: ExcalidrawElement, childIds: ReadonlySet<string>): string | null {
+export function isLinkOf(element: ExcalidrawElement, childIds: ReadonlySet<string>): string | null {
   const meta = metaOf(element)
   if (meta?.kind !== 'edge' || !childIds.has(meta.childId)) return null
   const end = (element as unknown as { endBinding?: { elementId?: string } | null }).endBinding?.elementId
@@ -89,11 +91,19 @@ export function branchElementIds(elements: readonly ExcalidrawElement[], nodeId:
   const map = mapOfNode(elements, nodeId)
   if (!map) return []
   const ids = new Set(branchIds(map, nodeId))
+  // Only the nodes' own badges: a pasted copy of a badge is a plain text elsewhere on the canvas.
+  const badgeIds = new Set(
+    elements.flatMap((e) => {
+      const meta = ids.has(e.id) ? metaOf(e) : null
+      return meta?.kind === 'node' && meta.badgeId ? [meta.badgeId] : []
+    }),
+  )
   return elements
     .filter((e) => {
       if (e.isDeleted) return false
       const container = (e as Mutable).containerId
-      return ids.has(e.id) || (container != null && ids.has(container)) || isLinkOf(e, ids) !== null
+      const badge = badgeIds.has(e.id)
+      return ids.has(e.id) || (container != null && ids.has(container)) || isLinkOf(e, ids) !== null || badge
     })
     .map((e) => e.id)
 }
@@ -159,6 +169,17 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
 
   return next.map((e) => {
     if (e.isDeleted) return e
+    const meta = metaOf(e)
+    const owner = meta?.kind === 'badge' ? moved.get(meta.nodeId)?.rect : undefined
+    if (meta?.kind === 'badge' && owner && (metaOf(owner) as NodeMeta).badgeId === e.id) {
+      const { rect } = moved.get(meta.nodeId)!
+      const right = sideOf(map, meta.nodeId) !== 'left'
+      return update(e, {
+        x: right ? rect.x + rect.width + BADGE_GAP : rect.x - e.width - BADGE_GAP,
+        y: rect.y + rect.height / 2 - e.height / 2,
+        strokeColor: rect.strokeColor,
+      })
+    }
     const container = (e as Mutable).containerId
     if (container && moved.has(container)) {
       const { dx, dy } = moved.get(container)!

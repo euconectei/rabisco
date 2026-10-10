@@ -45,6 +45,7 @@ export const en: Messages = {
     untitled: 'Untitled',
     listLabel: 'Your drawings',
     openFromDrive: 'Open from Drive',
+    importMarkdown: 'Import markdown',
     loading: 'Loading your files…',
     loadFailed: 'Could not load your files.',
     retry: 'Try again',
@@ -100,6 +101,18 @@ export const en: Messages = {
     placeHint: 'Click where the map should start (Esc cancels)',
     rootText: 'Central idea',
     nodeText: 'Topic',
+    defaultRoot: 'Map',
+    copyAsText: 'Copy map as text',
+    downloadMarkdown: 'Download .md',
+    saveMarkdownToDrive: 'Save .md to Drive',
+    touch: {
+      toolbar: 'Mind map actions',
+      addChild: '+ child',
+      addSibling: '+ sibling',
+      collapse: 'Collapse',
+      expand: 'Expand',
+      delete: 'Delete',
+    },
   },
   auth: {
     signIn: 'Sign in with Google',
@@ -123,6 +136,16 @@ export const en: Messages = {
     linkUnseen: 'News (something new)',
     menuItem: 'News ({version})',
     sections: {
+      mindmapExtras: {
+        title: 'More ways to work with mind maps',
+        items: [
+          'Collapse a branch with Ctrl + . (Cmd + . on a Mac) and expand it the same way: the "+N" badge shows how many topics are tucked away.',
+          'Drag a topic onto another to move it there, with everything below it.',
+          'Paste a markdown list or headings on the canvas and it becomes a map. From the menu, copy the map as text, download the .md or save the .md to Drive.',
+          'In "My files", "Import markdown" creates a new drawing from a .md file.',
+          'On a tablet, tap a topic: a bar with + child, + sibling, collapse and delete shows up above it.',
+        ],
+      },
       home: {
         title: 'A new home page',
         items: [

@@ -24,3 +24,12 @@ it('leaves combinations and other keys to Excalidraw and the browser', () => {
   expect(actionForKey(key('a'))).toBeNull()
   expect(actionForKey(key('Escape'))).toBeNull()
 })
+
+it.each([[{ ctrlKey: true }], [{ metaKey: true }]])('Ctrl/Cmd + . toggles collapse (%o)', (mods) => {
+  expect(actionForKey(key('.', mods))).toEqual({ type: 'toggleCollapse' })
+})
+
+it('a plain "." or Ctrl+Shift+. is not the collapse shortcut', () => {
+  expect(actionForKey(key('.'))).toBeNull()
+  expect(actionForKey(key('.', { ctrlKey: true, shiftKey: true }))).toBeNull()
+})

@@ -14,6 +14,11 @@ export interface NodeMeta {
   order: number
   side: Side | null // first-level nodes only; deeper levels inherit
   colorAuto: boolean
+  /** Collapsed: the descendants' elements live (as copies) in `hidden` and are deleted from the scene. */
+  collapsed?: boolean
+  hidden?: ExcalidrawElement[]
+  /** The id of this node's own "+N" badge: copies of a badge (Ctrl+D, paste) are plain texts. */
+  badgeId?: string
 }
 
 export interface EdgeMeta {
@@ -22,7 +27,14 @@ export interface EdgeMeta {
   childId: string
 }
 
-export type RabiscoMeta = NodeMeta | EdgeMeta
+/** The small "+N" text next to a collapsed node. */
+export interface BadgeMeta {
+  kind: 'badge'
+  mapId: string
+  nodeId: string
+}
+
+export type RabiscoMeta = NodeMeta | EdgeMeta | BadgeMeta
 
 export interface TreeNode {
   id: string
@@ -43,7 +55,7 @@ export function metaOf(element: ExcalidrawElement): RabiscoMeta | null {
   const meta = (element.customData as { rabisco?: unknown } | undefined)?.rabisco
   if (!meta || typeof meta !== 'object') return null
   const { kind, mapId } = meta as Record<string, unknown>
-  if (typeof mapId !== 'string' || (kind !== 'node' && kind !== 'edge')) return null
+  if (typeof mapId !== 'string' || (kind !== 'node' && kind !== 'edge' && kind !== 'badge')) return null
   return meta as RabiscoMeta
 }
 
@@ -115,4 +127,14 @@ export function branchIds(map: MindMap, nodeId: string): string[] {
     stack.push(...current.children)
   }
   return ids
+}
+
+/** Nodes hidden under a collapsed node, at any depth (nested collapsed nodes count theirs too). */
+export function hiddenCount(meta: NodeMeta): number {
+  let count = 0
+  for (const element of meta.hidden ?? []) {
+    const inner = metaOf(element)
+    if (inner?.kind === 'node' && inner.nodeId === element.id) count += 1 + hiddenCount(inner)
+  }
+  return count
 }
