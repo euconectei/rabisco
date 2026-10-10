@@ -3,7 +3,8 @@ import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import { colorForBranch, ROOT_COLOR } from './colors'
 import { createEdgeElement, createNodeElements, newId, nodeSize, withBoundEdge } from './elements'
 import { assignedSides, layoutMap, LEVEL_GAP, SIBLING_GAP, type Point, type Size } from './layout'
-import { branchIds, layoutOf, metaOf, readMaps, sideOf, styleOf, type MapStyle, type MindMap, type NodeMeta, type Side } from './model'
+import { createKnob, createLineEdge, createUnderline, knobGeometry, lineSiblingGap, LINE_NODE_PADDING_X, LINE_NODE_PADDING_Y, lineEdgeGeometry, underlineGeometry } from './lines'
+import { branchIds, hiddenCount, layoutOf, metaOf, readMaps, sideOf, styleOf, type MapStyle, type MindMap, type NodeMeta, type Side } from './model'
 
 export interface CommandResult {
   elements: ExcalidrawElement[]
@@ -207,21 +208,35 @@ export function navigate(elements: readonly ExcalidrawElement[], nodeId: string,
 }
 
 /** Re-positions and re-colors one map. Elements outside that map keep their identity. */
+// relayout and layoutDrift must space siblings alike, or a lines-style map always looks drifted and
+// the heal re-lays it out forever.
+const siblingGapFor = (style: MapStyle): number => (style === 'lines' ? lineSiblingGap() : SIBLING_GAP)
+
 export function relayout(elements: readonly ExcalidrawElement[], mapId: string): ExcalidrawElement[] {
   const deduped = dedupeLinksAndDecorations(elements)
   const map = readMaps(deduped).get(mapId)
   if (!map) return [...deduped]
   const style = styleOf(deduped, mapId)
   const layout = layoutOf(deduped, mapId)
+  const textByContainer = new Map<string, ExcalidrawElement>()
+  for (const e of deduped) {
+    const container = (e as Mutable).containerId
+    if (container && !e.isDeleted) textByContainer.set(container, e)
+  }
   const rects = new Map(deduped.filter((e) => map.byId.has(e.id)).map((e) => [e.id, e]))
-  const sizes = new Map<string, Size>([...rects].map(([id, e]) => [id, nodeSize(e)]))
+  // In lines style the node is only a bit larger than its text, so its size comes from the bound text.
+  const linesSize = (e: ExcalidrawElement): Size => {
+    const text = textByContainer.get(e.id)
+    return { width: (text?.width ?? 0) + LINE_NODE_PADDING_X * 2, height: (text?.height ?? 0) + LINE_NODE_PADDING_Y * 2 }
+  }
+  const sizes = new Map<string, Size>([...rects].map(([id, e]) => [id, style === 'lines' ? linesSize(e) : nodeSize(e)]))
   const root = rects.get(map.root.id)!
-  // Free layout keeps nodes where the user put them (positions come from the scene); Tarefa 4
-  // formalizes the rest (new-child placement, drag). The automatic layouts re-derive positions.
+  // Free layout keeps nodes where the user put them (positions come from the scene). The automatic
+  // layouts re-derive positions; lines style spaces siblings further apart (24 px).
   const positions =
     layout === 'free'
       ? new Map([...rects].map(([id, e]) => [id, { x: e.x, y: e.y }]))
-      : layoutMap(map, sizes, { x: root.x, y: root.y }, { layout, siblingGap: SIBLING_GAP })
+      : layoutMap(map, sizes, { x: root.x, y: root.y }, { layout, siblingGap: siblingGapFor(style) })
   // Only 'both' persists the side each first-level branch landed on; 'right' ignores (but keeps) it
   // and 'free' never touches it.
   const sides = layout === 'both' ? assignedSides(map, positions) : null
@@ -238,43 +253,64 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
   })
 
   const mapNodeIds = new Set(map.byId.keys())
+  // The color each node (and its decorations/links) uses: the branch color, or the manually chosen one.
+  const nodeColor = new Map<string, string>()
   const moved = new Map<string, { dx: number; dy: number; rect: ExcalidrawElement }>()
   const next = deduped.map((e) => {
     if (!map.byId.has(e.id) || e.isDeleted) return e
     const meta = metaOf(e) as NodeMeta
     const position = positions.get(e.id)!
     const color = meta.colorAuto ? branchColor.get(e.id)! : e.strokeColor
+    nodeColor.set(e.id, color)
     const side = sides?.get(e.id) ?? meta.side
-    const updated = update(e, {
-      x: position.x,
-      y: position.y,
-      strokeColor: color,
-      customData: { ...e.customData, rabisco: { ...meta, side } },
-    })
+    const updated =
+      style === 'lines'
+        ? update(e, {
+            x: position.x,
+            y: position.y,
+            width: sizes.get(e.id)!.width,
+            height: sizes.get(e.id)!.height,
+            strokeColor: 'transparent',
+            backgroundColor: 'transparent',
+            boundElements: (e.boundElements ?? []).filter((b) => b.type !== 'arrow'),
+            customData: { ...e.customData, rabisco: { ...meta, side } },
+          })
+        : update(e, {
+            x: position.x,
+            y: position.y,
+            strokeColor: color,
+            customData: { ...e.customData, rabisco: { ...meta, side } },
+          })
     moved.set(e.id, { dx: position.x - e.x, dy: position.y - e.y, rect: updated })
     return updated
   })
 
-  return next.map((e) => {
+  const positioned = next.map((e) => {
     if (e.isDeleted) return e
     const meta = metaOf(e)
-    const owner = meta?.kind === 'badge' ? moved.get(meta.nodeId)?.rect : undefined
-    if (meta?.kind === 'badge' && owner && (metaOf(owner) as NodeMeta).badgeId === e.id) {
+    if (meta?.kind === 'badge') {
+      const owner = moved.get(meta.nodeId)?.rect
+      if (!owner || (metaOf(owner) as NodeMeta).badgeId !== e.id) return e
       const { rect } = moved.get(meta.nodeId)!
       const right = sideOf(map, meta.nodeId) !== 'left'
+      // In lines style the badge sits beside the knob, i.e. at the underline level.
+      const y = style === 'lines' ? rect.y + rect.height - e.height / 2 : rect.y + rect.height / 2 - e.height / 2
       return update(e, {
         x: right ? rect.x + rect.width + BADGE_GAP : rect.x - e.width - BADGE_GAP,
-        y: rect.y + rect.height / 2 - e.height / 2,
+        y,
         strokeColor: rect.strokeColor,
       })
     }
     const container = (e as Mutable).containerId
     if (container && moved.has(container)) {
+      const { rect } = moved.get(container)!
+      if (style === 'lines') {
+        return update(e, { x: rect.x + LINE_NODE_PADDING_X, y: rect.y + LINE_NODE_PADDING_Y, textAlign: 'left' })
+      }
       const { dx, dy } = moved.get(container)!
       return dx || dy ? update(e, { x: e.x + dx, y: e.y + dy }) : e
     }
-    // Lines-style links are loose curved lines: their geometry is recomputed separately (see lines.ts),
-    // not repositioned here like a bound arrow.
+    // Lines-style links are loose curved lines recomputed separately (see below), not repositioned here.
     if (style !== 'boxes') return e
     const childId = isLinkOf(e, mapNodeIds, style)
     if (!childId || childId === map.root.id) return e
@@ -298,6 +334,71 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
       strokeColor: branchColor.get(childId) ?? e.strokeColor,
     })
   })
+
+  if (style !== 'lines') return positioned
+  // Lines style: rebuild the derived links/decorations from the moved nodes, keeping the ids of the
+  // ones already there (collapse/expand restore them by id) and dropping bound arrows left by boxes.
+  const existingByKey = new Map<string, ExcalidrawElement>()
+  for (const e of positioned) {
+    if (e.isDeleted) continue
+    const m = metaOf(e)
+    if (!m || m.mapId !== mapId) continue
+    const bound = (e as unknown as { endBinding?: { elementId?: string } | null }).endBinding?.elementId
+    if (m.kind === 'underline' || m.kind === 'knob') {
+      const key = `${m.kind}\u0000${m.mapId}\u0000${m.nodeId}`
+      if (!existingByKey.has(key)) existingByKey.set(key, e)
+    } else if (m.kind === 'edge' && !bound) {
+      const key = `edge\u0000${m.mapId}\u0000${m.childId}`
+      if (!existingByKey.has(key)) existingByKey.set(key, e)
+    }
+  }
+  const derived: ExcalidrawElement[] = []
+  const nodes = new Map([...moved].map(([id, m]) => [id, m.rect]))
+  const knobSide = (nodeId: string): Side => (layout === 'right' ? 'right' : sideOf(map, nodeId) ?? 'right')
+  const covered = new Set<string>()
+  for (const treeNode of map.byId.values()) {
+    const node = nodes.get(treeNode.id)!
+    const nodeMeta = metaOf(node) as NodeMeta
+    const color = nodeColor.get(treeNode.id)!
+    if (treeNode.id !== map.root.id) {
+      const key = `underline\u0000${mapId}\u0000${treeNode.id}`
+      covered.add(key)
+      const existing = existingByKey.get(key)
+      derived.push(existing ? update(existing, { ...underlineGeometry(node), strokeColor: color }) : createUnderline(node, color, mapId))
+      if (treeNode.children.length > 0 || hiddenCount(nodeMeta) > 0) {
+        const knobKey = `knob\u0000${mapId}\u0000${treeNode.id}`
+        covered.add(knobKey)
+        const side = knobSide(treeNode.id)
+        const existingKnob = existingByKey.get(knobKey)
+        derived.push(existingKnob ? update(existingKnob, { ...knobGeometry(node, side), strokeColor: color }) : createKnob(node, color, mapId, side, true)!)
+      }
+    }
+    for (const child of treeNode.children) {
+      const key = `edge\u0000${mapId}\u0000${child.id}`
+      covered.add(key)
+      const childNode = nodes.get(child.id)!
+      const existingEdge = existingByKey.get(key)
+      derived.push(existingEdge ? update(existingEdge, { ...lineEdgeGeometry(node, childNode), strokeColor: nodeColor.get(child.id)! }) : createLineEdge(mapId, node, childNode, nodeColor.get(child.id)!))
+    }
+  }
+  // Keep extra underlines/knobs already in the scene (e.g. a knob on a leaf left by an external edit),
+  // re-anchoring them to their node; orphans and bound arrows are dropped.
+  for (const e of positioned) {
+    if (e.isDeleted) continue
+    const m = metaOf(e)
+    if (!m || m.mapId !== mapId || (m.kind !== 'underline' && m.kind !== 'knob')) continue
+    const key = `${m.kind}\u0000${m.mapId}\u0000${m.nodeId}`
+    if (covered.has(key)) continue
+    const node = nodes.get(m.nodeId)
+    if (!node) continue
+    const color = nodeColor.get(m.nodeId) ?? e.strokeColor
+    derived.push(m.kind === 'underline' ? update(e, { ...underlineGeometry(node), strokeColor: color }) : update(e, { ...knobGeometry(node, knobSide(m.nodeId)), strokeColor: color }))
+  }
+  const kept = positioned.filter((e) => {
+    const m = metaOf(e)
+    return !m || m.mapId !== mapId || (m.kind !== 'edge' && m.kind !== 'underline' && m.kind !== 'knob')
+  })
+  return [...derived, ...kept]
 }
 
 /** Whether a map's nodes are away from where the layout puts them (undo, redo, paste, external edits). */
@@ -310,7 +411,7 @@ export function layoutDrift(elements: readonly ExcalidrawElement[], mapId: strin
   const rects = new Map(elements.filter((e) => map.byId.has(e.id) && !e.isDeleted).map((e) => [e.id, e]))
   const root = rects.get(map.root.id)
   if (!root) return false
-  const positions = layoutMap(map, new Map([...rects].map(([id, e]) => [id, nodeSize(e)])), { x: root.x, y: root.y }, { layout, siblingGap: SIBLING_GAP })
+  const positions = layoutMap(map, new Map([...rects].map(([id, e]) => [id, nodeSize(e)])), { x: root.x, y: root.y }, { layout, siblingGap: siblingGapFor(styleOf(elements, mapId)) })
   for (const [id, position] of positions) {
     const current = rects.get(id)
     if (current && (Math.abs(current.x - position.x) > 0.5 || Math.abs(current.y - position.y) > 0.5)) return true
