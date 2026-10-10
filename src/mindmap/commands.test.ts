@@ -22,6 +22,9 @@ function noOverlap(els: readonly ExcalidrawElement[]) {
   return true
 }
 
+const withLayout = (els: readonly ExcalidrawElement[], rootId: string, layout: string): ExcalidrawElement[] =>
+  els.map((e) => (e.id === rootId ? ({ ...e, customData: { rabisco: { ...metaOf(e), layout } } } as ExcalidrawElement) : e))
+
 function threeChildren() {
   let r = createMap([], { x: 0, y: 0 }, 'Raiz')
   const root = r.select!
@@ -209,4 +212,47 @@ it('a new map is born explicit: both sides, boxes style', () => {
   const rabisco = metaOf(rect(elements, select!)) as { layout?: unknown; style?: unknown }
   expect(rabisco.layout).toBe('both')
   expect(rabisco.style).toBe('boxes')
+})
+
+it('right layout: relayout puts every first-level branch to the right and keeps its side', () => {
+  const t = threeChildren()
+  const mapId = metaOf(rect(t.elements, t.root))!.mapId
+  const after = relayout(withLayout(t.elements, t.root, 'right'), mapId)
+  const rootX = rect(after, t.root).x
+  for (const id of [t.a, t.b, t.c]) expect(rect(after, id).x).toBeGreaterThan(rootX)
+  expect(noOverlap(after)).toBe(true)
+  expect((metaOf(rect(after, t.a)) as { side: unknown }).side).toBe('right')
+  expect((metaOf(rect(after, t.b)) as { side: unknown }).side).toBe('left')
+})
+
+it('switching right → both returns each first-level branch to its original side', () => {
+  const t = threeChildren()
+  const mapId = metaOf(rect(t.elements, t.root))!.mapId
+  const right = relayout(withLayout(t.elements, t.root, 'right'), mapId)
+  expect((metaOf(rect(right, t.b)) as { side: unknown }).side).toBe('left')
+  const both = relayout(withLayout(t.elements, t.root, 'both'), mapId)
+  expect([t.a, t.b, t.c].map((id) => (metaOf(rect(both, id)) as { side: unknown }).side)).toEqual(['right', 'left', 'right'])
+})
+
+it('right layout: layoutDrift detects a manual move and relayout restores it', () => {
+  const t = threeChildren()
+  const mapId = metaOf(rect(t.elements, t.root))!.mapId
+  const right = relayout(withLayout(t.elements, t.root, 'right'), mapId)
+  expect(layoutDrift(right, mapId)).toBe(false)
+  const moved = right.map((e) => (e.id === t.b ? ({ ...e, y: e.y + 37 } as ExcalidrawElement) : e))
+  expect(layoutDrift(moved, mapId)).toBe(true)
+  const restored = relayout(moved, mapId)
+  expect(rect(restored, t.b).y).toBe(rect(right, t.b).y)
+})
+
+it('right layout: navigate goes to the first child and back to the parent', () => {
+  const t = threeChildren()
+  const r = addChild(t.elements, t.a, 'A1')
+  const a1 = r.select!
+  const right = withLayout(r.elements, t.root, 'right')
+  expect(navigate(right, t.root, 'ArrowRight')).toBe(t.a)
+  expect(navigate(right, t.a, 'ArrowRight')).toBe(a1)
+  expect(navigate(right, a1, 'ArrowLeft')).toBe(t.a)
+  expect(navigate(right, t.a, 'ArrowLeft')).toBe(t.root)
+  expect(navigate(right, t.root, 'ArrowLeft')).toBeNull()
 })
