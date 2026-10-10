@@ -2,8 +2,8 @@ import { newElementWith } from '@excalidraw/excalidraw'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import { colorForBranch, ROOT_COLOR } from './colors'
 import { createEdgeElement, createNodeElements, newId, nodeSize, withBoundEdge } from './elements'
-import { assignedSides, layoutMap, type Point, type Size } from './layout'
-import { branchIds, metaOf, readMaps, sideOf, styleOf, type MapStyle, type MindMap, type NodeMeta, type Side } from './model'
+import { assignedSides, layoutMap, SIBLING_GAP, type Point, type Size } from './layout'
+import { branchIds, layoutOf, metaOf, readMaps, sideOf, styleOf, type MapStyle, type MindMap, type NodeMeta, type Side } from './model'
 
 export interface CommandResult {
   elements: ExcalidrawElement[]
@@ -155,13 +155,16 @@ export function navigate(elements: readonly ExcalidrawElement[], nodeId: string,
   const map = mapOfNode(elements, nodeId)
   if (!map) return null
   const current = map.byId.get(nodeId)!
+  const layout = layoutOf(elements, map.mapId)
   if (key === 'ArrowUp' || key === 'ArrowDown') {
     if (current.parentId === null) return null
     const siblings = map.byId.get(current.parentId)!.children
-    const sameSide = current.depth === 1 ? siblings.filter((s) => sideOf(map, s.id) === sideOf(map, nodeId)) : siblings
+    const sameSide = current.depth === 1 && layout === 'both' ? siblings.filter((s) => sideOf(map, s.id) === sideOf(map, nodeId)) : siblings
     const index = sameSide.findIndex((s) => s.id === nodeId)
     return sameSide[index + (key === 'ArrowDown' ? 1 : -1)]?.id ?? null
   }
+  // In 'right' and 'free' the side has no visual meaning: → is the first child, ← the parent.
+  if (layout !== 'both') return key === 'ArrowRight' ? (current.children[0]?.id ?? null) : current.parentId
   if (current.parentId === null) {
     const want: Side = key === 'ArrowRight' ? 'right' : 'left'
     return current.children.find((child) => sideOf(map, child.id) === want)?.id ?? null
@@ -177,11 +180,19 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
   const map = readMaps(deduped).get(mapId)
   if (!map) return [...deduped]
   const style = styleOf(deduped, mapId)
+  const layout = layoutOf(deduped, mapId)
   const rects = new Map(deduped.filter((e) => map.byId.has(e.id)).map((e) => [e.id, e]))
   const sizes = new Map<string, Size>([...rects].map(([id, e]) => [id, nodeSize(e)]))
   const root = rects.get(map.root.id)!
-  const positions = layoutMap(map, sizes, { x: root.x, y: root.y })
-  const sides = assignedSides(map, positions)
+  // Free layout keeps nodes where the user put them (positions come from the scene); Tarefa 4
+  // formalizes the rest (new-child placement, drag). The automatic layouts re-derive positions.
+  const positions =
+    layout === 'free'
+      ? new Map([...rects].map(([id, e]) => [id, { x: e.x, y: e.y }]))
+      : layoutMap(map, sizes, { x: root.x, y: root.y }, { layout, siblingGap: SIBLING_GAP })
+  // Only 'both' persists the side each first-level branch landed on; 'right' ignores (but keeps) it
+  // and 'free' never touches it.
+  const sides = layout === 'both' ? assignedSides(map, positions) : null
 
   const branchColor = new Map<string, string>([[map.root.id, ROOT_COLOR]])
   map.root.children.forEach((child, index) => {
@@ -201,7 +212,7 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
     const meta = metaOf(e) as NodeMeta
     const position = positions.get(e.id)!
     const color = meta.colorAuto ? branchColor.get(e.id)! : e.strokeColor
-    const side = sides.get(e.id) ?? meta.side
+    const side = sides?.get(e.id) ?? meta.side
     const updated = update(e, {
       x: position.x,
       y: position.y,
@@ -237,7 +248,8 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
     if (!childId || childId === map.root.id) return e
     const child = moved.get(childId)!.rect
     const parent = moved.get(map.byId.get(childId)!.parentId!)!.rect
-    const right = sideOf(map, childId) !== 'left'
+    // In 'right' (and 'free') the stored side is not the visual side, so use the actual position.
+    const right = layout === 'both' ? sideOf(map, childId) !== 'left' : child.x >= parent.x + parent.width
     const start = { x: right ? parent.x + parent.width : parent.x, y: parent.y + parent.height / 2 }
     const end = { x: right ? child.x : child.x + child.width, y: child.y + child.height / 2 }
     const dx = end.x - start.x
@@ -260,10 +272,13 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
 export function layoutDrift(elements: readonly ExcalidrawElement[], mapId: string): boolean {
   const map = readMaps(elements).get(mapId)
   if (!map) return false
+  const layout = layoutOf(elements, mapId)
+  // Free maps keep the user's positions, so nothing can "drift" (Tarefa 4 formalizes the layout).
+  if (layout === 'free') return false
   const rects = new Map(elements.filter((e) => map.byId.has(e.id) && !e.isDeleted).map((e) => [e.id, e]))
   const root = rects.get(map.root.id)
   if (!root) return false
-  const positions = layoutMap(map, new Map([...rects].map(([id, e]) => [id, nodeSize(e)])), { x: root.x, y: root.y })
+  const positions = layoutMap(map, new Map([...rects].map(([id, e]) => [id, nodeSize(e)])), { x: root.x, y: root.y }, { layout, siblingGap: SIBLING_GAP })
   for (const [id, position] of positions) {
     const current = rects.get(id)
     if (current && (Math.abs(current.x - position.x) > 0.5 || Math.abs(current.y - position.y) > 0.5)) return true
