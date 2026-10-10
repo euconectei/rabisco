@@ -189,6 +189,15 @@ export const en: Messages = {
           'On a tablet, tap a topic: a bar with + child, + sibling, collapse and delete shows up above it.',
         ],
       },
+      mindmapLayouts: {
+        title: 'Arrange your map your way',
+        items: [
+          'With a topic selected, the "Organize" button switches the map arrangement: Both sides, To the right or Free.',
+          'In the Free arrangement, drag a topic wherever you like and the whole branch follows.',
+          'Pick a style too: Boxes or Lines, with a logic-chart look.',
+          'Each map keeps its own arrangement and style, without affecting the others.',
+        ],
+      },
       home: {
         title: 'A new home page',
         items: [

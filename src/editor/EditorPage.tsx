@@ -1,4 +1,4 @@
-import { CaptureUpdateAction, Excalidraw, Footer, MainMenu, sceneCoordsToViewportCoords, viewportCoordsToSceneCoords } from '@excalidraw/excalidraw'
+import { CaptureUpdateAction, Excalidraw, Footer, MainMenu, newElementWith, sceneCoordsToViewportCoords, viewportCoordsToSceneCoords } from '@excalidraw/excalidraw'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import '@excalidraw/excalidraw/index.css'
@@ -11,7 +11,7 @@ import { useI18n } from '../i18n/useI18n'
 import { ExportImageDialog } from '../export/ExportImageDialog'
 import { findNodeOf, type CommandResult } from '../mindmap/commands'
 import { exportableMap, mapToOutline, outlineToMarkdown } from '../mindmap/markdown'
-import { layoutOf, readMaps, styleOf, type MapLayout, type MapStyle } from '../mindmap/model'
+import { layoutOf, metaOf, readMaps, styleOf, type MapLayout, type MapStyle, type NodeMeta } from '../mindmap/model'
 import { OrganizePanel } from '../mindmap/OrganizePanel'
 import { setLayout, setStyle } from '../mindmap/switchStyle'
 import { toolbarPosition, touchTarget, TouchToolbar, useSettled, type TouchTarget } from '../mindmap/TouchToolbar'
@@ -79,10 +79,18 @@ function EditorScreen({ fileId }: { fileId: string }) {
   useEffect(() => {
     if (import.meta.env.VITE_E2E !== '1') return
     if (!api) return
-    window.__rabiscoScene = () => ({
-      elements: api.getSceneElements(),
-      selection: Object.entries(api.getAppState().selectedElementIds).flatMap(([id, on]) => (on ? [id] : [])),
-    })
+    window.__rabiscoScene = () => {
+      const state = api.getAppState()
+      return {
+        elements: api.getSceneElements(),
+        selection: Object.entries(state.selectedElementIds).flatMap(([id, on]) => (on ? [id] : [])),
+        scrollX: state.scrollX,
+        scrollY: state.scrollY,
+        zoom: state.zoom.value,
+        offsetLeft: state.offsetLeft,
+        offsetTop: state.offsetTop,
+      }
+    }
     window.__rabiscoSetLayout = (layout: MapLayout) => {
       let next: readonly ExcalidrawElement[] = api.getSceneElements()
       for (const mapId of [...readMaps(next).keys()]) next = setLayout(next, mapId, layout).elements
@@ -93,10 +101,25 @@ function EditorScreen({ fileId }: { fileId: string }) {
       for (const mapId of [...readMaps(next).keys()]) next = setStyle(next, mapId, style).elements
       api.updateScene({ elements: next, captureUpdate: CaptureUpdateAction.IMMEDIATELY })
     }
+    // Simulates a manual color change on a node (colorAuto: false), so the E2E can exercise the
+    // boxes → lines → boxes color round trip without Excalidraw's own color picker.
+    window.__rabiscoSetColor = (nodeId: string, strokeColor: string, backgroundColor: string) => {
+      const next = api.getSceneElements().map((e) => {
+        if (e.id !== nodeId) return e
+        const meta = metaOf(e) as NodeMeta
+        return newElementWith(e as never, {
+          strokeColor,
+          backgroundColor,
+          customData: { ...e.customData, rabisco: { ...meta, colorAuto: false } },
+        } as never) as unknown as ExcalidrawElement
+      })
+      api.updateScene({ elements: next, captureUpdate: CaptureUpdateAction.IMMEDIATELY })
+    }
     return () => {
       delete window.__rabiscoScene
       delete window.__rabiscoSetLayout
       delete window.__rabiscoSetStyle
+      delete window.__rabiscoSetColor
     }
   }, [api])
   const onChange = useCallback<NonNullable<Parameters<typeof Excalidraw>[0]['onChange']>>(
