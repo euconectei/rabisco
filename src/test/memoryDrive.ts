@@ -4,6 +4,8 @@ import { DriveError } from '../drive/errors'
 interface StoredFile {
   meta: DriveFileMeta
   content: string
+  /** Binary content (an exported PNG); `content` is empty then. */
+  blob?: Blob
   thumbnail?: DriveThumbnail
 }
 
@@ -64,10 +66,16 @@ export function memoryDrive(initial: Array<{ id: string; name: string; content: 
       bump(file, false)
       return { ...file.meta }
     }),
-    createSibling: vi.fn(async (name: string, content: string, _mime: string, nearFileId: string) => {
+    createSibling: vi.fn(async (name: string, content: string | Blob, _mime: string, nearFileId: string) => {
       const parents = files.get(nearFileId)?.meta.parents ?? ['folder-1']
+      // Same rule as the real client: a taken name becomes "name (2).ext", "(3)"…
+      const taken = (candidate: string) => [...files.values()].some((f) => f.meta.name === candidate && f.meta.parents?.[0] === parents[0])
+      const dot = name.lastIndexOf('.')
+      let unique = name
+      for (let n = 2; taken(unique); n++) unique = dot > 0 ? `${name.slice(0, dot)} (${n})${name.slice(dot)}` : `${name} (${n})`
       const id = `file-${nextId++}`
-      put(id, name, content, '1', parents)
+      put(id, unique, typeof content === 'string' ? content : '', '1', parents)
+      if (typeof content !== 'string') find(id).blob = content
       return { ...find(id).meta }
     }),
   } satisfies DriveClient

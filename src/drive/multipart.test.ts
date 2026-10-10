@@ -19,3 +19,14 @@ it('never uses a boundary that appears inside the content', () => {
     expect(body.split(`--${boundary}`)).toHaveLength(4)
   }
 })
+
+it('keeps binary content byte for byte in a Blob body', async () => {
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff])
+  const { body, contentType } = buildMultipart({ name: 'Mapa.png' }, new Blob([png], { type: 'image/png' }), 'image/png')
+  const boundary = contentType.split('boundary=')[1]
+  expect(body).toBeInstanceOf(Blob)
+  const bytes = new Uint8Array(await (body as Blob).arrayBuffer())
+  const head = new TextEncoder().encode(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n{"name":"Mapa.png"}\r\n--${boundary}\r\nContent-Type: image/png\r\n\r\n`)
+  const tail = new TextEncoder().encode(`\r\n--${boundary}--`)
+  expect(bytes).toEqual(new Uint8Array([...head, ...png, ...tail]))
+})

@@ -30,7 +30,9 @@ export interface FakeFile {
   /** Like Drive: changes only when the content changes (renames bump `version` only). */
   headRevisionId: string
   modifiedTime: string
+  /** The content as UTF-8 text; `bytes` holds it exactly (binary uploads such as PNGs). */
   content: string
+  bytes: Buffer
   thumbnail?: { image: string; mimeType: string }
   trashed: boolean
 }
@@ -49,7 +51,8 @@ export class FakeDrive {
     return new Date(this.clock).toISOString()
   }
 
-  add(file: { name: string; content: string; mimeType?: string; parents?: string[] }): FakeFile {
+  add(file: { name: string; content: string | Buffer; mimeType?: string; parents?: string[] }): FakeFile {
+    const bytes = typeof file.content === 'string' ? Buffer.from(file.content, 'utf8') : file.content
     const created: FakeFile = {
       id: `fake-${this.seq++}`,
       name: file.name,
@@ -58,7 +61,8 @@ export class FakeDrive {
       version: 1,
       headRevisionId: `rev-${this.seq}-1`,
       modifiedTime: this.tick(),
-      content: file.content,
+      content: bytes.toString('utf8'),
+      bytes,
       trashed: false,
     }
     this.files.set(created.id, created)
@@ -69,6 +73,7 @@ export class FakeDrive {
   editExternally(id: string, content: string): void {
     const file = this.files.get(id)!
     file.content = content
+    file.bytes = Buffer.from(content, 'utf8')
     file.version += 1
     file.headRevisionId = `rev-${id}-${file.version}`
     file.modifiedTime = this.tick()
@@ -89,11 +94,12 @@ export class FakeDrive {
     }
   }
 
-  private static parseMultipart(contentType: string, body: string): { metadata: Record<string, unknown>; content: string } {
+  // Works on the raw bytes (latin1 keeps one char per byte), so binary uploads survive intact.
+  private static parseMultipart(contentType: string, body: Buffer): { metadata: Record<string, unknown>; content: Buffer } {
     const boundary = contentType.split('boundary=')[1]
-    const parts = body.split(`--${boundary}`).slice(1, -1)
-    const payload = (part: string) => part.slice(part.indexOf('\r\n\r\n') + 4, part.lastIndexOf('\r\n'))
-    return { metadata: JSON.parse(payload(parts[0])) as Record<string, unknown>, content: payload(parts[1]) }
+    const parts = body.toString('latin1').split(`--${boundary}`).slice(1, -1)
+    const payload = (part: string) => Buffer.from(part.slice(part.indexOf('\r\n\r\n') + 4, part.lastIndexOf('\r\n')), 'latin1')
+    return { metadata: JSON.parse(payload(parts[0]).toString('utf8')) as Record<string, unknown>, content: payload(parts[1]) }
   }
 
   async handle(route: Route): Promise<void> {
@@ -115,6 +121,12 @@ export class FakeDrive {
         const name = query.match(/name='([^']+)'/)?.[1]
         return route.fulfill({ json: { files: all.filter((f) => f.mimeType === FOLDER_MIME && f.name === name).map((f) => ({ id: f.id })) } })
       }
+      // Name lookup in a folder (unique sibling names): name='…' and '<parent>' in parents.
+      const lookup = query.match(/^name='((?:[^'\\]|\\.)*)' and '([^']+)' in parents/)
+      if (lookup) {
+        const name = lookup[1].replace(/\\(.)/g, '$1')
+        return route.fulfill({ json: { files: all.filter((f) => f.name === name && f.parents.includes(lookup[2])).map((f) => ({ id: f.id })) } })
+      }
       const files = all.filter((f) => f.mimeType !== FOLDER_MIME).sort((a, b) => b.modifiedTime.localeCompare(a.modifiedTime))
       return route.fulfill({ json: { files: files.map((f) => this.meta(f)) } })
     }
@@ -123,22 +135,23 @@ export class FakeDrive {
       return route.fulfill({ json: { id: this.add({ name: body.name, mimeType: body.mimeType, content: '' }).id } })
     }
     if (method === 'POST' && isUpload) {
-      const { metadata, content } = FakeDrive.parseMultipart(request.headers()['content-type'], request.postData() ?? '')
+      const { metadata, content } = FakeDrive.parseMultipart(request.headers()['content-type'], request.postDataBuffer() ?? Buffer.alloc(0))
       const file = this.add({ name: String(metadata.name), mimeType: String(metadata.mimeType), parents: metadata.parents as string[], content })
       return route.fulfill({ json: this.meta(file) })
     }
     const file = id ? this.files.get(id) : undefined
     if (!file) return notFound()
     if (method === 'GET') {
-      if (url.searchParams.get('alt') === 'media') return route.fulfill({ body: file.content, contentType: 'application/json' })
+      if (url.searchParams.get('alt') === 'media') return route.fulfill({ body: file.bytes, contentType: file.mimeType })
       if (url.searchParams.get('fields') === 'id,trashed') return route.fulfill({ json: { id: file.id, trashed: file.trashed } })
       return route.fulfill({ json: this.meta(file) })
     }
     if (method === 'PATCH' && isUpload) {
       const failure = this.uploadFailures.shift()
       if (failure) return route.fulfill({ status: failure, json: { error: { code: failure } } })
-      const { metadata, content } = FakeDrive.parseMultipart(request.headers()['content-type'], request.postData() ?? '')
-      file.content = content
+      const { metadata, content } = FakeDrive.parseMultipart(request.headers()['content-type'], request.postDataBuffer() ?? Buffer.alloc(0))
+      file.bytes = content
+      file.content = content.toString('utf8')
       const hints = metadata.contentHints as { thumbnail?: FakeFile['thumbnail'] } | undefined
       if (hints?.thumbnail) file.thumbnail = hints.thumbnail
       file.version += 1

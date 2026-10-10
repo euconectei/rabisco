@@ -46,7 +46,8 @@ export interface DriveClient {
   download(id: string): Promise<string>
   save(id: string, content: string, thumbnail?: DriveThumbnail): Promise<DriveFileMeta>
   rename(id: string, name: string): Promise<DriveFileMeta>
-  createSibling(name: string, content: string, mimeType: string, nearFileId: string): Promise<DriveFileMeta>
+  /** Creates `name` next to another file; if the name is taken there, uses "name (2).ext", "(3)"… */
+  createSibling(name: string, content: string | Blob, mimeType: string, nearFileId: string): Promise<DriveFileMeta>
 }
 
 export interface FolderCache {
@@ -82,6 +83,18 @@ function withExtension(name: string): string {
   return trimmed.toLowerCase().endsWith(EXTENSION) ? trimmed : `${trimmed}${EXTENSION}`
 }
 
+// Drive query strings are single-quoted: escape backslashes first, then quotes.
+function quoteForQuery(value: string): string {
+  return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`
+}
+
+function numberedName(name: string, n: number): string {
+  const dot = name.lastIndexOf('.')
+  return dot > 0 ? `${name.slice(0, dot)} (${n})${name.slice(dot)}` : `${name} (${n})`
+}
+
+const MAX_NAME_ATTEMPTS = 100
+
 function isExcalidrawName(name: string): boolean {
   return name.toLowerCase().endsWith(EXTENSION)
 }
@@ -92,7 +105,7 @@ export function createDriveClient(driveFetch: DriveFetch, folderCache: FolderCac
     return (await response.json()) as T
   }
 
-  function upload(method: 'POST' | 'PATCH', path: string, metadata: object, content: string, mimeType: string) {
+  function upload(method: 'POST' | 'PATCH', path: string, metadata: object, content: string | Blob, mimeType: string) {
     const multipart = buildMultipart(metadata, content, mimeType)
     return json<DriveFileMeta>(url(UPLOAD, path, { uploadType: 'multipart', fields: META_FIELDS }), {
       method,
@@ -190,7 +203,14 @@ export function createDriveClient(driveFetch: DriveFetch, folderCache: FolderCac
     async createSibling(name, content, mimeType, nearFileId) {
       const near = await client.getMeta(nearFileId)
       const parents = near.parents?.length ? near.parents : [await client.ensureFolder()]
-      return upload('POST', '/files', { name, mimeType, parents }, content, mimeType)
+      const isTaken = async (candidate: string) => {
+        const query = `name=${quoteForQuery(candidate)} and ${quoteForQuery(parents[0])} in parents and trashed=false`
+        const found = await json<{ files: Array<{ id: string }> }>(url(API, '/files', { q: query, fields: 'files(id)', pageSize: '1' }))
+        return found.files.length > 0
+      }
+      let unique = name
+      for (let n = 2; n <= MAX_NAME_ATTEMPTS && (await isTaken(unique)); n++) unique = numberedName(name, n)
+      return upload('POST', '/files', { name: unique, mimeType, parents }, content, mimeType)
     },
   }
   return client

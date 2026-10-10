@@ -120,11 +120,41 @@ it('renames, adding the extension only when missing', async () => {
   expect(calls.map((c) => JSON.parse(c.body!).name)).toEqual(['Mapa.excalidraw', 'Mapa.excalidraw', 'Plano.EXCALIDRAW'])
 })
 
+// Answers the sibling flow: the near file's metadata, name lookups in its folder, then the upload.
+function siblingFetch(taken: string[] = []) {
+  return fakeFetch((call) => {
+    if (call.method !== 'GET') return meta({ id: 'png' })
+    const q = new URL(call.url).searchParams.get('q')
+    if (!q) return meta({ parents: ['p9'] })
+    const name = q.match(/^name='((?:[^'\\]|\\.)*)'/)?.[1]?.replace(/\\(.)/g, '$1')
+    return { files: name && taken.includes(name) ? [{ id: 'x' }] : [] }
+  })
+}
+
 it('creates a sibling file in the same folder as another file', async () => {
-  const { driveFetch, calls } = fakeFetch((call) => (call.method === 'GET' ? meta({ parents: ['p9'] }) : meta({ id: 'png' })))
+  const { driveFetch, calls } = siblingFetch()
   const created = await createDriveClient(driveFetch, memoryCache()).createSibling('Mapa (cópia).excalidraw', '{}', EXCALIDRAW_MIME, 'f1')
   expect(created.id).toBe('png')
-  expect(calls[1].body).toContain(JSON.stringify({ name: 'Mapa (cópia).excalidraw', mimeType: EXCALIDRAW_MIME, parents: ['p9'] }))
+  expect(calls.at(-1)!.body).toContain(JSON.stringify({ name: 'Mapa (cópia).excalidraw', mimeType: EXCALIDRAW_MIME, parents: ['p9'] }))
+})
+
+it('numbers a sibling whose name is already taken in the folder', async () => {
+  const { driveFetch, calls } = siblingFetch(['Mapa.png', 'Mapa (2).png'])
+  await createDriveClient(driveFetch, memoryCache()).createSibling('Mapa.png', 'x', 'image/png', 'f1')
+  expect(calls.at(-1)!.body).toContain(JSON.stringify({ name: 'Mapa (3).png', mimeType: 'image/png', parents: ['p9'] }))
+})
+
+it('escapes quotes and backslashes when looking a name up', async () => {
+  const { driveFetch, calls } = siblingFetch()
+  await createDriveClient(driveFetch, memoryCache()).createSibling("O'Plano \\ 1.png", 'x', 'image/png', 'f1')
+  const lookup = calls.map((c) => new URL(c.url).searchParams.get('q')).find(Boolean)
+  expect(lookup).toBe("name='O\\'Plano \\\\ 1.png' and 'p9' in parents and trashed=false")
+})
+
+it('uploads binary content as a Blob body', async () => {
+  const { driveFetch, calls } = siblingFetch()
+  await createDriveClient(driveFetch, memoryCache()).createSibling('Mapa.png', new Blob([new Uint8Array([1, 2, 3])]), 'image/png', 'f1')
+  expect(calls.at(-1)!.body as unknown).toBeInstanceOf(Blob)
 })
 
 it('follows pagination when listing files', async () => {
