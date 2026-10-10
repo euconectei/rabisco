@@ -90,6 +90,15 @@ export const en: Messages = {
     linkUnseen: 'News (something new)',
     menuItem: 'News ({version})',
     sections: {
+      mindmap: {
+        title: 'Mind maps on the canvas',
+        items: [
+          'Click "Mind map", then the spot on the board where the central idea should go.',
+          'With a topic selected: Tab adds a child, Enter adds a sibling, Delete removes the branch, arrows move around and F2 edits the text.',
+          'The map arranges itself on both sides, and each branch gets its own color.',
+          'Maps and free drawings share the same board, and the file still opens on excalidraw.com.',
+        ],
+      },
       drive: {
         title: 'Your drawings in your Google Drive',
         items: [
