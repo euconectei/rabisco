@@ -35,7 +35,7 @@ test.describe('pt-BR browser', () => {
   test('landing → files → editor, switch to English, no third-party requests', async ({ page, baseURL }) => {
     const external = trackThirdPartyRequests(page, baseURL!)
     await page.goto('/')
-    await page.getByRole('link', { name: 'Começar' }).click()
+    await page.getByRole('link', { name: 'Começar, é grátis' }).first().click()
     await page.getByRole('button', { name: 'Entrar com Google' }).click()
     await page.getByRole('button', { name: 'Novo' }).click()
     await expect(page.locator('.excalidraw')).toBeVisible()
@@ -86,6 +86,41 @@ test.describe('English browser', () => {
 
   test('landing is in English', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByRole('link', { name: 'Get started' })).toBeVisible()
+    await expect(page.getByRole('link', { name: "Get started, it's free" }).first()).toBeVisible()
+  })
+
+  test('landing screenshots load', async ({ page }) => {
+    await page.goto('/')
+    const images = page.locator('main img')
+    await expect(images).toHaveCount(4)
+    for (const image of await images.all()) {
+      await image.scrollIntoViewIfNeeded()
+      await expect.poll(() => image.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBeGreaterThan(0)
+    }
+  })
+})
+
+test.describe('dark system theme', () => {
+  test.use({ locale: 'pt-BR', colorScheme: 'dark' })
+
+  test('the mind map button stays readable whatever the editor theme', async ({ page }) => {
+    await page.goto('/app')
+    await page.getByRole('button', { name: 'Entrar com Google' }).click()
+    await page.getByRole('button', { name: 'Novo' }).click()
+    const button = page.getByRole('button', { name: 'Mapa mental' })
+    const colors = () =>
+      button.evaluate((el) => {
+        const style = getComputedStyle(el)
+        return { color: style.color, background: style.backgroundColor }
+      })
+    const light = await colors()
+    expect(light.color).not.toBe(light.background)
+    expect(light.background).toBe('rgb(255, 255, 255)') // follows the editor (light), not the system (dark)
+
+    await page.getByTestId('main-menu-trigger').click()
+    await page.getByText('Modo escuro').click()
+    const dark = await colors()
+    expect(dark.color).not.toBe(dark.background)
+    expect(dark.background).not.toBe('rgb(255, 255, 255)')
   })
 })

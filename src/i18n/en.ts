@@ -5,7 +5,39 @@ export const en: Messages = {
     name: 'Rabisco',
     tagline: 'Mind maps and hand-drawn flows on one canvas, saved to your Google Drive.',
   },
-  landing: { start: 'Get started' },
+  landing: {
+    start: "Get started, it's free",
+    title: 'Think on paper. Keep it in your Drive.',
+    heroAlt: 'Rabisco editor with a mind map and a hand-drawn flow on the same canvas',
+    featuresTitle: 'What you can do',
+    features: {
+      mindmap: {
+        title: 'Keyboard-driven mind maps',
+        text: 'Tab adds a child topic, Enter adds a sibling. The map lays itself out and every branch gets its own color.',
+        alt: 'Mind map with colored branches on both sides of the central idea',
+      },
+      draw: {
+        title: 'Freehand drawing',
+        text: "Flows, boxes, arrows and doodles on the same canvas as the map, with Excalidraw's hand-drawn look.",
+        alt: 'Hand-drawn flow with boxes connected by arrows',
+      },
+      files: {
+        title: 'Files that are yours',
+        text: 'Every drawing is an .excalidraw file in your Google Drive, which also opens on excalidraw.com.',
+        alt: 'List of drawings saved to Google Drive',
+      },
+    },
+    trustTitle: 'Your drawings are yours',
+    trust: {
+      drive: 'Your drawings live in your Google Drive. Rabisco has no server that keeps your content.',
+      scope: 'The app only sees the files it created or that you opened with it. The rest of your Drive stays out of reach.',
+      openSource: 'Open source',
+      openSourceText: '(MIT license): anyone can see how it works.',
+      offline: 'Lost your connection? Keep drawing: Rabisco saves once it is back.',
+    },
+    ctaTitle: 'Start a sketch now',
+    ctaText: 'Sign in with your Google account and create your first drawing in seconds.',
+  },
   files: {
     title: 'My files',
     empty: 'No files yet.',
@@ -61,6 +93,7 @@ export const en: Messages = {
     },
   },
   notFound: { title: 'Page not found', backHome: 'Back to home' },
+  footer: { madeBy: 'Made by the community with', love: 'love' },
   language: { label: 'Language', 'pt-BR': 'Português', en: 'English' },
   mindmap: {
     button: 'Mind map',
@@ -90,6 +123,13 @@ export const en: Messages = {
     linkUnseen: 'News (something new)',
     menuItem: 'News ({version})',
     sections: {
+      home: {
+        title: 'A new home page',
+        items: [
+          'The home page now shows Rabisco at work and explains where your drawings live: in your Google Drive.',
+          'The "Mind map" button was unreadable with the system in dark mode and the canvas in light mode (or the other way around). It now follows the canvas theme.',
+        ],
+      },
       mindmap: {
         title: 'Mind maps on the canvas',
         items: [

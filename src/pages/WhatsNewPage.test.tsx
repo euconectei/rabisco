@@ -28,5 +28,5 @@ it('marks the news as seen when opened', () => {
 it('goes home when opened directly, with no history to go back to', async () => {
   renderWithProviders(<AppRoutes />, { route: '/whats-new' })
   await userEvent.click(screen.getByRole('button', { name: 'Voltar' }))
-  expect(screen.getByRole('link', { name: 'Começar' })).toBeInTheDocument()
+  expect(screen.getAllByRole('link', { name: 'Começar, é grátis' })[0]).toBeInTheDocument()
 })
