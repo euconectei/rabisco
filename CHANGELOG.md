@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/euconectei/rabisco/compare/v0.6.1...v0.7.0) (2026-10-10)
+
+
+### Features
+
+* collapse, drag to reparent, markdown and a touch toolbar for mind maps ([#18](https://github.com/euconectei/rabisco/issues/18)) ([f390fc2](https://github.com/euconectei/rabisco/commit/f390fc27d47319a39005850bd0e974587daa9b61))
+
 ## [0.6.1](https://github.com/euconectei/rabisco/compare/v0.6.0...v0.6.1) (2026-10-10)
 
 
