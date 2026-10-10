@@ -87,6 +87,7 @@ export const ptBR = {
           'Tudo é salvo sozinho enquanto você desenha, sem precisar clicar em salvar.',
           'Se a internet cair, nada se perde: o Rabisco guarda as alterações no navegador e envia quando a conexão voltar.',
           'Abra desenhos do seu Drive, inclusive arquivos criados no excalidraw.com, e renomeie pelo título no topo.',
+          'No próprio Google Drive, clique com o botão direito num arquivo .excalidraw e escolha "Abrir com" › Rabisco.',
         ],
       },
       launch: {

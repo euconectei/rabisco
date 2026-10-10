@@ -89,6 +89,7 @@ export const en: Messages = {
           'Everything saves by itself while you draw; no save button needed.',
           'If the internet drops, nothing is lost: Rabisco keeps your changes in the browser and sends them when you are back online.',
           'Open drawings from your Drive, including files made on excalidraw.com, and rename them from the title at the top.',
+          'Right in Google Drive, right-click an .excalidraw file and choose "Open with" › Rabisco.',
         ],
       },
       launch: {

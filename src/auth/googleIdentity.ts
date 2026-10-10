@@ -1,6 +1,8 @@
 export const GIS_SCRIPT_URL = 'https://accounts.google.com/gsi/client'
 export const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
-export const SCOPES = `${DRIVE_SCOPE} openid email profile`
+// drive.install only registers Rabisco in Drive's "Open with" menu; it grants no file access.
+export const DRIVE_INSTALL_SCOPE = 'https://www.googleapis.com/auth/drive.install'
+export const SCOPES = `${DRIVE_SCOPE} ${DRIVE_INSTALL_SCOPE} openid email profile`
 
 export interface TokenResponse {
   accessToken: string
