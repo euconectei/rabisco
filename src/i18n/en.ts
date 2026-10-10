@@ -67,7 +67,7 @@ export const en: Messages = {
     signingIn: 'Signing in…',
     unavailable: 'Sign-in is unavailable here.',
     failed: 'Could not sign in. Please try again.',
-    missingDrive: 'To keep your drawings, Rabisco needs access to your Google Drive. Sign in again and leave the Drive permission ticked.',
+    missingDrive: 'To keep your drawings, Rabisco needs access to your Google Drive. Sign in again and, on the Google screen, tick the Google Drive box (you may need to scroll the list).',
     reconnectBanner: 'Your Google session expired. Your changes are kept in this browser.',
     reconnect: 'Reconnect',
     signOut: 'Sign out',
