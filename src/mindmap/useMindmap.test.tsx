@@ -1,6 +1,7 @@
 import 'vitest-canvas-mock'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import { act, renderHook } from '@testing-library/react'
+import { collapse } from './collapse'
 import { addChild, createMap } from './commands'
 import { metaOf, readMaps } from './model'
 import { useMindmap, type MindmapApi } from './useMindmap'
@@ -399,6 +400,83 @@ it('Ctrl + . does nothing while a text is being edited', () => {
   expect(api.updateScene).not.toHaveBeenCalled()
 })
 
+describe('the +N badge', () => {
+  function collapsedMap() {
+    let r = createMap([], { x: 0, y: 0 }, 'Raiz')
+    const root = r.select!
+    r = addChild(r.elements, root, 'A')
+    const a = r.select!
+    r = addChild(r.elements, a, 'A1')
+    const collapsed = collapse(r.elements, a).elements
+    const badgeId = (metaOf(collapsed.find((e) => e.id === a)!) as { badgeId?: string }).badgeId!
+    return { elements: collapsed, root, a, badgeId }
+  }
+
+  const centerOf = (e: ExcalidrawElement) => ({ clientX: e.x + e.width / 2, clientY: e.y + e.height / 2 })
+
+  it('clicking it expands the node and selects it, in one undo step', () => {
+    const { elements, a, badgeId } = collapsedMap()
+    const { api, state } = fakeApi(elements)
+    const { result } = renderHook(() => useMindmap(api, labels))
+    const badge = elements.find((e) => e.id === badgeId)!
+    act(() => result.current.onDragPointerDown(centerOf(badge)))
+    act(() => result.current.onDragPointerUp(centerOf(badge)))
+    expect(api.updateScene).toHaveBeenCalledTimes(1)
+    // Joins the step Excalidraw's own pointerup records for the click.
+    expect(api.updateScene.mock.calls[0][0].captureUpdate).toBe('EVENTUALLY')
+    expect(nodeCount(state.elements)).toBe(3)
+    expect(state.appState.selectedElementIds).toEqual({ [a]: true })
+  })
+
+  it('an undo that brings back the badge selected leaves the node collapsed', () => {
+    const { elements, badgeId } = collapsedMap()
+    const { api } = fakeApi(elements, [badgeId])
+    const { result } = renderHook(() => useMindmap(api, labels))
+    // Undoing the expand restores the scene as it was, with the badge selected; no pointer involved.
+    act(() => result.current.handleChange(elements, { editingTextElement: null, selectedElementIds: { [badgeId]: true } } as never))
+    expect(api.updateScene).not.toHaveBeenCalled()
+  })
+
+  it('dragging the badge away, or releasing elsewhere, does not expand', () => {
+    const { elements, badgeId } = collapsedMap()
+    const { api, state } = fakeApi(elements)
+    const { result } = renderHook(() => useMindmap(api, labels))
+    const badge = elements.find((e) => e.id === badgeId)!
+    act(() => result.current.onDragPointerDown(centerOf(badge)))
+    act(() => result.current.onDragPointerUp({ clientX: badge.x + 300, clientY: badge.y + 300 }))
+    state.appState = { ...state.appState, selectedElementsAreBeingDragged: true } as typeof state.appState
+    act(() => result.current.onDragPointerDown(centerOf(badge)))
+    act(() => result.current.onDragPointerUp(centerOf(badge)))
+    expect(api.updateScene).not.toHaveBeenCalled()
+  })
+
+  it('a copy of the badge is a plain text: clicking it does nothing', () => {
+    const { elements, badgeId } = collapsedMap()
+    const badge = elements.find((e) => e.id === badgeId)!
+    const copy = { ...badge, id: 'badge-copy', x: badge.x + 400 } as ExcalidrawElement
+    const withCopy = [...elements, copy]
+    const { api, state } = fakeApi(withCopy)
+    const { result } = renderHook(() => useMindmap(api, labels))
+    act(() => result.current.onDragPointerDown(centerOf(copy)))
+    act(() => result.current.onDragPointerUp(centerOf(copy)))
+    expect(api.updateScene).not.toHaveBeenCalled()
+    expect(nodeCount(state.elements)).toBe(2)
+  })
+
+  it('heals a drifted badge once and stays quiet on the next change', () => {
+    const { elements, badgeId } = collapsedMap()
+    const before = elements.find((e) => e.id === badgeId)!
+    const drifted = elements.map((e) => (e.id === badgeId ? ({ ...e, y: e.y + 40 } as ExcalidrawElement) : e))
+    const { api, state } = fakeApi(drifted)
+    const { result } = renderHook(() => useMindmap(api, labels))
+    act(() => result.current.handleChange(drifted, { editingTextElement: null, selectedElementsAreBeingDragged: false } as never))
+    expect(api.updateScene).toHaveBeenCalledTimes(1)
+    expect(state.elements.find((e) => e.id === badgeId)!.y).toBe(before.y)
+    act(() => result.current.handleChange(state.elements, { editingTextElement: null, selectedElementsAreBeingDragged: false } as never))
+    expect(api.updateScene).toHaveBeenCalledTimes(1)
+  })
+})
+
 describe('dragging a node', () => {
   function twoBranches() {
     let r = createMap([], { x: 0, y: 0 }, 'Raiz')
@@ -598,7 +676,7 @@ describe('live branch drag (free layout)', () => {
     const dragging = { editingTextElement: null, selectedElementIds: { [node.id]: true }, selectedElementsAreBeingDragged: true }
     state.appState = { ...state.appState, ...dragging }
     act(() => result.current.handleChange(state.elements, dragging as never))
-    act(() => result.current.onDragPointerUp())
+    act(() => result.current.onDragPointerUp({ clientX: 0, clientY: 0 }))
     expect(api.updateScene).toHaveBeenLastCalledWith(expect.objectContaining({ captureUpdate: 'EVENTUALLY' }))
     const parentOf = (id: string) => (metaOf(state.elements.find((e) => e.id === id)!) as { parentId: string }).parentId
     expect(parentOf(b.select!)).toBe(t.a)
@@ -618,9 +696,9 @@ describe('live branch drag (free layout)', () => {
     const { result } = renderHook(() => useMindmap(api, labels))
     const a = state.elements.find((e) => e.id === t.a)!
     act(() => result.current.onDragPointerDown(pointerAt(a)))
-    act(() => result.current.onDragPointerUp())
+    act(() => result.current.onDragPointerUp({ clientX: 0, clientY: 0 }))
     state.appState = { ...state.appState, selectedElementsAreBeingDragged: true } as typeof state.appState
-    act(() => result.current.onDragPointerUp())
+    act(() => result.current.onDragPointerUp({ clientX: 0, clientY: 0 }))
     expect(api.updateScene).not.toHaveBeenCalled()
   })
 })

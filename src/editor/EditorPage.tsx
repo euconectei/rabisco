@@ -73,8 +73,9 @@ function EditorScreen({ fileId }: { fileId: string }) {
     const handler = (event: PointerEvent) => onDragPointerDown(event)
     container.addEventListener('pointerdown', handler, true)
     // Excalidraw listens for the drag's pointerup on window: a capture listener there runs first,
-    // so the drop onto another node joins the drag in one undo step.
-    const onUp = () => onDragPointerUp()
+    // so the drop onto another node joins the drag in one undo step. It also turns a click on a
+    // "+N" badge into an expand.
+    const onUp = (event: PointerEvent) => onDragPointerUp(event)
     window.addEventListener('pointerup', onUp, true)
     return () => {
       container.removeEventListener('pointerdown', handler, true)

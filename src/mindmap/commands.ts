@@ -32,6 +32,17 @@ export function mapOfNode(elements: readonly ExcalidrawElement[], nodeId: string
 
 const BADGE_GAP = 8
 
+/**
+ * Where a node's own "+N" badge sits, in scene coordinates: beside the node, on the side its branch
+ * faces (right unless it is on the left), at the underline level in lines style. relayout and
+ * layoutDrift share this so they never disagree about what "out of place" means.
+ */
+function badgePosition(node: ExcalidrawElement, badge: ExcalidrawElement, style: MapStyle, side: Side | null): Point {
+  const right = side !== 'left'
+  const y = style === 'lines' ? node.y + node.height - badge.height / 2 : node.y + node.height / 2 - badge.height / 2
+  return { x: right ? node.x + node.width + BADGE_GAP : node.x - badge.width - BADGE_GAP, y }
+}
+
 // A new (non-root) node's footprint, matching createNodeElements: used to find a clear spot for a
 // child in the free layout.
 const CHILD_NODE_SIZE: Size = { width: 140, height: 44 }
@@ -299,15 +310,7 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
     if (meta?.kind === 'badge') {
       const owner = moved.get(meta.nodeId)?.rect
       if (!owner || (metaOf(owner) as NodeMeta).badgeId !== e.id) return e
-      const { rect } = moved.get(meta.nodeId)!
-      const right = sideOf(map, meta.nodeId) !== 'left'
-      // In lines style the badge sits beside the knob, i.e. at the underline level.
-      const y = style === 'lines' ? rect.y + rect.height - e.height / 2 : rect.y + rect.height / 2 - e.height / 2
-      return update(e, {
-        x: right ? rect.x + rect.width + BADGE_GAP : rect.x - e.width - BADGE_GAP,
-        y,
-        strokeColor: rect.strokeColor,
-      })
+      return update(e, { ...badgePosition(owner, e, style, sideOf(map, meta.nodeId)), strokeColor: owner.strokeColor })
     }
     const container = (e as Mutable).containerId
     if (container && moved.has(container)) {
@@ -422,13 +425,25 @@ export function layoutDrift(elements: readonly ExcalidrawElement[], mapId: strin
   const layout = layoutOf(elements, mapId)
   // Free maps keep the user's positions, so nothing can "drift" (Tarefa 4 formalizes the layout).
   if (layout === 'free') return false
+  const style = styleOf(elements, mapId)
   const rects = new Map(elements.filter((e) => map.byId.has(e.id) && !e.isDeleted).map((e) => [e.id, e]))
   const root = rects.get(map.root.id)
   if (!root) return false
-  const positions = layoutMap(map, new Map([...rects].map(([id, e]) => [id, nodeSize(e)])), { x: root.x, y: root.y }, { layout, siblingGap: siblingGapFor(styleOf(elements, mapId)) })
+  const positions = layoutMap(map, new Map([...rects].map(([id, e]) => [id, nodeSize(e)])), { x: root.x, y: root.y }, { layout, siblingGap: siblingGapFor(style) })
   for (const [id, position] of positions) {
     const current = rects.get(id)
     if (current && (Math.abs(current.x - position.x) > 0.5 || Math.abs(current.y - position.y) > 0.5)) return true
+  }
+  // A node's own badge must sit where relayout puts it too, or heal would re-lay the map out forever.
+  const badgeById = new Map(elements.filter((e) => !e.isDeleted && metaOf(e)?.kind === 'badge').map((e) => [e.id, e]))
+  for (const [id, position] of positions) {
+    const node = rects.get(id)
+    if (!node) continue
+    const badgeId = (metaOf(node) as NodeMeta).badgeId
+    const badge = badgeId ? badgeById.get(badgeId) : undefined
+    if (!badge) continue
+    const expected = badgePosition({ ...node, x: position.x, y: position.y }, badge, style, sideOf(map, id))
+    if (Math.abs(badge.x - expected.x) > 0.5 || Math.abs(badge.y - expected.y) > 0.5) return true
   }
   return false
 }

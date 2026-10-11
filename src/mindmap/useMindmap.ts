@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { addChild, addSibling, branchElementIds, createMap, findNodeOf, layoutDrift, navigate, relayout, type CommandResult } from './commands'
 import { expand, toggleCollapse } from './collapse'
-import { nodeAtPoint } from './dragBranch'
+import { badgeNodeAtPoint, nodeAtPoint } from './dragBranch'
 import { importOutline } from './importMap'
 import { actionForKey, type MindmapAction } from './keyboard'
 import type { Point } from './layout'
@@ -257,6 +257,12 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
   // Whether the current drag selected a whole branch (free layout), so it can be undone in one step.
   const draggingBranch = useRef(false)
 
+  // Set when the drop was already handled on pointerup, so the drag end seen in handleChange does not
+  // reparent a second time.
+  const reparentedOnPointerUp = useRef(false)
+  // The node whose own "+N" badge was under the pointer on pointerdown (a click on it expands the node).
+  const badgePressed = useRef<string | null>(null)
+
   // On pointerdown, before Excalidraw's own handler, remember the node under the pointer and (in free
   // layout) select its whole branch so the branch drags as one unit and native undo undoes it at once.
   // flushSync makes the new selection visible to Excalidraw's pointerdown handler in the same event.
@@ -267,6 +273,7 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
       if (appState.editingTextElement) return
       const elements = api.getSceneElements()
       const scene = viewportCoordsToSceneCoords({ clientX: event.clientX, clientY: event.clientY }, appState)
+      badgePressed.current = badgeNodeAtPoint(elements, scene)
       const nodeId = nodeAtPoint(elements, scene)
       draggedNodeId.current = nodeId
       draggingBranch.current = false
@@ -285,18 +292,33 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
     [api],
   )
 
-  // Set when the drop was already handled on pointerup, so the drag end seen in handleChange does not
-  // reparent a second time.
-  const reparentedOnPointerUp = useRef(false)
 
   // On pointerup, before Excalidraw's own handler (capture phase on window), reparent a node dropped on
   // another node. Excalidraw only records the drag in the undo history once its pointerup handler
   // runs, and an EVENTUALLY update is recorded together with the next captured one: the drag and the
   // new parent become a single undo step. Reparenting later, in handleChange, left two steps (the
   // second one undoing a drag that heal had already put back).
-  const onDragPointerUp = useCallback(() => {
+  const onDragPointerUp = useCallback((event: { clientX: number; clientY: number }) => {
     if (!api) return
     const appState = api.getAppState() as AppState
+    const pressedBadge = badgePressed.current
+    badgePressed.current = null
+    // A click (press and release, no drag) on a collapsed node's own "+N" badge expands it, as one
+    // undo step like Ctrl/Cmd + .. Driven by the pointer, not by the selection: an undo that brings
+    // the badge back selected must not expand it again. EVENTUALLY, because Excalidraw's own pointerup
+    // (which runs next) records the click as a step: the expand joins that step instead of being undone
+    // only after a selection-only step.
+    if (pressedBadge && !appState.selectedElementsAreBeingDragged && !appState.editingTextElement) {
+      const elements = api.getSceneElements()
+      const scene = viewportCoordsToSceneCoords({ clientX: event.clientX, clientY: event.clientY }, appState)
+      if (badgeNodeAtPoint(elements, scene) !== pressedBadge) return
+      api.updateScene({
+        elements: expand(elements, pressedBadge).elements,
+        appState: { selectedElementIds: { [pressedBadge]: true } } as Partial<AppState>,
+        captureUpdate: CaptureUpdateAction.EVENTUALLY,
+      })
+      return
+    }
     const draggedId = draggedNodeId.current
     if (!appState.selectedElementsAreBeingDragged || appState.editingTextElement || !draggedId) return
     const elements = api.getSceneElements()
