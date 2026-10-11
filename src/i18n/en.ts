@@ -190,6 +190,16 @@ export const en: Messages = {
           'On a tablet, tap a topic: a bar with + child, + sibling, collapse and delete shows up above it.',
         ],
       },
+      mindmapPolish: {
+        title: 'Mind map touch-ups',
+        items: [
+          'The color you pick for a topic now stays, even when the map rearranges itself.',
+          'Clicking the "+N" of a collapsed topic opens the branch.',
+          'Undo after dragging a topic onto another parent takes it all back at once.',
+          'Collapsing a branch also hides the arrows you drew attached to it.',
+          'Importing a large markdown file is much faster.',
+        ],
+      },
       mindmapLayouts: {
         title: 'Arrange your map your way',
         items: [
