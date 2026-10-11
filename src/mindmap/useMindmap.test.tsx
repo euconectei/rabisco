@@ -584,6 +584,45 @@ describe('live branch drag (free layout)', () => {
     act(() => result.current.handleChange(state.elements, { ...appState, selectedElementsAreBeingDragged: false } as never))
     expect(state.appState.selectedElementIds).toEqual({ [t.a]: true })
   })
+
+  it('a drop onto another node reparents on pointerup, in the same undo step as the drag', () => {
+    const t = branchMap()
+    const b = addChild(t.elements, t.root, 'B')
+    const { api, state } = dragApi(b.elements)
+    const { result } = renderHook(() => useMindmap(api, labels))
+    const node = state.elements.find((e) => e.id === b.select)!
+    const target = state.elements.find((e) => e.id === t.a)!
+    act(() => result.current.onDragPointerDown(pointerAt(node)))
+    // Mid-drag: B sits over A.
+    state.elements = state.elements.map((e) => (e.id === b.select ? ({ ...e, x: target.x, y: target.y } as ExcalidrawElement) : e))
+    const dragging = { editingTextElement: null, selectedElementIds: { [node.id]: true }, selectedElementsAreBeingDragged: true }
+    state.appState = { ...state.appState, ...dragging }
+    act(() => result.current.handleChange(state.elements, dragging as never))
+    act(() => result.current.onDragPointerUp())
+    expect(api.updateScene).toHaveBeenLastCalledWith(expect.objectContaining({ captureUpdate: 'EVENTUALLY' }))
+    const parentOf = (id: string) => (metaOf(state.elements.find((e) => e.id === id)!) as { parentId: string }).parentId
+    expect(parentOf(b.select!)).toBe(t.a)
+
+    // The drag end that follows only selects the node and lays the map out, outside the history.
+    const calls = api.updateScene.mock.calls.length
+    act(() => result.current.handleChange(state.elements, { ...dragging, selectedElementsAreBeingDragged: false } as never))
+    expect(api.updateScene.mock.calls.length).toBe(calls + 1)
+    expect(api.updateScene).toHaveBeenLastCalledWith(expect.objectContaining({ captureUpdate: 'NEVER' }))
+    expect(state.appState.selectedElementIds).toEqual({ [b.select!]: true })
+    expect(parentOf(b.select!)).toBe(t.a)
+  })
+
+  it('pointerup without a drag, or over empty canvas, changes nothing', () => {
+    const t = branchMap()
+    const { api, state } = dragApi(t.elements)
+    const { result } = renderHook(() => useMindmap(api, labels))
+    const a = state.elements.find((e) => e.id === t.a)!
+    act(() => result.current.onDragPointerDown(pointerAt(a)))
+    act(() => result.current.onDragPointerUp())
+    state.appState = { ...state.appState, selectedElementsAreBeingDragged: true } as typeof state.appState
+    act(() => result.current.onDragPointerUp())
+    expect(api.updateScene).not.toHaveBeenCalled()
+  })
 })
 
 it('a node painted by hand turns manual right away, outside the undo history, and keeps its color', () => {

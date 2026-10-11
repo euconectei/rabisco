@@ -285,6 +285,27 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
     [api],
   )
 
+  // Set when the drop was already handled on pointerup, so the drag end seen in handleChange does not
+  // reparent a second time.
+  const reparentedOnPointerUp = useRef(false)
+
+  // On pointerup, before Excalidraw's own handler (capture phase on window), reparent a node dropped on
+  // another node. Excalidraw only records the drag in the undo history once its pointerup handler
+  // runs, and an EVENTUALLY update is recorded together with the next captured one: the drag and the
+  // new parent become a single undo step. Reparenting later, in handleChange, left two steps (the
+  // second one undoing a drag that heal had already put back).
+  const onDragPointerUp = useCallback(() => {
+    if (!api) return
+    const appState = api.getAppState() as AppState
+    const draggedId = draggedNodeId.current
+    if (!appState.selectedElementsAreBeingDragged || appState.editingTextElement || !draggedId) return
+    const elements = api.getSceneElements()
+    const target = dropTarget(elements, draggedId)
+    if (!target) return
+    reparentedOnPointerUp.current = true
+    api.updateScene({ elements: reparent(elements, draggedId, target).elements, captureUpdate: CaptureUpdateAction.EVENTUALLY })
+  }, [api])
+
   const handleChange = useCallback(
     (
       elements: readonly ExcalidrawElement[],
@@ -297,6 +318,19 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
         const branchDrag = draggingBranch.current
         draggingBranch.current = false
         const draggedId = draggedNodeId.current
+        const handledOnPointerUp = reparentedOnPointerUp.current
+        reparentedOnPointerUp.current = false
+        // Reparented on pointerup: what is left is selecting the dragged node, then laying the map out.
+        const draggedMeta = draggedId ? metaOf(elements.find((e) => e.id === draggedId) ?? ({} as ExcalidrawElement)) : null
+        if (draggedId && handledOnPointerUp && draggedMeta) {
+          api.updateScene({
+            // Excalidraw's own pointerup still applied the last pointer move to the dragged elements.
+            elements: relayout(elements, draggedMeta.mapId),
+            appState: { selectedElementIds: { [draggedId]: true } } as Partial<AppState>,
+            captureUpdate: CaptureUpdateAction.NEVER,
+          })
+          return
+        }
         const target = draggedId ? dropTarget(elements, draggedId) : null
         if (draggedId && target) {
           const result = reparent(elements, draggedId, target)
@@ -377,5 +411,5 @@ export function useMindmap(api: MindmapApi | null, labels: MindmapLabels) {
     [api, apply],
   )
 
-  return { handleChange, createMapAt, startEditing, pasteOutline, perform, onDragPointerDown }
+  return { handleChange, createMapAt, startEditing, pasteOutline, perform, onDragPointerDown, onDragPointerUp }
 }

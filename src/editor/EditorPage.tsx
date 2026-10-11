@@ -65,14 +65,22 @@ function EditorScreen({ fileId }: { fileId: string }) {
   // Live branch drag (spike): on pointerdown, in capture phase on Excalidraw's container, let the
   // mind map select the whole branch before Excalidraw starts its own drag. Tarefa 4 keeps this.
   const onDragPointerDown = mindmap.onDragPointerDown
+  const onDragPointerUp = mindmap.onDragPointerUp
   useEffect(() => {
     if (!api) return
     const container = document.querySelector<HTMLElement>('.excalidraw')
     if (!container) return
     const handler = (event: PointerEvent) => onDragPointerDown(event)
     container.addEventListener('pointerdown', handler, true)
-    return () => container.removeEventListener('pointerdown', handler, true)
-  }, [api, onDragPointerDown])
+    // Excalidraw listens for the drag's pointerup on window: a capture listener there runs first,
+    // so the drop onto another node joins the drag in one undo step.
+    const onUp = () => onDragPointerUp()
+    window.addEventListener('pointerup', onUp, true)
+    return () => {
+      container.removeEventListener('pointerdown', handler, true)
+      window.removeEventListener('pointerup', onUp, true)
+    }
+  }, [api, onDragPointerDown, onDragPointerUp])
   // Test hook: only the E2E build (VITE_E2E=1) exposes the live scene, so the drag spec can read
   // element positions in the middle of a gesture. Production builds never set the flag and Vite
   // drops this block, keeping `__rabiscoScene` out of the bundle.
