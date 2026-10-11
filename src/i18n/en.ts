@@ -46,6 +46,7 @@ export const en: Messages = {
     listLabel: 'Your drawings',
     openFromDrive: 'Open from Drive',
     importFile: 'Import',
+    importReadFailed: "Couldn't read the file. Try again.",
     importImageFailed: 'This image has no editable drawing inside. Export it again with “Include editable data”.',
     loading: 'Loading your files…',
     loadFailed: 'Could not load your files.',
@@ -187,6 +188,16 @@ export const en: Messages = {
           'Paste a markdown list or headings on the canvas and it becomes a map. From the menu, copy the map as text, download the .md or save the .md to Drive.',
           'In "My files", "Import" creates a new drawing from a .md file.',
           'On a tablet, tap a topic: a bar with + child, + sibling, collapse and delete shows up above it.',
+        ],
+      },
+      mindmapPolish: {
+        title: 'Mind map touch-ups',
+        items: [
+          'The color you pick for a topic now stays, even when the map rearranges itself.',
+          'Clicking the "+N" of a collapsed topic opens the branch.',
+          'Undo after dragging a topic onto another parent takes it all back at once.',
+          'Collapsing a branch also hides the arrows you drew attached to it.',
+          'Importing a large markdown file is much faster.',
         ],
       },
       mindmapLayouts: {

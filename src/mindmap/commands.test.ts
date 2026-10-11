@@ -2,8 +2,10 @@ import 'vitest-canvas-mock'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import { parseScene, serializeScene } from '../editor/scene'
 import { MINDMAP_PALETTE, ROOT_COLOR } from './colors'
+import { collapse } from './collapse'
 import { addChild, addSibling, branchElementIds, createMap, findNodeOf, freeChildPosition, isLinkOf, layoutDrift, navigate, relayout } from './commands'
 import { metaOf, readMaps } from './model'
+import { setStyle } from './switchStyle'
 import { edge, knob, node, underline } from './testElements'
 
 type El = ExcalidrawElement & { text?: string; containerId?: string | null; strokeColor: string }
@@ -168,6 +170,51 @@ it('detects when a map drifted from its layout (e.g. after an undo)', () => {
   expect(layoutDrift(t.elements, mapId)).toBe(false)
   const moved = t.elements.map((e) => (e.id === t.b ? ({ ...e, y: e.y + 37 } as ExcalidrawElement) : e))
   expect(layoutDrift(moved, mapId)).toBe(true)
+})
+
+it('detects when a collapsed node\'s own badge drifted from its place', () => {
+  const t = threeChildren()
+  const r = addChild(t.elements, t.a, 'A1')
+  const collapsed = collapse(r.elements, t.a).elements
+  const mapId = metaOf(rect(collapsed, t.root))!.mapId
+  expect(layoutDrift(collapsed, mapId)).toBe(false)
+  const badgeId = (metaOf(rect(collapsed, t.a)) as { badgeId?: string }).badgeId!
+  const moved = collapsed.map((e) => (e.id === badgeId ? ({ ...e, y: e.y + 40 } as ExcalidrawElement) : e))
+  expect(layoutDrift(moved, mapId)).toBe(true)
+})
+
+it('healing a drifted badge is stable: a second relayout moves nothing', () => {
+  const t = threeChildren()
+  const r = addChild(t.elements, t.a, 'A1')
+  const collapsed = collapse(r.elements, t.a).elements
+  const mapId = metaOf(rect(collapsed, t.root))!.mapId
+  const badgeId = (metaOf(rect(collapsed, t.a)) as { badgeId?: string }).badgeId!
+  const before = rect(collapsed, badgeId)
+  const moved = collapsed.map((e) => (e.id === badgeId ? ({ ...e, y: e.y + 40 } as ExcalidrawElement) : e))
+  const healed = relayout(moved, mapId)
+  expect(rect(healed, badgeId).y).toBe(before.y)
+  expect(layoutDrift(healed, mapId)).toBe(false)
+  const again = relayout(healed, mapId)
+  const at = (els: readonly ExcalidrawElement[], id: string) => {
+    const e = els.find((x) => x.id === id)!
+    return [e.x, e.y, e.width, e.height]
+  }
+  for (const e of healed) expect(at(again, e.id)).toEqual(at(healed, e.id))
+})
+
+it('detects and restores a drifted badge in lines style too', () => {
+  const t = threeChildren()
+  const r = addChild(t.elements, t.a, 'A1')
+  const mapId = metaOf(rect(r.elements, t.root))!.mapId
+  const lines = setStyle(r.elements, mapId, 'lines').elements
+  const collapsed = collapse(lines, t.a).elements
+  expect(layoutDrift(collapsed, mapId)).toBe(false)
+  const badgeId = (metaOf(rect(collapsed, t.a)) as { badgeId?: string }).badgeId!
+  const before = rect(collapsed, badgeId)
+  const moved = collapsed.map((e) => (e.id === badgeId ? ({ ...e, y: e.y + 40 } as ExcalidrawElement) : e))
+  expect(layoutDrift(moved, mapId)).toBe(true)
+  const healed = relayout(moved, mapId)
+  expect(rect(healed, badgeId).y).toBe(before.y)
 })
 
 it('isLinkOf: lines style trusts customData, boxes style requires endBinding', () => {

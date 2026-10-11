@@ -37,6 +37,14 @@ describe('parseMarkdownOutline', () => {
     expect(parseMarkdownOutline('- um\n- dois', 'Notas')).toEqual(n('Notas', n('um'), n('dois')))
   })
 
+  it('a heading after a list item returns to the last lower-level heading', () => {
+    expect(parseMarkdownOutline('# A\n- x\n### C\n- y', 'Mapa')).toEqual(n('A', n('x'), n('C', n('y'))))
+  })
+
+  it('a heading that follows nested list items becomes a sibling of them under the previous heading', () => {
+    expect(parseMarkdownOutline('# A\n- x\n  - x2\n## B', 'Mapa')).toEqual(n('A', n('x', n('x2')), n('B')))
+  })
+
   it('ignores blank lines', () => {
     expect(parseMarkdownOutline('\n- Raiz\n\n  - A\n\n', 'Mapa')).toEqual(n('Raiz', n('A')))
   })

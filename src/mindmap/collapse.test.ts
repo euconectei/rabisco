@@ -192,6 +192,66 @@ describe('free layout', () => {
   })
 })
 
+describe('hand-drawn arrows bound to a hidden descendant', () => {
+  const handArrow = (id: string, start: string | null, end: string | null): ExcalidrawElement =>
+    ({
+      id,
+      type: 'arrow',
+      x: 0,
+      y: 0,
+      width: 20,
+      height: 20,
+      isDeleted: false,
+      startBinding: start ? { elementId: start, focus: 0, gap: 1 } : null,
+      endBinding: end ? { elementId: end, focus: 0, gap: 1 } : null,
+    }) as unknown as ExcalidrawElement
+
+  const handText = (id: string, arrowId: string): ExcalidrawElement =>
+    ({ id, type: 'text', x: 0, y: 0, width: 10, height: 10, isDeleted: false, containerId: arrowId, text: 'note' }) as unknown as ExcalidrawElement
+
+  it('is hidden and restored with the same ids and bindings', () => {
+    const s = sample()
+    const arrow = handArrow('free-arrow', s.b, s.a1)
+    const collapsed = collapse([...s.elements, arrow], s.a).elements
+    const hidden = nodeMeta(collapsed, s.a).hidden ?? []
+    expect(hidden.some((e) => e.id === 'free-arrow')).toBe(true)
+    expect(live(collapsed).some((e) => e.id === 'free-arrow')).toBe(false)
+    const expanded = expand(collapsed, s.a).elements
+    const restored = live(expanded).find((e) => e.id === 'free-arrow')!
+    expect(restored).toBeTruthy()
+    const binding = restored as unknown as { startBinding?: { elementId?: string } | null; endBinding?: { elementId?: string } | null }
+    expect(binding.startBinding?.elementId).toBe(s.b)
+    expect(binding.endBinding?.elementId).toBe(s.a1)
+  })
+
+  it('an arrow bound only to the collapsed node stays visible', () => {
+    const s = sample()
+    const arrow = handArrow('free-arrow', s.a, null)
+    const collapsed = collapse([...s.elements, arrow], s.a).elements
+    expect(live(collapsed).some((e) => e.id === 'free-arrow')).toBe(true)
+    expect(nodeMeta(collapsed, s.a).hidden?.some((e) => e.id === 'free-arrow')).toBe(false)
+  })
+
+  it('its bound text is hidden and restored with it', () => {
+    const s = sample()
+    const arrow = handArrow('free-arrow', s.b, s.a2x)
+    const text = handText('free-text', 'free-arrow')
+    const collapsed = collapse([...s.elements, arrow, text], s.a).elements
+    const hidden = nodeMeta(collapsed, s.a).hidden ?? []
+    expect(hidden.some((e) => e.id === 'free-text')).toBe(true)
+    expect(live(collapsed).some((e) => e.id === 'free-text')).toBe(false)
+    const expanded = expand(collapsed, s.a).elements
+    expect(live(expanded).some((e) => e.id === 'free-text')).toBe(true)
+  })
+
+  it('does not change the badge count', () => {
+    const s = sample()
+    const arrow = handArrow('free-arrow', s.b, s.a1)
+    const collapsed = collapse([...s.elements, arrow], s.a).elements
+    expect((badgeOf(collapsed, s.a) as El | undefined)?.text).toBe('+3')
+  })
+})
+
 describe('lines-style branch decorations', () => {
   /** r(lines) → a → a1, with a line link to each child and an underline + knob on a1. */
   function linesMap() {

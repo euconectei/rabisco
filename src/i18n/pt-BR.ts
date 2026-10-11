@@ -44,6 +44,7 @@ export const ptBR = {
     listLabel: 'Seus desenhos',
     openFromDrive: 'Abrir do Drive',
     importFile: 'Importar',
+    importReadFailed: 'Não foi possível ler o arquivo. Tente de novo.',
     importImageFailed: 'Esta imagem não tem um desenho editável dentro. Exporte de novo com “Incluir dados editáveis”.',
     loading: 'Carregando seus arquivos…',
     loadFailed: 'Não foi possível carregar seus arquivos.',
@@ -185,6 +186,16 @@ export const ptBR = {
           'Cole uma lista ou títulos em markdown no quadro e ela vira um mapa. No menu, copie o mapa como texto, baixe o .md ou salve o .md no Drive.',
           'Em "Meus arquivos", "Importar" cria um desenho novo a partir de um arquivo .md.',
           'No tablet, toque num tópico: uma barra com + filho, + irmão, recolher e apagar aparece acima dele.',
+        ],
+      },
+      mindmapPolish: {
+        title: 'Ajustes no mapa mental',
+        items: [
+          'A cor que você escolhe para um tópico agora fica, mesmo quando o mapa se reorganiza.',
+          'Clicar no "+N" de um tópico recolhido abre o ramo.',
+          'Desfazer depois de arrastar um tópico para outro pai volta tudo de uma vez.',
+          'Recolher um ramo esconde também as setas que você desenhou presas a ele.',
+          'Importar um markdown grande ficou muito mais rápido.',
         ],
       },
       mindmapLayouts: {

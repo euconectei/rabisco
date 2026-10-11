@@ -79,3 +79,24 @@ it('reads an old map without layout/style and does not change its customData', (
   expect(rabisco.layout).toBeUndefined()
   expect(rabisco.style).toBeUndefined()
 })
+
+it('memoizes by elements array identity: the same array returns the same map', () => {
+  const elements = [node('r', null), node('a', 'r')]
+  expect(readMaps(elements)).toBe(readMaps(elements))
+})
+
+it('a new elements array, even with the same content, returns a fresh map', () => {
+  const elements = [node('r', null), node('a', 'r')]
+  const copy = [node('r', null), node('a', 'r')]
+  expect(readMaps(elements)).not.toBe(readMaps(copy))
+})
+
+it('an element changed in place (as Excalidraw does mid-drag, bumping its version) is read again', () => {
+  const elements = [node('r', null), node('a', 'r'), node('b', 'r')]
+  expect(readMaps(elements).values().next().value!.byId.size).toBe(3)
+  // Excalidraw's mutateElement edits the element object inside the same array and bumps its version.
+  const b = elements[2] as unknown as { isDeleted: boolean; version: number }
+  b.isDeleted = true
+  b.version = 2
+  expect(readMaps(elements).values().next().value!.byId.size).toBe(2)
+})

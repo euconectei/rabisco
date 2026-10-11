@@ -221,6 +221,28 @@ test('Ctrl/Cmd + . collapses a branch that survives a reload, and expands it bac
   expect(nodes(await savedElements(drive, page))).toHaveLength(3)
 })
 
+test('a click on the "+N" badge expands the node, and one undo collapses it again', async ({ page }) => {
+  const drive = await openNewDrawing(page)
+  await createMap(page)
+  await typeNode(page, 'Raiz')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Filho')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Neto')
+  await page.keyboard.press('ArrowLeft')
+  await page.keyboard.press(collapseKey)
+  await expect.poll(async () => nodes(await savedElements(drive, page))).toHaveLength(2)
+  const badge = (await savedElements(drive, page)).find((e) => e.type === 'text' && e.text === '+1')!
+  await page.mouse.click(badge.x + badge.width / 2, badge.y + badge.height / 2)
+  await expect.poll(async () => nodes(await savedElements(drive, page)), { timeout: 10_000 }).toHaveLength(3)
+
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect.poll(async () => nodes(await savedElements(drive, page)), { timeout: 10_000 }).toHaveLength(2)
+  // The undo brought the badge back selected; that alone must not expand the node again.
+  await page.waitForTimeout(500)
+  expect(nodes(await savedElements(drive, page))).toHaveLength(2)
+})
+
 test('dragging a node onto another moves its branch there, without overlaps', async ({ page }) => {
   const drive = await openNewDrawing(page)
   await createMap(page)
@@ -243,6 +265,45 @@ test('dragging a node onto another moves its branch there, without overlaps', as
     const now = await savedElements(drive, page)
     return dataOf(byText(now, 'Tres')!).parentId === byText(now, 'Um')!.id
   }, { timeout: 10_000 }).toBe(true)
+  expect(overlapping(await savedElements(drive, page))).toBe(false)
+})
+
+test('one undo takes back a drag onto another parent, and one redo brings it back', async ({ page }) => {
+  const drive = await openNewDrawing(page)
+  await createMap(page)
+  await typeNode(page, 'Raiz')
+  await page.keyboard.press('Tab')
+  await typeNode(page, 'Um')
+  await page.keyboard.press('Enter')
+  await typeNode(page, 'Dois')
+  await page.keyboard.press('Enter')
+  await typeNode(page, 'Tres')
+  await page.keyboard.press('Escape')
+  const before = await savedElements(drive, page)
+  const rootId = dataOf(byText(before, 'Tres')!).parentId
+  const start = { x: byText(before, 'Tres')!.x, y: byText(before, 'Tres')!.y }
+  const from = centerOf(byText(before, 'Tres')!)
+  const to = centerOf(byText(before, 'Um')!)
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  await page.mouse.move(to.x, to.y, { steps: 12 })
+  await page.mouse.up()
+  const parentOfTres = async () => dataOf(byText(await savedElements(drive, page), 'Tres')!).parentId
+  await expect.poll(parentOfTres, { timeout: 10_000 }).toBe(byText(before, 'Um')!.id)
+
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect.poll(parentOfTres, { timeout: 10_000 }).toBe(rootId)
+  const undone = byText(await savedElements(drive, page), 'Tres')!
+  expect(Math.abs(undone.x - start.x)).toBeLessThan(1)
+  expect(Math.abs(undone.y - start.y)).toBeLessThan(1)
+
+  // The drag left no empty step behind: the next undo takes back what came before it (typing "Tres").
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect.poll(async () => byText(await savedElements(drive, page), 'Tres'), { timeout: 10_000 }).toBeUndefined()
+
+  await page.keyboard.press('ControlOrMeta+Shift+z')
+  await page.keyboard.press('ControlOrMeta+Shift+z')
+  await expect.poll(async () => byText(await savedElements(drive, page), 'Tres') && (await parentOfTres()), { timeout: 10_000 }).toBe(byText(before, 'Um')!.id)
   expect(overlapping(await savedElements(drive, page))).toBe(false)
 })
 

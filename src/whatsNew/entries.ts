@@ -16,7 +16,7 @@ export interface WhatsNewEntry {
 }
 
 export const whatsNewEntries: WhatsNewEntry[] = [
-  { date: '2026-10-10', sections: ['imageExport', 'mindmapExtras', 'mindmapLayouts', 'home'] },
+  { date: '2026-10-10', sections: ['imageExport', 'mindmapExtras', 'mindmapLayouts', 'mindmapPolish', 'home'] },
   { date: '2026-10-09', sections: ['mindmap', 'drive', 'launch'] },
 ]
 

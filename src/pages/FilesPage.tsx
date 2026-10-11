@@ -30,7 +30,7 @@ export function FilesPage() {
   const drive = useDrive()
   const pick = useFilePicker()
   const [list, setList] = useState<ListState>({ kind: 'loading' })
-  const [importFailed, setImportFailed] = useState(false)
+  const [importError, setImportError] = useState<'image' | 'read' | null>(null)
 
   const fetchFiles = useCallback(async (): Promise<ListState> => {
     try {
@@ -60,15 +60,19 @@ export function FilesPage() {
     const picked = input.files?.[0]
     input.value = ''
     if (!picked) return
-    setImportFailed(false)
-    if (/\.(png|svg)$/i.test(picked.name)) {
-      const json = await sceneFromImage(picked)
-      if (!json) return setImportFailed(true)
-      const name = picked.name.replace(/(\.excalidraw)?\.(png|svg)$/i, '')
-      return navigate('/edit/new', { state: { importScene: { name, json } } })
+    setImportError(null)
+    try {
+      if (/\.(png|svg)$/i.test(picked.name)) {
+        const json = await sceneFromImage(picked)
+        if (!json) return setImportError('image')
+        const name = picked.name.replace(/(\.excalidraw)?\.(png|svg)$/i, '')
+        return navigate('/edit/new', { state: { importScene: { name, json } } })
+      }
+      const name = picked.name.replace(/\.(md|markdown|txt)$/i, '')
+      navigate('/edit/new', { state: { importMarkdown: { name, text: await picked.text() } } })
+    } catch {
+      setImportError('read')
     }
-    const name = picked.name.replace(/\.(md|markdown|txt)$/i, '')
-    navigate('/edit/new', { state: { importMarkdown: { name, text: await picked.text() } } })
   }
 
   async function openFromDrive() {
@@ -99,7 +103,8 @@ export function FilesPage() {
           />
         </label>
       </div>
-      {importFailed && <p role="alert">{t.files.importImageFailed}</p>}
+      {importError === 'read' && <p role="alert">{t.files.importReadFailed}</p>}
+      {importError === 'image' && <p role="alert">{t.files.importImageFailed}</p>}
       {list.kind === 'loading' && <p>{t.files.loading}</p>}
       {list.kind === 'error' && (
         <p role="alert">
