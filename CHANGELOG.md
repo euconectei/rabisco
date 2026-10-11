@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/euconectei/rabisco/compare/v0.9.0...v0.9.1) (2026-10-11)
+
+
+### Bug Fixes
+
+* **mindmap:** manual colors, one-step undo after reparent, badge click and other fixes ([#23](https://github.com/euconectei/rabisco/issues/23)) ([def200c](https://github.com/euconectei/rabisco/commit/def200c2ebc63a4c0b48650838ca3443afb80271))
+
 ## [0.9.0](https://github.com/euconectei/rabisco/compare/v0.8.0...v0.9.0) (2026-10-10)
 
 
