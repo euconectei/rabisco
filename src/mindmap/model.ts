@@ -88,11 +88,36 @@ export function metaOf(element: ExcalidrawElement): RabiscoMeta | null {
   return meta as RabiscoMeta
 }
 
+// One-entry cache: the same elements array with the same element versions gives the same maps.
+// Excalidraw hands a new array on most scene changes, and Rabisco's pure functions always return
+// fresh arrays, but during a drag Excalidraw edits elements in place inside the same array
+// (mutateElement), bumping their versions; the version sum catches that. Elements without a version
+// (test helpers) count as 0.
+let cachedElements: readonly ExcalidrawElement[] | null = null
+let cachedVersions = 0
+let cachedMaps: Map<string, MindMap> | null = null
+
+function versionSum(elements: readonly ExcalidrawElement[]): number {
+  let sum = 0
+  for (const element of elements) sum += element.version ?? 0
+  return sum
+}
+
 /**
  * Reads every map in the scene. Invalid structures (missing parent, cycles, maps without exactly one
  * root, deleted elements) are dropped: those elements then behave like plain drawing elements.
  */
 export function readMaps(elements: readonly ExcalidrawElement[]): Map<string, MindMap> {
+  const versions = versionSum(elements)
+  if (cachedElements === elements && cachedVersions === versions && cachedMaps) return cachedMaps
+  const maps = computeMaps(elements)
+  cachedElements = elements
+  cachedVersions = versions
+  cachedMaps = maps
+  return maps
+}
+
+function computeMaps(elements: readonly ExcalidrawElement[]): Map<string, MindMap> {
   const nodesByMap = new Map<string, NodeMeta[]>()
   for (const element of elements) {
     if (element.isDeleted) continue
