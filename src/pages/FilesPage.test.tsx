@@ -11,6 +11,11 @@ import { renderWithProviders, signedInAuth } from '../test/renderWithProviders'
 
 const pick = vi.hoisted(() => vi.fn())
 vi.mock('../drive/usePicker', () => ({ useFilePicker: () => pick }))
+// Reading an image loads Excalidraw on demand; here that load fails (e.g. offline), the way a file
+// read can fail. No other test in this file opens an image.
+vi.mock('@excalidraw/excalidraw', () => {
+  throw new Error('module load failed')
+})
 
 function Where() {
   return <p data-testid="where">{useLocation().pathname}</p>
@@ -88,4 +93,23 @@ it('works in English', async () => {
   expect(await screen.findByRole('list', { name: 'Your drawings' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Open from Drive' })).toBeInTheDocument()
   expect(screen.getByText(/^edited /)).toBeInTheDocument()
+})
+
+it('shows an alert and stays put when a markdown file cannot be read', async () => {
+  setup()
+  const input = screen.getByLabelText('Importar') as HTMLInputElement
+  const file = new File(['# mapa'], 'mapa.md', { type: 'text/markdown' })
+  Object.defineProperty(file, 'text', { value: () => Promise.reject(new Error('read failed')), configurable: true })
+  await userEvent.upload(input, file)
+  expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível ler o arquivo. Tente de novo.')
+  expect(screen.getByTestId('where')).toHaveTextContent('/app')
+})
+
+it('shows an alert and stays put when an image cannot be read', async () => {
+  setup()
+  const input = screen.getByLabelText('Importar') as HTMLInputElement
+  const file = new File(['not an image'], 'mapa.png', { type: 'image/png' })
+  await userEvent.upload(input, file)
+  expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível ler o arquivo. Tente de novo.')
+  expect(screen.getByTestId('where')).toHaveTextContent('/app')
 })

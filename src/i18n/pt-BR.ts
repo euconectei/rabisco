@@ -44,6 +44,7 @@ export const ptBR = {
     listLabel: 'Seus desenhos',
     openFromDrive: 'Abrir do Drive',
     importFile: 'Importar',
+    importReadFailed: 'Não foi possível ler o arquivo. Tente de novo.',
     importImageFailed: 'Esta imagem não tem um desenho editável dentro. Exporte de novo com “Incluir dados editáveis”.',
     loading: 'Carregando seus arquivos…',
     loadFailed: 'Não foi possível carregar seus arquivos.',

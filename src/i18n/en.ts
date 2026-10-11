@@ -46,6 +46,7 @@ export const en: Messages = {
     listLabel: 'Your drawings',
     openFromDrive: 'Open from Drive',
     importFile: 'Import',
+    importReadFailed: "Couldn't read the file. Try again.",
     importImageFailed: 'This image has no editable drawing inside. Export it again with “Include editable data”.',
     loading: 'Loading your files…',
     loadFailed: 'Could not load your files.',
