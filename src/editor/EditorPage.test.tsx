@@ -602,6 +602,7 @@ describe('new drawings', () => {
 
   it('imports a markdown file from the files page as a new drawing with a mind map', async () => {
     const drive = open(memoryDrive(), { route: '/app' })
+    await screen.findByText('Seu primeiro rabisco começa aqui')
     const input = await screen.findByLabelText('Importar')
     await userEvent.upload(input, new File(['# Plano\n- passo um\n- passo dois\n'], 'Notas da semana.md', { type: 'text/markdown' }))
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/edit/file-1'))
@@ -622,6 +623,7 @@ describe('new drawings', () => {
   it('reopens an exported PNG with editable data as a new drawing', async () => {
     const drive = open(memoryDrive(), { route: '/app' })
     const png = await encodePngMetadata(new Blob([PNG_1X1], { type: 'image/png' }), sceneWith('Ação 😀'))
+    await screen.findByText('Seu primeiro rabisco começa aqui')
     await userEvent.upload(await screen.findByLabelText('Importar'), new File([png], 'Plano.excalidraw.png', { type: 'image/png' }))
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/edit/file-1'))
     expect(drive.client.createFile).toHaveBeenCalledWith('Plano', expect.any(String), 'folder-1')
@@ -634,12 +636,14 @@ describe('new drawings', () => {
     const drive = open(memoryDrive(), { route: '/app' })
     const { elements } = JSON.parse(sceneWith('Fluxo')) as { elements: never[] }
     const svg = await exportToSvg({ elements, appState: { exportEmbedScene: true }, files: {} })
+    await screen.findByText('Seu primeiro rabisco começa aqui')
     await userEvent.upload(await screen.findByLabelText('Importar'), new File([svg.outerHTML], 'Fluxo.svg', { type: 'image/svg+xml' }))
     await waitFor(() => expect(drive.client.createFile).toHaveBeenCalledWith('Fluxo', expect.stringContaining('"Fluxo"'), 'folder-1'))
   })
 
   it('explains that an image without editable data cannot be reopened, and creates nothing', async () => {
     const drive = open(memoryDrive(), { route: '/app' })
+    await screen.findByText('Seu primeiro rabisco começa aqui')
     await userEvent.upload(await screen.findByLabelText('Importar'), new File([PNG_1X1], 'Foto.png', { type: 'image/png' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Esta imagem não tem um desenho editável dentro.')
     expect(drive.client.createFile).not.toHaveBeenCalled()

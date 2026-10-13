@@ -36,7 +36,7 @@ test('a color picked by hand in the properties panel survives adding more nodes'
   const drive = await installFakeGoogle(page)
   await page.goto('/app')
   await page.getByRole('button', { name: 'Entrar com Google' }).click()
-  await page.getByRole('button', { name: 'Novo' }).click()
+  await page.getByRole('button', { name: /Novo desenho|Criar o primeiro desenho/ }).click()
   await expect(page.locator('.excalidraw')).toBeVisible()
   await page.getByRole('button', { name: 'Mapa mental' }).click()
   await page.getByTestId('mindmap-placement').click({ position: { x: 640, y: 360 } })

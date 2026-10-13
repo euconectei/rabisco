@@ -26,6 +26,8 @@ export interface DriveFileMeta {
   headRevisionId?: string
   modifiedTime: string
   parents?: string[]
+  /** Short-lived link to the thumbnail the app uploads on every save; only the file list asks for it. */
+  thumbnailLink?: string
 }
 
 /** The token used to detect edits made elsewhere: the content revision, falling back to `version`. */
@@ -163,7 +165,7 @@ export function createDriveClient(driveFetch: DriveFetch, folderCache: FolderCac
             q: `trashed=false and mimeType!='${FOLDER_MIME}'`,
             orderBy: 'modifiedTime desc',
             pageSize: '100',
-            fields: 'nextPageToken,files(id,name,version,modifiedTime)',
+            fields: 'nextPageToken,files(id,name,version,modifiedTime,thumbnailLink)',
             ...(pageToken ? { pageToken } : {}),
           }),
         )

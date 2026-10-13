@@ -79,6 +79,8 @@ it('lists only .excalidraw files, newest first as returned', async () => {
   expect(url.searchParams.get('q')).toBe(`trashed=false and mimeType!='${FOLDER_MIME}'`)
   expect(url.searchParams.get('orderBy')).toBe('modifiedTime desc')
   expect(url.searchParams.get('pageSize')).toBe('100')
+  // The files page draws a card per drawing, with the thumbnail the app uploads on every save.
+  expect(url.searchParams.get('fields')).toBe('nextPageToken,files(id,name,version,modifiedTime,thumbnailLink)')
 })
 
 it('creates a file with a multipart upload inside the folder', async () => {

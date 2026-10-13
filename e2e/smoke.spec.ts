@@ -37,7 +37,7 @@ test.describe('pt-BR browser', () => {
     await page.goto('/')
     await page.getByRole('link', { name: 'Começar, é grátis' }).first().click()
     await page.getByRole('button', { name: 'Entrar com Google' }).click()
-    await page.getByRole('button', { name: 'Novo' }).click()
+    await page.getByRole('button', { name: /Novo desenho|Criar o primeiro desenho/ }).click()
     await expect(page.locator('.excalidraw')).toBeVisible()
 
     // Typing text forces the hand-drawn canvas font (Excalifont) to load.
@@ -105,7 +105,7 @@ test.describe('dark system theme', () => {
   test('the mind map button stays readable whatever the editor theme', async ({ page }) => {
     await page.goto('/app')
     await page.getByRole('button', { name: 'Entrar com Google' }).click()
-    await page.getByRole('button', { name: 'Novo' }).click()
+    await page.getByRole('button', { name: /Novo desenho|Criar o primeiro desenho/ }).click()
     const button = page.getByRole('button', { name: 'Mapa mental' })
     const colors = () =>
       button.evaluate((el) => {

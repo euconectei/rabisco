@@ -6,7 +6,7 @@ test.use({ locale: 'pt-BR' })
 async function signInAndCreate(page: Page) {
   await page.goto('/app')
   await page.getByRole('button', { name: 'Entrar com Google' }).click()
-  await page.getByRole('button', { name: 'Novo' }).click()
+  await page.getByRole('button', { name: /Novo desenho|Criar o primeiro desenho/ }).click()
   await expect(page.locator('.excalidraw')).toBeVisible()
   await expect(page.getByRole('status').filter({ hasText: 'Salvo' })).toBeVisible()
 }

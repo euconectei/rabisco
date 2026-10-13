@@ -69,11 +69,6 @@ html, body, #root { height: 100%; margin: 0; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 label.button-secondary { display: inline-block; }
 label.button-secondary:focus-within { outline: 3px solid var(--accent-text); outline-offset: 2px; }
-.files-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 1rem 0 1.5rem; }
-.files-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.25rem; }
-.files-list a { display: flex; justify-content: space-between; gap: 1rem; padding: 0.7rem 0.9rem; border-radius: 0.5rem; color: inherit; text-decoration: none; }
-.files-list a:hover { background: #6965db14; }
-.file-date { opacity: 0.65; font-size: 0.85rem; white-space: nowrap; }
 .account-menu { position: relative; }
 .account-button { width: 2.25rem; height: 2.25rem; border-radius: 50%; border: 1px solid #6965db55; background: #6965db22; color: inherit; font: inherit; cursor: pointer; overflow: hidden; padding: 0; }
 .account-button img { width: 100%; height: 100%; object-fit: cover; }
@@ -190,3 +185,32 @@ label.button-secondary:focus-within { outline: 3px solid var(--accent-text); out
 .cookie-notice-actions { display: flex; align-items: center; gap: 0.5rem; }
 .cookie-notice-actions a { color: var(--accent-text); }
 .editor .cookie-notice { bottom: 4.5rem; }
+
+/* Files page: header, cards with a preview, empty state. */
+.files-page { max-width: 72rem; margin: 0 auto; padding: 0 1.25rem; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+.files-topbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem 0; }
+.files-topbar-end { display: flex; align-items: center; gap: 0.9rem; }
+.files-topbar .language-switcher { margin-top: 0; }
+.files-brand { display: inline-flex; align-items: center; gap: 0.6rem; font-family: 'Excalifont', system-ui, sans-serif; font-size: 1.8rem; }
+.files-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem 1.5rem; padding: 1rem 0 1.6rem; }
+.files-head h1 { margin: 0; font-family: 'Excalifont', system-ui, sans-serif; font-weight: 400; font-size: clamp(2.2rem, 5vw, 3.4rem); line-height: 1; }
+.files-count { margin: 0.4rem 0 0; font-size: 0.9rem; opacity: 0.7; }
+.files-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.files-search { width: 14rem; max-width: 100%; padding: 0.5rem 0.8rem; border: 1px solid color-mix(in srgb, CanvasText 25%, transparent); border-radius: 0.5rem; background: transparent; color: inherit; font: inherit; }
+.files-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 1.5rem; }
+.file-card { display: block; overflow: hidden; border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 0.9rem; background: Canvas; color: inherit; text-decoration: none; transition: box-shadow 0.15s, transform 0.15s; }
+.file-card:hover { box-shadow: 0 6px 20px rgb(0 0 0 / 0.12); transform: translateY(-2px); }
+.file-card:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 2px; }
+.file-preview { display: flex; align-items: center; justify-content: center; height: 9.5rem; overflow: hidden; background: color-mix(in srgb, var(--tint) 14%, Canvas); color: var(--tint); }
+.file-preview img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.file-preview svg { width: 62%; height: auto; }
+.file-meta { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.8rem 1rem; }
+.file-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-date { opacity: 0.65; font-size: 0.82rem; white-space: nowrap; }
+.files-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 2rem 0 3rem; text-align: center; }
+.files-empty h1 { margin: 0; font-family: 'Excalifont', system-ui, sans-serif; font-weight: 400; font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.05; }
+.files-empty p { margin: 0; max-width: 28rem; line-height: 1.5; opacity: 0.85; }
+.files-empty-art { color: var(--accent); }
+.files-hint { font-size: 0.9rem; }
+.files-page .app-footer { margin-top: auto; }
+@media (prefers-reduced-motion: reduce) { .file-card { transition: none; } .file-card:hover { transform: none; } }
