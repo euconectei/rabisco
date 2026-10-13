@@ -160,6 +160,9 @@ label.button-secondary:focus-within { outline: 3px solid var(--accent-text); out
 .ad-slot-editor .ad-body { width: 320px; height: 50px; overflow: hidden; }
 .house-ad { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.3rem; height: 100%; min-height: inherit; padding: 0.4rem 0.8rem; box-sizing: border-box; border: 1px dashed var(--ad-border); border-radius: 0.5rem; color: inherit; text-decoration: none; text-align: center; }
 .house-ad strong { color: var(--accent-text); font-weight: 600; }
+/* 320x50 only fits the call to action; the full sentence stays in the files page. */
+.ad-slot-editor .house-ad > span { display: none; }
+.ad-slot-editor .house-ad { padding: 0.2rem 0.5rem; font-size: 0.8rem; }
 
 /* Cookie notice (Brazil): a bar at the bottom that does not block the page. In the editor it sits above Excalidraw's footer. */
 .cookie-notice { --cn-bg: Canvas; --cn-text: CanvasText; --cn-border: color-mix(in srgb, CanvasText 18%, transparent);
