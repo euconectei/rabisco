@@ -99,8 +99,8 @@ export function PrivacyPtBR() {
           visitas de forma agregada e <strong>sem cookies</strong>.
         </li>
         <li>
-          <strong>Anúncios:</strong> um espaço pequeno no rodapé do editor e outro no fim da lista de arquivos podem
-          mostrar anúncios do Google AdSense (veja a seção 6). <strong>Nenhum dado dos seus desenhos, nem o seu e-mail, é
+          <strong>Anúncios:</strong> pequenos espaços na página inicial, no fim da lista de arquivos e no rodapé do editor
+          podem mostrar anúncios do Google AdSense (veja a seção 6). <strong>Nenhum dado dos seus desenhos, nem o seu e-mail, é
           enviado a quem mostra os anúncios.</strong>
         </li>
       </ul>
@@ -109,8 +109,8 @@ export function PrivacyPtBR() {
       <section id="cookies">
         <h2>6. Cookies e anúncios</h2>
         <p>
-          O Rabisco mostra anúncios em dois espaços pequenos: no rodapé do editor e no fim da lista de arquivos. A página
-          inicial, as Novidades e estas páginas legais não têm anúncios. Como o site não tem servidor, toda a escolha sobre
+          O Rabisco mostra anúncios em três espaços pequenos: na página inicial, no fim da lista de arquivos e no rodapé
+          do editor. As Novidades e estas páginas legais não têm anúncios. Como o site não tem servidor, toda a escolha sobre
           cookies fica no seu navegador. A região é deduzida do fuso horário do navegador.
         </p>
         <ul>
@@ -283,8 +283,8 @@ export function PrivacyEn() {
           counts visits in aggregate and <strong>without cookies</strong>.
         </li>
         <li>
-          <strong>Ads:</strong> a small slot in the editor footer and another at the end of the file list may show Google
-          AdSense ads (see section 6). <strong>No data from your drawings, nor your email, is sent to whoever shows the
+          <strong>Ads:</strong> small slots on the home page, at the end of the file list, and in the editor footer may
+          show Google AdSense ads (see section 6). <strong>No data from your drawings, nor your email, is sent to whoever shows the
           ads.</strong>
         </li>
       </ul>
@@ -293,8 +293,8 @@ export function PrivacyEn() {
       <section id="cookies">
         <h2>6. Cookies and ads</h2>
         <p>
-          Rabisco shows ads in two small slots: in the editor footer and at the end of the file list. The home page, News,
-          and these legal pages have no ads. Because the site has no server, every cookie choice stays in your browser. The
+          Rabisco shows ads in three small slots: on the home page, at the end of the file list, and in the editor footer.
+          News and these legal pages have no ads. Because the site has no server, every cookie choice stays in your browser. The
           region is inferred from your browser's time zone.
         </p>
         <ul>

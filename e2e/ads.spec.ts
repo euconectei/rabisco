@@ -90,6 +90,40 @@ test.describe('other regions', () => {
   })
 })
 
+test.describe('landing page', () => {
+  test('Europe: only the house ad and no request to AdSense', async ({ page }) => {
+    const adsense = await installFakeAdsense(page)
+    await page.goto('/')
+    await expect(adSlot(page).getByRole('link', { name: /GitHub/ })).toBeVisible()
+    await expect(notice(page)).toHaveCount(0)
+    expect(adsense.requests).toEqual([])
+  })
+
+  test.describe('Brazil', () => {
+    test.use({ timezoneId: 'America/Sao_Paulo' })
+
+    test('asks first, then loads AdSense after "Aceitar"', async ({ page }) => {
+      const adsense = await installFakeAdsense(page)
+      await page.goto('/')
+      await expect(notice(page)).toBeVisible()
+      expect(adsense.requests).toEqual([])
+      await notice(page).getByRole('button', { name: 'Aceitar' }).click()
+      await expect(adSlot(page).getByText('Fake AdSense')).toBeVisible()
+    })
+  })
+
+  test.describe('other regions', () => {
+    test.use({ timezoneId: 'America/New_York' })
+
+    test('AdSense loads without a notice', async ({ page }) => {
+      await installFakeAdsense(page)
+      await page.goto('/')
+      await expect(adSlot(page).getByText('Fake AdSense')).toBeVisible()
+      await expect(notice(page)).toHaveCount(0)
+    })
+  })
+})
+
 test('legal pages open without signing in, in both languages, with no ad', async ({ page }) => {
   await page.goto('/privacy')
   await expect(page.getByRole('heading', { level: 1, name: 'Política de Privacidade' })).toBeVisible()

@@ -153,6 +153,10 @@ label.button-secondary:focus-within { outline: 3px solid var(--accent-text); out
 .ad-slot[data-theme='light'] { --ad-text: #1b1b1f; --ad-border: #dcdce3; }
 .ad-slot[data-theme='dark'] { --ad-text: #e3e3e8; --ad-border: #45454f; }
 .ad-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.65; }
+.ad-slot-landing { text-align: center; min-height: calc(90px + 1.2rem); }
+.ad-slot-landing .ad-label { display: block; margin-bottom: 0.2rem; }
+.ad-slot-landing .ad-body { min-height: 90px; }
+.landing-ad { padding-block: 0.5rem 1rem; }
 .ad-slot-files { margin: 2rem 0 0; min-height: calc(90px + 1.2rem); }
 .ad-slot-files .ad-label { display: block; margin-bottom: 0.2rem; }
 .ad-slot-files .ad-body { min-height: 90px; }

@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
+import { AdSlot } from '../ads/AdSlot'
+import { CookieNotice } from '../ads/CookieNotice'
 import { AppFooter } from '../components/AppFooter'
 import { Screenshot } from '../components/Screenshot'
 import { REPOSITORY_URL } from '../components/links'
@@ -65,6 +67,10 @@ export function LandingPage() {
           </ul>
         </section>
 
+        <section className="landing-ad">
+          <AdSlot placement="landing" />
+        </section>
+
         <section className="landing-section landing-cta">
           <h2>{t.landing.ctaTitle}</h2>
           <p>{t.landing.ctaText}</p>
@@ -73,6 +79,7 @@ export function LandingPage() {
       </main>
 
       <AppFooter />
+      <CookieNotice />
     </div>
   )
 }

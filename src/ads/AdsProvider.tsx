@@ -15,7 +15,10 @@ interface Props {
 }
 
 export function AdsProvider({ children, timeZone = browserTimeZone(), adsense = adsenseConfig(), exemptHashes = EXEMPT_HASHES }: Props) {
-  const email = useAuth().user?.email ?? null
+  const { user, hint } = useAuth()
+  // The landing page has no signed-in user: the remembered account (local only) still tells whether it is exempt.
+  // With no account at all, nobody can be exempt, so there is nothing to wait for.
+  const email = user?.email ?? hint?.email ?? null
   // Tagged with the email it was computed for, so a new account never inherits the previous answer.
   const [exemption, setExemption] = useState<{ email: string; exempt: boolean } | null>(null)
   const [consent, setConsentState] = useState<AdConsent | null>(readConsent)
@@ -37,7 +40,7 @@ export function AdsProvider({ children, timeZone = browserTimeZone(), adsense = 
   }, [])
 
   const value = useMemo(() => {
-    const exempt = email && exemption?.email === email ? exemption.exempt : null
+    const exempt = email === null ? false : exemption?.email === email ? exemption.exempt : null
     const inputs = { exempt, region: adRegion(timeZone), adsenseConfigured: adsense !== null, consent }
     return { decision: decideAd(inputs), showCookieNotice: needsCookieNotice(inputs), consent, setConsent, adsense }
   }, [email, exemption, timeZone, adsense, consent, setConsent])

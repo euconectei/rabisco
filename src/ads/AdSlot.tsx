@@ -6,7 +6,7 @@ import { useAds } from './useAds'
 
 const NO_FILL_TIMEOUT_MS = 5_000
 
-type Placement = 'editor' | 'files'
+type Placement = 'editor' | 'files' | 'landing'
 
 function AdsenseUnit({ client, slot, placement, onFail }: { client: string; slot: string; placement: Placement; onFail(): void }) {
   const ref = useRef<HTMLModElement>(null)
@@ -61,7 +61,7 @@ export function AdSlot({ placement, theme }: { placement: Placement; theme?: str
       {decision !== 'pending' && <span className="ad-label">{t.ads.label}</span>}
       <div className="ad-body">
         {decision === 'pending' ? null : useAdsense ? (
-          <AdsenseUnit client={adsense.client} slot={placement === 'editor' ? adsense.slots.editor : adsense.slots.files} placement={placement} onFail={fail} />
+          <AdsenseUnit client={adsense.client} slot={placement === 'editor' ? adsense.slots.editor : adsense.slots.files /* the landing reuses the files unit */} placement={placement} onFail={fail} />
         ) : (
           <a className="house-ad" href={house.href} target="_blank" rel="noopener noreferrer">
             <span>{house.text}</span> <strong>{house.cta}</strong>
