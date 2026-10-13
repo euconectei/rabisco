@@ -54,6 +54,7 @@ export const en: Messages = {
     edited: 'edited {time}',
   },
   editor: {
+    privacyMenuItem: 'Privacy and cookies',
     backToFiles: 'My files',
     loading: 'Loading the editor…',
     opening: 'Opening the drawing…',
@@ -96,12 +97,28 @@ export const en: Messages = {
     },
   },
   notFound: { title: 'Page not found', backHome: 'Back to home' },
-  footer: { madeBy: 'Made by the community with', love: 'love', privacy: 'Privacy', terms: 'Terms' },
+  footer: { madeBy: 'Made by the community with', love: 'love', privacy: 'Privacy', terms: 'Terms', cookies: 'Cookies' },
   legal: {
     privacyTitle: 'Privacy Policy',
     termsTitle: 'Terms of Use',
     updated: 'Last updated: {date}',
     back: 'Back',
+    choice: {
+      accepted: 'Your choice in this browser: you accepted ad cookies.',
+      declined: 'Your choice in this browser: you declined ad cookies.',
+      none: "You haven't chosen in this browser yet.",
+    },
+  },
+  cookies: {
+    title: 'Cookies',
+    text: 'Rabisco is free thanks to ads. If you accept, we show Google ads, which use cookies. If you decline, we show only our own ad, without cookies. You can change this later under "Cookies" in the footer.',
+    accept: 'Accept',
+    decline: 'Decline',
+    learnMore: 'Learn more',
+  },
+  ads: {
+    label: 'Ad',
+    house: { text: 'Rabisco is made by its community, as open source.', cta: 'See it and contribute on GitHub' },
   },
   language: { label: 'Language', 'pt-BR': 'Português', en: 'English' },
   exportImage: {
