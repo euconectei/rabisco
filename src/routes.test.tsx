@@ -50,4 +50,5 @@ it('legal pages are public and linked from the footer', async () => {
   expect(await screen.findByRole('heading', { level: 1, name: 'Política de Privacidade' })).toBeInTheDocument()
   await userEvent.click(screen.getByRole('link', { name: 'Termos' }))
   expect(await screen.findByRole('heading', { level: 1, name: 'Termos de Uso' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Cookies' })).toHaveAttribute('href', '/privacy#cookies')
 })
