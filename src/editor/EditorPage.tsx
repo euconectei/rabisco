@@ -267,6 +267,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
                 {t.mindmap.organize.button}
               </button>
             )}
+            <SaveStatus status={file.status} lost={file.lost} onRetry={file.retry} onSaveAsNew={() => void attempt(saveAsNew)} />
             <TitleField key={baseName} name={baseName} onRename={file.rename} />
             <LanguageSwitcher />
           </div>
@@ -294,7 +295,6 @@ function EditorScreen({ fileId }: { fileId: string }) {
           <MainMenu.DefaultItems.ChangeCanvasBackground />
         </MainMenu>
         <Footer>
-          <SaveStatus status={file.status} lost={file.lost} onRetry={file.retry} onSaveAsNew={() => void attempt(saveAsNew)} />
           <AdSlot placement="editor" theme={theme} />
         </Footer>
       </Excalidraw>
