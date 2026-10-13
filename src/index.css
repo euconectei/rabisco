@@ -40,7 +40,34 @@ html, body, #root { height: 100%; margin: 0; }
 .whats-new-date { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: #6965db; margin: 0; }
 .whats-new h2 { font-size: 1.15rem; margin: 0.75rem 0 0.5rem; }
 .whats-new ul { padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.4rem; line-height: 1.5; }
-.sign-in { display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; }
+.sign-in { display: flex; flex-wrap: wrap; min-height: 100vh; min-height: 100dvh; }
+.sign-in-panel { flex: 1 1 30rem; display: flex; flex-direction: column; justify-content: space-between; gap: 2rem; padding: 2.5rem 3.5rem; background: color-mix(in srgb, var(--accent) 12%, Canvas); }
+.sign-in-brand { display: inline-flex; align-items: center; gap: 0.6rem; font-family: 'Excalifont', system-ui, sans-serif; font-size: 1.9rem; }
+.sign-in-pitch { display: flex; flex-direction: column; gap: 1.4rem; }
+.sign-in-art { width: min(22rem, 100%); height: auto; color: var(--accent); }
+.sign-in-tagline { margin: 0; max-width: 26rem; font-family: 'Excalifont', system-ui, sans-serif; font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.05; }
+.sign-in-why { margin: 0; max-width: 26rem; line-height: 1.5; opacity: 0.85; }
+.sign-in-sub { margin: 0; font-size: 0.85rem; opacity: 0.75; }
+.sign-in-card { flex: 1 1 28rem; display: flex; align-items: center; justify-content: center; padding: 2.5rem 2rem; }
+.sign-in-form { width: 100%; max-width: 27rem; display: flex; flex-direction: column; gap: 1.25rem; }
+.sign-in-form h1 { margin: 0; font-family: 'Excalifont', system-ui, sans-serif; font-weight: 400; line-height: 1.1; font-size: clamp(2rem, 4vw, 3.1rem); }
+.sign-in-account { display: flex; align-items: center; gap: 0.9rem; padding: 0.85rem 1rem; border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); border-radius: 0.9rem; }
+.sign-in-avatar { width: 2.75rem; height: 2.75rem; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; font-size: 1.1rem; }
+.sign-in-who { display: flex; flex-direction: column; min-width: 0; }
+.sign-in-who strong, .sign-in-who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sign-in-who span { font-size: 0.82rem; opacity: 0.7; }
+.sign-in-link { align-self: center; }
+.sign-in-note { margin: 0; font-size: 0.8rem; line-height: 1.5; opacity: 0.7; text-align: center; }
+.sign-in-note a { color: inherit; }
+.sign-in-reasons { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.7rem; font-size: 0.9rem; line-height: 1.45; }
+.sign-in-reasons li { position: relative; padding-left: 1.6rem; }
+.sign-in-reasons li::before { content: '✓'; position: absolute; left: 0; font-weight: 700; color: var(--accent-text); }
+.sign-in-warning { display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem 1.1rem; border: 1px solid #f0c36d; border-radius: 0.9rem; background: #fff8e6; color: #5a4a2a; line-height: 1.5; }
+.sign-in-warning strong { color: #7a4b00; }
+@media (prefers-color-scheme: dark) {
+  .sign-in-warning { background: #3a2e12; border-color: #7a5a1a; color: #f1dcae; }
+  .sign-in-warning strong { color: #ffd37a; }
+}
 .button-link { border: 0; background: none; padding: 0; color: inherit; text-decoration: underline; font: inherit; cursor: pointer; }
 .reconnect-banner { position: fixed; z-index: 10; top: 0; left: 0; right: 0; display: flex; gap: 1rem; align-items: center; justify-content: center; padding: 0.5rem 1rem; background: #fff3cd; color: #5c4400; }
 .dialog-backdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: #0006; padding: 1rem; }
