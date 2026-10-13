@@ -55,7 +55,7 @@ it('external links open safely in a new tab', () => {
 it('the cookies section shows the current choice and changes it', async () => {
   renderWithProviders(<PrivacyPage />, { route: '/privacy#cookies', auth: signedOut })
   const section = document.getElementById('cookies')!
-  expect(section.parentElement).toHaveTextContent('Você ainda não escolheu neste navegador.')
+  expect(section).toHaveTextContent('Você ainda não escolheu neste navegador.')
   await userEvent.click(screen.getByRole('button', { name: 'Recusar' }))
   expect(screen.getByRole('status')).toHaveTextContent('recusou os cookies de anúncios')
   expect(localStorage.getItem('rabisco.adConsent')).toBe('declined')
