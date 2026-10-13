@@ -6,6 +6,8 @@ declare global {
 
   interface Window {
     EXCALIDRAW_ASSET_PATH?: string
+    /** Google AdSense queue; each <ins> gets exactly one push. */
+    adsbygoogle?: unknown[]
     /** Test-only scene reader exposed by the E2E build (never present in production). */
     __rabiscoScene?: () => {
       elements: readonly unknown[]

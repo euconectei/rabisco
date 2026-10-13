@@ -20,6 +20,8 @@ export function AppFooter() {
       <span aria-hidden="true">·</span>
       <Link to="/terms">{t.footer.terms}</Link>
       <span aria-hidden="true">·</span>
+      <Link to="/privacy#cookies">{t.footer.cookies}</Link>
+      <span aria-hidden="true">·</span>
       <span>
         {t.footer.madeBy}{' '}
         <span className="heartbeat" role="img" aria-label={t.footer.love}>

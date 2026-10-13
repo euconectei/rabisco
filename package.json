@@ -18,6 +18,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "screenshots": "playwright test -c playwright.screenshots.config.ts",
+    "hash-email": "node scripts/hash-email.mjs",
     "ci": "pnpm run lint && pnpm run test:coverage && pnpm run build"
   },
   "dependencies": {

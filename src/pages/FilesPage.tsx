@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { AdSlot } from '../ads/AdSlot'
+import { CookieNotice } from '../ads/CookieNotice'
 import { AppFooter } from '../components/AppFooter'
 import type { DriveFileMeta } from '../drive/client'
 import { useFilePicker } from '../drive/usePicker'
@@ -127,8 +129,10 @@ export function FilesPage() {
           ))}
         </ul>
       )}
+      <AdSlot placement="files" />
       <LanguageSwitcher />
       <AppFooter />
+      <CookieNotice />
     </main>
   )
 }

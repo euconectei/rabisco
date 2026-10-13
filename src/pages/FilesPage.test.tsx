@@ -113,3 +113,9 @@ it('shows an alert and stays put when an image cannot be read', async () => {
   expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível ler o arquivo. Tente de novo.')
   expect(screen.getByTestId('where')).toHaveTextContent('/app')
 })
+
+it('shows the labeled ad after the file list', async () => {
+  renderWithProviders(<FilesPage />, { route: '/app' })
+  const ad = await screen.findByRole('complementary', { name: 'Anúncio' })
+  expect(await within(ad).findByRole('link', { name: /GitHub/ })).toBeInTheDocument()
+})

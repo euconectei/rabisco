@@ -52,6 +52,7 @@ export const ptBR = {
     edited: 'editado {time}',
   },
   editor: {
+    privacyMenuItem: 'Privacidade e cookies',
     backToFiles: 'Meus arquivos',
     loading: 'Carregando o editor…',
     opening: 'Abrindo o desenho…',
@@ -94,12 +95,28 @@ export const ptBR = {
     },
   },
   notFound: { title: 'Página não encontrada', backHome: 'Voltar ao início' },
-  footer: { madeBy: 'Feito pela comunidade com', love: 'amor', privacy: 'Privacidade', terms: 'Termos' },
+  footer: { madeBy: 'Feito pela comunidade com', love: 'amor', privacy: 'Privacidade', terms: 'Termos', cookies: 'Cookies' },
   legal: {
     privacyTitle: 'Política de Privacidade',
     termsTitle: 'Termos de Uso',
     updated: 'Última atualização: {date}',
     back: 'Voltar',
+    choice: {
+      accepted: 'Sua escolha neste navegador: aceitou os cookies de anúncios.',
+      declined: 'Sua escolha neste navegador: recusou os cookies de anúncios.',
+      none: 'Você ainda não escolheu neste navegador.',
+    },
+  },
+  cookies: {
+    title: 'Cookies',
+    text: 'O Rabisco é grátis graças a anúncios. Se você aceitar, mostramos anúncios do Google, que usam cookies. Se recusar, mostramos só um anúncio nosso, sem cookies. Dá para mudar depois em "Cookies", no rodapé.',
+    accept: 'Aceitar',
+    decline: 'Recusar',
+    learnMore: 'Saiba mais',
+  },
+  ads: {
+    label: 'Anúncio',
+    house: { text: 'O Rabisco é feito pela comunidade, com código aberto.', cta: 'Conheça e contribua no GitHub' },
   },
   language: { label: 'Idioma', 'pt-BR': 'Português', en: 'English' },
   exportImage: {
@@ -211,6 +228,15 @@ export const ptBR = {
           'Na organização Livre, você arrasta um tópico para onde quiser, e o ramo inteiro vai junto.',
           'Escolha também o estilo: Caixas ou Linhas, com cara de gráfico de lógica.',
           'Cada mapa guarda a própria organização e o próprio estilo, sem atrapalhar os outros.',
+        ],
+      },
+      adsAndPrivacy: {
+        title: 'Privacidade e anúncios',
+        items: [
+          'O Rabisco continua grátis. Para isso, a lista de arquivos e o rodapé do editor mostram um anúncio pequeno, sempre marcado como "Anúncio".',
+          'Nenhum dado dos seus desenhos vai para quem mostra os anúncios.',
+          'No Brasil, você escolhe se aceita cookies de anúncios. Enquanto não aceitar, aparece só um anúncio do próprio Rabisco, sem cookies.',
+          'As páginas de Privacidade e de Termos estão no rodapé. Em "Cookies", você muda a sua escolha quando quiser.',
         ],
       },
       home: {

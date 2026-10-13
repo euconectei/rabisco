@@ -147,3 +147,31 @@ label.button-secondary:focus-within { outline: 3px solid var(--accent-text); out
 .legal h2 { margin-top: 2rem; font-size: 1.15rem; }
 .legal-updated { font-size: 0.85rem; opacity: 0.7; }
 .legal code { font-size: 0.85em; }
+
+/* Ad slots (spec 7.1): labeled, with reserved height so the page does not jump. */
+.ad-slot { --ad-text: inherit; --ad-border: color-mix(in srgb, CanvasText 15%, transparent); color: var(--ad-text); font-size: 0.8rem; }
+.ad-slot[data-theme='light'] { --ad-text: #1b1b1f; --ad-border: #dcdce3; }
+.ad-slot[data-theme='dark'] { --ad-text: #e3e3e8; --ad-border: #45454f; }
+.ad-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.65; }
+.ad-slot-files { margin: 2rem 0 0; min-height: calc(90px + 1.2rem); }
+.ad-slot-files .ad-label { display: block; margin-bottom: 0.2rem; }
+.ad-slot-files .ad-body { min-height: 90px; }
+.ad-slot-editor { display: flex; align-items: center; gap: 0.5rem; height: 50px; }
+.ad-slot-editor .ad-body { width: 320px; height: 50px; overflow: hidden; }
+.house-ad { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.3rem; height: 100%; min-height: inherit; padding: 0.4rem 0.8rem; box-sizing: border-box; border: 1px dashed var(--ad-border); border-radius: 0.5rem; color: inherit; text-decoration: none; text-align: center; }
+.house-ad strong { color: var(--accent-text); font-weight: 600; }
+/* 320x50 only fits the call to action; the full sentence stays in the files page. */
+.ad-slot-editor .house-ad > span { display: none; }
+.ad-slot-editor .house-ad { padding: 0.2rem 0.5rem; font-size: 0.8rem; }
+
+/* Cookie notice (Brazil): a bar at the bottom that does not block the page. In the editor it sits above Excalidraw's footer. */
+.cookie-notice { --cn-bg: Canvas; --cn-text: CanvasText; --cn-border: color-mix(in srgb, CanvasText 18%, transparent);
+  position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%); z-index: 20; width: min(40rem, calc(100vw - 2rem)); box-sizing: border-box;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; padding: 0.75rem 1rem; border: 1px solid var(--cn-border); border-radius: 0.75rem;
+  background: var(--cn-bg); color: var(--cn-text); box-shadow: 0 4px 16px rgb(0 0 0 / 0.15); font-size: 0.85rem; }
+.cookie-notice[data-theme='light'] { --cn-bg: #fff; --cn-text: #1b1b1f; --cn-border: #dcdce3; }
+.cookie-notice[data-theme='dark'] { --cn-bg: #232329; --cn-text: #e3e3e8; --cn-border: #45454f; }
+.cookie-notice p { flex: 1 1 18rem; margin: 0; }
+.cookie-notice-actions { display: flex; align-items: center; gap: 0.5rem; }
+.cookie-notice-actions a { color: var(--accent-text); }
+.editor .cookie-notice { bottom: 4.5rem; }

@@ -1,6 +1,8 @@
 import { render } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { MemoryRouter } from 'react-router-dom'
+import { AdsProvider } from '../ads/AdsProvider'
+import type { AdsenseConfig } from '../ads/config'
 import { AuthContext, type AuthValue } from '../auth/context'
 import type { DriveClient } from '../drive/client'
 import { DriveContext } from '../drive/context'
@@ -32,14 +34,24 @@ export function renderWithProviders(
     lang = 'pt-BR',
     auth = signedInAuth(),
     drive = memoryDrive().client,
-  }: { route?: string; lang?: Language; auth?: AuthValue; drive?: DriveClient } = {},
+    ads = {},
+  }: {
+    route?: string
+    lang?: Language
+    auth?: AuthValue
+    drive?: DriveClient
+    // Defaults to Europe with no AdSense: the house ad, no cookie notice, whatever the machine's time zone.
+    ads?: { timeZone?: string; adsense?: AdsenseConfig | null; exemptHashes?: readonly string[] }
+  } = {},
 ) {
   return render(
     <I18nProvider initialLanguage={lang}>
       <AuthContext.Provider value={auth}>
-        <DriveContext.Provider value={drive}>
-          <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
-        </DriveContext.Provider>
+        <AdsProvider timeZone={ads.timeZone ?? 'Europe/Lisbon'} adsense={ads.adsense ?? null} exemptHashes={ads.exemptHashes}>
+          <DriveContext.Provider value={drive}>
+            <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+          </DriveContext.Provider>
+        </AdsProvider>
       </AuthContext.Provider>
     </I18nProvider>,
   )

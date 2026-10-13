@@ -1,3 +1,4 @@
+import { CookieChoice } from './CookieChoice'
 import { Contact, External, GOOGLE_API_POLICY_URL, GOOGLE_PERMISSIONS_URL, Repository } from './links'
 
 export function PrivacyPtBR() {
@@ -29,7 +30,7 @@ export function PrivacyPtBR() {
       <ul>
         <li>
           <code>openid</code>, <code>email</code> e <code>profile</code>: para mostrar qual conta está em uso (nome e
-          e-mail).
+          e-mail) e para saber se a conta é isenta de anúncios.
         </li>
         <li>
           <code>drive.file</code>: para criar e abrir, no seu Google Drive, só os arquivos criados pelo Rabisco ou
@@ -74,6 +75,9 @@ export function PrivacyPtBR() {
                 <li>
                   <code>rabisco.exportOptions</code>: as últimas opções de exportação de imagem;
                 </li>
+                <li>
+                  <code>rabisco.adConsent</code>: a sua escolha sobre cookies de anúncios (veja a seção 6);
+                </li>
               </ul>
             </li>
             <li>
@@ -94,17 +98,58 @@ export function PrivacyPtBR() {
           <strong>Cloudflare:</strong> o site é servido pelo Cloudflare Pages e usa o Cloudflare Web Analytics, que conta
           visitas de forma agregada e <strong>sem cookies</strong>.
         </li>
+        <li>
+          <strong>Anúncios:</strong> um espaço pequeno no rodapé do editor e outro no fim da lista de arquivos podem
+          mostrar anúncios do Google AdSense (veja a seção 6). <strong>Nenhum dado dos seus desenhos, nem o seu e-mail, é
+          enviado a quem mostra os anúncios.</strong>
+        </li>
       </ul>
-      <p>
-        O Rabisco não vende dados e não envia nenhum dado dos seus desenhos, nem o seu e-mail, a terceiros além do Google.
-      </p>
+      <p>O Rabisco não vende dados.</p>
 
-      <h2 id="cookies">6. Cookies e anúncios</h2>
-      <p>
-        O Rabisco <strong>não mostra anúncios</strong> e não grava cookies próprios: os dados locais da seção 4 ficam no{' '}
-        <code>localStorage</code> e no <code>IndexedDB</code>. O login e o seletor de arquivos são serviços do Google,
-        que podem usar os cookies deles conforme a política do Google.
-      </p>
+      <section id="cookies">
+        <h2>6. Cookies e anúncios</h2>
+        <p>
+          O Rabisco mostra anúncios em dois espaços pequenos: no rodapé do editor e no fim da lista de arquivos. A página
+          inicial, as Novidades e estas páginas legais não têm anúncios. Como o site não tem servidor, toda a escolha sobre
+          cookies fica no seu navegador. A região é deduzida do fuso horário do navegador.
+        </p>
+        <ul>
+          <li>
+            <strong>Europa (Espaço Econômico Europeu), Reino Unido e Suíça:</strong> o Rabisco{' '}
+            <strong>não carrega anúncios do Google</strong>. O espaço mostra só um anúncio do próprio projeto, sem cookies,
+            e nada é perguntado.
+          </li>
+          <li>
+            <strong>Brasil:</strong> aparece um aviso do próprio Rabisco. <strong>Até você responder, e se você recusar</strong>
+            , o Rabisco não carrega anúncios do Google: o espaço mostra só um anúncio do próprio projeto, sem cookies.{' '}
+            <strong>Se você aceitar</strong>, o Rabisco passa a carregar o Google AdSense, que usa cookies e pode
+            personalizar os anúncios. A escolha fica guardada neste navegador (<code>rabisco.adConsent</code>) e pode ser
+            mudada a qualquer momento aqui embaixo, pelo link "Cookies" no rodapé ou pelo item "Privacidade e cookies" no
+            menu do editor.
+          </li>
+          <li>
+            <strong>Outras regiões:</strong> o Google AdSense é carregado sem aviso, e esta seção explica os cookies que
+            ele usa.
+          </li>
+          <li>
+            <strong>Fuso não reconhecido:</strong> se o navegador não informar o fuso horário, o Rabisco não carrega
+            anúncios do Google.
+          </li>
+        </ul>
+        <p>
+          <strong>Sobre os anúncios do Google:</strong> o Google e os parceiros dele usam cookies e identificadores para
+          mostrar e medir anúncios, inclusive para personalizá-los. Saiba mais em{' '}
+          <External href="https://policies.google.com/technologies/ads">policies.google.com/technologies/ads</External> e
+          ajuste suas preferências em <External href="https://www.google.com/settings/ads">google.com/settings/ads</External>.
+          O login e o seletor de arquivos também são serviços do Google e podem usar cookies conforme a política dele.
+        </p>
+        <p>
+          <strong>Contas isentas</strong> (o mantenedor e quem contribui com o projeto) não veem anúncios nem o aviso, e o
+          script de anúncios nem é baixado. A isenção compara o hash SHA-256 do seu e-mail, calculado no seu navegador,
+          com uma lista pública no repositório do projeto. O e-mail e o hash não saem do navegador.
+        </p>
+        <CookieChoice />
+      </section>
 
       <h2>7. Seus direitos (LGPD e GDPR)</h2>
       <p>
@@ -170,7 +215,7 @@ export function PrivacyEn() {
       <ul>
         <li>
           <code>openid</code>, <code>email</code>, and <code>profile</code>: to show which account is in use (name and
-          email).
+          email) and to know whether the account is exempt from ads.
         </li>
         <li>
           <code>drive.file</code>: to create and open, in your Google Drive, only the files Rabisco created or that you
@@ -214,6 +259,9 @@ export function PrivacyEn() {
                 <li>
                   <code>rabisco.exportOptions</code>: your last image export options;
                 </li>
+                <li>
+                  <code>rabisco.adConsent</code>: your choice about ad cookies (see section 6);
+                </li>
               </ul>
             </li>
             <li>
@@ -234,17 +282,57 @@ export function PrivacyEn() {
           <strong>Cloudflare:</strong> the site is served by Cloudflare Pages and uses Cloudflare Web Analytics, which
           counts visits in aggregate and <strong>without cookies</strong>.
         </li>
+        <li>
+          <strong>Ads:</strong> a small slot in the editor footer and another at the end of the file list may show Google
+          AdSense ads (see section 6). <strong>No data from your drawings, nor your email, is sent to whoever shows the
+          ads.</strong>
+        </li>
       </ul>
-      <p>
-        Rabisco does not sell data and sends no data from your drawings, nor your email, to anyone other than Google.
-      </p>
+      <p>Rabisco does not sell data.</p>
 
-      <h2 id="cookies">6. Cookies and ads</h2>
-      <p>
-        Rabisco <strong>shows no ads</strong> and sets no cookies of its own: the local data in section 4 lives in{' '}
-        <code>localStorage</code> and <code>IndexedDB</code>. Sign-in and the file picker are Google services, which may
-        use their own cookies under Google's policy.
-      </p>
+      <section id="cookies">
+        <h2>6. Cookies and ads</h2>
+        <p>
+          Rabisco shows ads in two small slots: in the editor footer and at the end of the file list. The home page, News,
+          and these legal pages have no ads. Because the site has no server, every cookie choice stays in your browser. The
+          region is inferred from your browser's time zone.
+        </p>
+        <ul>
+          <li>
+            <strong>Europe (European Economic Area), United Kingdom, and Switzerland:</strong> Rabisco{' '}
+            <strong>does not load Google ads</strong>. The slot shows only an ad for the project itself, without cookies, and
+            nothing is asked.
+          </li>
+          <li>
+            <strong>Brazil:</strong> Rabisco shows its own notice. <strong>Until you answer, and if you decline</strong>,
+            Rabisco does not load Google ads: the slot shows only an ad for the project itself, without cookies.{' '}
+            <strong>If you accept</strong>, Rabisco loads Google AdSense, which uses cookies and may personalize ads. Your
+            choice is kept in this browser (<code>rabisco.adConsent</code>) and can be changed at any time below, through
+            the "Cookies" link in the footer, or through "Privacy and cookies" in the editor menu.
+          </li>
+          <li>
+            <strong>Other regions:</strong> Google AdSense loads without a notice, and this section explains the cookies it
+            uses.
+          </li>
+          <li>
+            <strong>Unknown time zone:</strong> if the browser does not report a time zone, Rabisco does not load Google
+            ads.
+          </li>
+        </ul>
+        <p>
+          <strong>About Google ads:</strong> Google and its partners use cookies and identifiers to serve and measure ads,
+          including to personalize them. Learn more at{' '}
+          <External href="https://policies.google.com/technologies/ads">policies.google.com/technologies/ads</External> and
+          adjust your preferences at <External href="https://www.google.com/settings/ads">google.com/settings/ads</External>.
+          Sign-in and the file picker are also Google services and may use cookies under Google's policy.
+        </p>
+        <p>
+          <strong>Exempt accounts</strong> (the maintainer and project contributors) see no ads and no notice, and the ad
+          script is not even downloaded. Exemption compares the SHA-256 hash of your email, computed in your browser, with a
+          public list in the project repository. Neither the email nor the hash leaves the browser.
+        </p>
+        <CookieChoice />
+      </section>
 
       <h2>7. Your rights (LGPD and GDPR)</h2>
       <p>

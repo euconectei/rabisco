@@ -54,6 +54,7 @@ export const en: Messages = {
     edited: 'edited {time}',
   },
   editor: {
+    privacyMenuItem: 'Privacy and cookies',
     backToFiles: 'My files',
     loading: 'Loading the editor…',
     opening: 'Opening the drawing…',
@@ -96,12 +97,28 @@ export const en: Messages = {
     },
   },
   notFound: { title: 'Page not found', backHome: 'Back to home' },
-  footer: { madeBy: 'Made by the community with', love: 'love', privacy: 'Privacy', terms: 'Terms' },
+  footer: { madeBy: 'Made by the community with', love: 'love', privacy: 'Privacy', terms: 'Terms', cookies: 'Cookies' },
   legal: {
     privacyTitle: 'Privacy Policy',
     termsTitle: 'Terms of Use',
     updated: 'Last updated: {date}',
     back: 'Back',
+    choice: {
+      accepted: 'Your choice in this browser: you accepted ad cookies.',
+      declined: 'Your choice in this browser: you declined ad cookies.',
+      none: "You haven't chosen in this browser yet.",
+    },
+  },
+  cookies: {
+    title: 'Cookies',
+    text: 'Rabisco is free thanks to ads. If you accept, we show Google ads, which use cookies. If you decline, we show only our own ad, without cookies. You can change this later under "Cookies" in the footer.',
+    accept: 'Accept',
+    decline: 'Decline',
+    learnMore: 'Learn more',
+  },
+  ads: {
+    label: 'Ad',
+    house: { text: 'Rabisco is made by its community, as open source.', cta: 'See it and contribute on GitHub' },
   },
   language: { label: 'Language', 'pt-BR': 'Português', en: 'English' },
   exportImage: {
@@ -213,6 +230,15 @@ export const en: Messages = {
           'In the Free arrangement, drag a topic wherever you like and the whole branch follows.',
           'Pick a style too: Boxes or Lines, with a logic-chart look.',
           'Each map keeps its own arrangement and style, without affecting the others.',
+        ],
+      },
+      adsAndPrivacy: {
+        title: 'Privacy and ads',
+        items: [
+          'Rabisco is still free. To keep it that way, the file list and the editor footer show a small ad, always labeled "Ad".',
+          'No data from your drawings goes to whoever shows the ads.',
+          "In Brazil, you choose whether to accept ad cookies. Until you accept, only Rabisco's own ad shows up, without cookies.",
+          'The Privacy and Terms pages are in the footer. Under "Cookies", you can change your choice whenever you like.',
         ],
       },
       home: {

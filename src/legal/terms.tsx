@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Contact, External, GOOGLE_PERMISSIONS_URL, Repository } from './links'
 
 export function TermsPtBR() {
@@ -21,32 +22,38 @@ export function TermsPtBR() {
         ausência de erros.
       </p>
 
-      <h2>3. Responsabilidade pelo conteúdo</h2>
+      <h2>3. Anúncios</h2>
+      <p>
+        Para continuar grátis, o Rabisco mostra anúncios pequenos, como explica a{' '}
+        <Link to="/privacy#cookies">Política de Privacidade</Link>.
+      </p>
+
+      <h2>4. Responsabilidade pelo conteúdo</h2>
       <p>
         Você é o único responsável pelo que cria e guarda com o Rabisco, por ter os direitos sobre esse conteúdo e por
         cumprir a lei ao usá-lo. O Rabisco não responde por perda de dados, indisponibilidade do serviço ou danos
         decorrentes do uso.
       </p>
 
-      <h2>4. Código aberto</h2>
+      <h2>5. Código aberto</h2>
       <p>
         O código do Rabisco é aberto, sob a <strong>licença MIT</strong> (<Repository />). Você pode usá-lo, modificá-lo e
         distribuí-lo conforme essa licença.
       </p>
 
-      <h2>5. Conta e acesso</h2>
+      <h2>6. Conta e acesso</h2>
       <p>
         Para usar o Rabisco, você entra com uma conta Google. Você pode revogar o acesso a qualquer momento em{' '}
         <External href={GOOGLE_PERMISSIONS_URL}>{GOOGLE_PERMISSIONS_URL}</External>.
       </p>
 
-      <h2>6. Mudanças</h2>
+      <h2>7. Mudanças</h2>
       <p>
         O Rabisco e estes termos podem mudar a qualquer momento. Quando os termos mudarem, a data de "Última atualização"
         no topo também muda.
       </p>
 
-      <h2>7. Contato</h2>
+      <h2>8. Contato</h2>
       <p>
         Dúvidas sobre estes termos: <Contact />.
       </p>
@@ -74,32 +81,37 @@ export function TermsEn() {
         express or implied, including fitness for a particular purpose, availability, or absence of errors.
       </p>
 
-      <h2>3. Responsibility for content</h2>
+      <h2>3. Ads</h2>
+      <p>
+        To stay free, Rabisco shows small ads, as the <Link to="/privacy#cookies">Privacy Policy</Link> explains.
+      </p>
+
+      <h2>4. Responsibility for content</h2>
       <p>
         You alone are responsible for what you create and keep with Rabisco, for having the rights to that content, and
         for complying with the law when using it. Rabisco is not liable for data loss, service unavailability, or damages
         arising from use.
       </p>
 
-      <h2>4. Open source</h2>
+      <h2>5. Open source</h2>
       <p>
         Rabisco's code is open source under the <strong>MIT license</strong> (<Repository />). You may use, modify, and
         distribute it under that license.
       </p>
 
-      <h2>5. Account and access</h2>
+      <h2>6. Account and access</h2>
       <p>
         To use Rabisco, you sign in with a Google account. You can revoke access at any time at{' '}
         <External href={GOOGLE_PERMISSIONS_URL}>{GOOGLE_PERMISSIONS_URL}</External>.
       </p>
 
-      <h2>6. Changes</h2>
+      <h2>7. Changes</h2>
       <p>
         Rabisco and these terms may change at any time. When the terms change, the "Last updated" date at the top
         changes too.
       </p>
 
-      <h2>7. Contact</h2>
+      <h2>8. Contact</h2>
       <p>
         Questions about these terms: <Contact />.
       </p>
