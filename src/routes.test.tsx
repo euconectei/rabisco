@@ -43,3 +43,11 @@ it('asks to sign in before showing private pages', () => {
   expect(screen.getByRole('button', { name: 'Entrar com Google' })).toBeInTheDocument()
   expect(screen.queryByText('Nenhum arquivo ainda.')).not.toBeInTheDocument()
 })
+
+it('legal pages are public and linked from the footer', async () => {
+  renderWithProviders(<AppRoutes />, { route: '/', auth: signedInAuth({ status: 'signed-out', user: null, hint: null }) })
+  await userEvent.click(screen.getByRole('link', { name: 'Privacidade' }))
+  expect(await screen.findByRole('heading', { level: 1, name: 'Política de Privacidade' })).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('link', { name: 'Termos' }))
+  expect(await screen.findByRole('heading', { level: 1, name: 'Termos de Uso' })).toBeInTheDocument()
+})

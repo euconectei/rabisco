@@ -10,6 +10,8 @@ import { WhatsNewPage } from './pages/WhatsNewPage'
 
 const EditorPage = lazy(() => import('./editor/EditorPage'))
 const NewFileRedirect = lazy(() => import('./editor/NewFileRedirect'))
+const PrivacyPage = lazy(() => import('./legal/PrivacyPage'))
+const TermsPage = lazy(() => import('./legal/TermsPage'))
 
 function EditorFallback() {
   const { t } = useI18n()
@@ -55,6 +57,22 @@ export function AppRoutes() {
               <EditorPage />
             </Suspense>
           </RequireAuth>
+        }
+      />
+      <Route
+        path="/privacy"
+        element={
+          <Suspense fallback={<EditorFallback />}>
+            <PrivacyPage />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/terms"
+        element={
+          <Suspense fallback={<EditorFallback />}>
+            <TermsPage />
+          </Suspense>
         }
       />
       <Route path="*" element={<NotFoundPage />} />

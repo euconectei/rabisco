@@ -94,7 +94,13 @@ export const ptBR = {
     },
   },
   notFound: { title: 'Página não encontrada', backHome: 'Voltar ao início' },
-  footer: { madeBy: 'Feito pela comunidade com', love: 'amor' },
+  footer: { madeBy: 'Feito pela comunidade com', love: 'amor', privacy: 'Privacidade', terms: 'Termos' },
+  legal: {
+    privacyTitle: 'Política de Privacidade',
+    termsTitle: 'Termos de Uso',
+    updated: 'Última atualização: {date}',
+    back: 'Voltar',
+  },
   language: { label: 'Idioma', 'pt-BR': 'Português', en: 'English' },
   exportImage: {
     menuItem: 'Exportar imagem…',
