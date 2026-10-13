@@ -230,6 +230,15 @@ export const ptBR = {
           'Cada mapa guarda a própria organização e o próprio estilo, sem atrapalhar os outros.',
         ],
       },
+      adsAndPrivacy: {
+        title: 'Privacidade e anúncios',
+        items: [
+          'O Rabisco continua grátis. Para isso, a lista de arquivos e o rodapé do editor mostram um anúncio pequeno, sempre marcado como "Anúncio".',
+          'Nenhum dado dos seus desenhos vai para quem mostra os anúncios.',
+          'No Brasil, você escolhe se aceita cookies de anúncios. Enquanto não aceitar, aparece só um anúncio do próprio Rabisco, sem cookies.',
+          'As páginas de Privacidade e de Termos estão no rodapé. Em "Cookies", você muda a sua escolha quando quiser.',
+        ],
+      },
       home: {
         title: 'Página inicial nova',
         items: [

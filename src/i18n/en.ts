@@ -232,6 +232,15 @@ export const en: Messages = {
           'Each map keeps its own arrangement and style, without affecting the others.',
         ],
       },
+      adsAndPrivacy: {
+        title: 'Privacy and ads',
+        items: [
+          'Rabisco is still free. To keep it that way, the file list and the editor footer show a small ad, always labeled "Ad".',
+          'No data from your drawings goes to whoever shows the ads.',
+          "In Brazil, you choose whether to accept ad cookies. Until you accept, only Rabisco's own ad shows up, without cookies.",
+          'The Privacy and Terms pages are in the footer. Under "Cookies", you can change your choice whenever you like.',
+        ],
+      },
       home: {
         title: 'A new home page',
         items: [
