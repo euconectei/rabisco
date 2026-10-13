@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event'
 import { useEffect, type ReactNode } from 'react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import fixture from './fixtures/excalidraw-com.excalidraw?raw'
+import { AdsProvider } from '../ads/AdsProvider'
 import { AuthContext, type AuthValue } from '../auth/context'
 import { DriveContext } from '../drive/context'
 import { DriveError } from '../drive/errors'
@@ -191,11 +192,13 @@ describe('review follow-ups', () => {
     const tree = (auth: AuthValue) => (
       <I18nProvider initialLanguage="pt-BR">
         <AuthContext.Provider value={auth}>
-          <DriveContext.Provider value={drive.client}>
-            <MemoryRouter initialEntries={['/edit/f1']}>
-              <AppRoutes />
-            </MemoryRouter>
-          </DriveContext.Provider>
+          <AdsProvider timeZone="Europe/Lisbon" adsense={null}>
+            <DriveContext.Provider value={drive.client}>
+              <MemoryRouter initialEntries={['/edit/f1']}>
+                <AppRoutes />
+              </MemoryRouter>
+            </DriveContext.Provider>
+          </AdsProvider>
         </AuthContext.Provider>
       </I18nProvider>
     )
@@ -562,11 +565,13 @@ describe('saving', () => {
     const tree = (auth: AuthValue) => (
       <I18nProvider initialLanguage="pt-BR">
         <AuthContext.Provider value={auth}>
-          <DriveContext.Provider value={drive.client}>
-            <MemoryRouter initialEntries={['/edit/f1']}>
-              <AppRoutes />
-            </MemoryRouter>
-          </DriveContext.Provider>
+          <AdsProvider timeZone="Europe/Lisbon" adsense={null}>
+            <DriveContext.Provider value={drive.client}>
+              <MemoryRouter initialEntries={['/edit/f1']}>
+                <AppRoutes />
+              </MemoryRouter>
+            </DriveContext.Provider>
+          </AdsProvider>
         </AuthContext.Provider>
       </I18nProvider>
     )

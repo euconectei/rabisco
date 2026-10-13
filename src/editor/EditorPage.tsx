@@ -17,6 +17,8 @@ import { setLayout, setStyle } from '../mindmap/switchStyle'
 import { toolbarPosition, touchTarget, TouchToolbar, useSettled, type TouchTarget } from '../mindmap/TouchToolbar'
 import { useMindmap, type MindmapApi } from '../mindmap/useMindmap'
 import { Dialog } from './Dialog'
+import { AdSlot } from '../ads/AdSlot'
+import { CookieNotice } from '../ads/CookieNotice'
 import { downloadBlob } from './download'
 import { MindmapPlacement } from './MindmapPlacement'
 import { SaveStatus } from './SaveStatus'
@@ -275,6 +277,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
           <MainMenu.Item onSelect={() => navigate('/whats-new')}>
             {format(t.whatsNew.menuItem, { version: `v${__APP_VERSION__}` })}
           </MainMenu.Item>
+          <MainMenu.Item onSelect={() => navigate('/privacy#cookies')}>{t.editor.privacyMenuItem}</MainMenu.Item>
           <MainMenu.Separator />
           <MainMenu.Item onSelect={() => setExportingImage(true)}>{t.exportImage.menuItem}</MainMenu.Item>
           <MainMenu.Item disabled={!exportMapId} onSelect={() => void attempt(async () => navigator.clipboard.writeText(mapMarkdown() ?? ''))}>
@@ -292,8 +295,10 @@ function EditorScreen({ fileId }: { fileId: string }) {
         </MainMenu>
         <Footer>
           <SaveStatus status={file.status} lost={file.lost} onRetry={file.retry} onSaveAsNew={() => void attempt(saveAsNew)} />
+          <AdSlot placement="editor" theme={theme} />
         </Footer>
       </Excalidraw>
+      <CookieNotice theme={theme} />
       {placing && <MindmapPlacement onPlace={placeMap} onCancel={cancelPlacing} />}
       {exportingImage && api && <ExportImageDialog api={api} baseName={baseName} fileId={fileId} onClose={closeExport} />}
       {api && touch && viewSettled && (pointerType === 'touch' || pointerType === 'pen') && (
