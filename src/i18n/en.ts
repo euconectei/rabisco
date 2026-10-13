@@ -96,7 +96,13 @@ export const en: Messages = {
     },
   },
   notFound: { title: 'Page not found', backHome: 'Back to home' },
-  footer: { madeBy: 'Made by the community with', love: 'love' },
+  footer: { madeBy: 'Made by the community with', love: 'love', privacy: 'Privacy', terms: 'Terms' },
+  legal: {
+    privacyTitle: 'Privacy Policy',
+    termsTitle: 'Terms of Use',
+    updated: 'Last updated: {date}',
+    back: 'Back',
+  },
   language: { label: 'Language', 'pt-BR': 'Português', en: 'English' },
   exportImage: {
     menuItem: 'Export image…',
