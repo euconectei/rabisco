@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AuthContext } from '../auth/context'
 import { signedInAuth } from '../test/renderWithProviders'
@@ -81,14 +81,26 @@ it('recomputes exemption for a new account instead of reusing the old answer', a
   await waitFor(() => expect(screen.getByTestId('decision')).toHaveTextContent('adsense'))
 })
 
-it('is pending with no signed-in user', async () => {
+it('a visitor with no account is never exempt, so the landing page does not wait', async () => {
   render(
-    <AuthContext.Provider value={signedInAuth({ status: 'signed-out', user: null })}>
+    <AuthContext.Provider value={signedInAuth({ status: 'signed-out', user: null, hint: null })}>
       <AdsProvider adsense={ADSENSE} timeZone="America/New_York">
         <Probe />
       </AdsProvider>
     </AuthContext.Provider>,
   )
-  await act(async () => {})
+  expect(screen.getByTestId('decision')).toHaveTextContent('adsense')
+})
+
+it('uses the remembered account to exempt a signed-out visitor', async () => {
+  const hint = { email: 'ana@example.com', name: 'Ana' }
+  render(
+    <AuthContext.Provider value={signedInAuth({ status: 'signed-out', user: null, hint })}>
+      <AdsProvider adsense={ADSENSE} timeZone="America/New_York" exemptHashes={[await hashEmail('ana@example.com')]}>
+        <Probe />
+      </AdsProvider>
+    </AuthContext.Provider>,
+  )
   expect(screen.getByTestId('decision')).toHaveTextContent('pending')
+  await waitFor(() => expect(screen.getByTestId('decision')).toHaveTextContent('none'))
 })

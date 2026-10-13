@@ -42,3 +42,15 @@ it('is in English', () => {
   expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Think on paper. Keep it in your Drive.')
   expect(screen.getAllByRole('link', { name: "Get started, it's free" })[0]).toHaveAttribute('href', '/app')
 })
+
+it('shows one labeled, discreet ad between the trust section and the closing call', async () => {
+  renderWithProviders(<LandingPage />)
+  const ad = await screen.findByRole('complementary', { name: 'Anúncio' })
+  expect(await within(ad).findByRole('link', { name: /GitHub/ })).toBeInTheDocument()
+})
+
+it('asks about ad cookies in Brazil, as in the app', async () => {
+  const adsense = { client: 'ca-pub-1', slots: { editor: '1', files: '2' } }
+  renderWithProviders(<LandingPage />, { ads: { timeZone: 'America/Sao_Paulo', adsense } })
+  expect(await screen.findByRole('region', { name: 'Cookies' })).toBeInTheDocument()
+})

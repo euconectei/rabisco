@@ -31,7 +31,7 @@ html, body, #root { height: 100%; margin: 0; }
 .language-switcher button:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 2px; }
 .page-header .language-switcher { margin-top: 0; }
 .editor { height: 100vh; height: 100dvh; }
-.app-footer { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; padding: 1.5rem 1rem; font-size: 0.8rem; opacity: 0.7; }
+.app-footer { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; align-items: baseline; padding: 1.5rem 1rem; font-size: 0.8rem; opacity: 0.7; }
 .app-footer a { color: inherit; position: relative; }
 .unseen-dot { display: inline-block; width: 0.45rem; height: 0.45rem; margin-left: 0.25rem; border-radius: 50%; background: var(--accent); vertical-align: super; }
 .button-secondary { padding: 0.4rem 0.9rem; border: 1px solid currentColor; border-radius: 0.5rem; background: transparent; color: inherit; font: inherit; cursor: pointer; }
@@ -153,6 +153,10 @@ label.button-secondary:focus-within { outline: 3px solid var(--accent-text); out
 .ad-slot[data-theme='light'] { --ad-text: #1b1b1f; --ad-border: #dcdce3; }
 .ad-slot[data-theme='dark'] { --ad-text: #e3e3e8; --ad-border: #45454f; }
 .ad-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.65; }
+.ad-slot-landing { text-align: center; min-height: calc(90px + 1.2rem); }
+.ad-slot-landing .ad-label { display: block; margin-bottom: 0.2rem; }
+.ad-slot-landing .ad-body { min-height: 90px; }
+.landing-ad { padding-block: 0.5rem 1rem; }
 .ad-slot-files { margin: 2rem 0 0; min-height: calc(90px + 1.2rem); }
 .ad-slot-files .ad-label { display: block; margin-bottom: 0.2rem; }
 .ad-slot-files .ad-body { min-height: 90px; }

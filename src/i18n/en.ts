@@ -235,7 +235,7 @@ export const en: Messages = {
       adsAndPrivacy: {
         title: 'Privacy and ads',
         items: [
-          'Rabisco is still free. To keep it that way, the file list and the editor footer show a small ad, always labeled "Ad".',
+          'Rabisco is still free. To keep it that way, the home page, the file list and the editor footer show a small ad, always labeled "Ad".',
           'No data from your drawings goes to whoever shows the ads.',
           "In Brazil, you choose whether to accept ad cookies. Until you accept, only Rabisco's own ad shows up, without cookies.",
           'The Privacy and Terms pages are in the footer. Under "Cookies", you can change your choice whenever you like.',
