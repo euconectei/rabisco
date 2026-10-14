@@ -151,7 +151,6 @@ export function MermaidDialog({ title, submitLabel, onClose, onSubmit }: Mermaid
           value={text}
           placeholder={t.mermaid.placeholder}
           spellCheck={false}
-          maxLength={MERMAID_MAX_CHARS}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           onChange={(event) => setText(event.currentTarget.value)}

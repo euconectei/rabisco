@@ -135,3 +135,14 @@ test('when one upload fails the others still move, the failed one stays intact h
   expect(drive.byName('Beta.excalidraw')?.content).toContain('Conteúdo Beta')
   expect(await storedScenes(page)).toEqual([])
 })
+
+test('"Try without signing in" on the home page never asks Google for anything', async ({ page }) => {
+  const seen: string[] = []
+  page.on('request', (request) => seen.push(request.url()))
+  await page.goto('/')
+  await page.getByRole('link', { name: 'Experimente sem entrar' }).first().click()
+  await expect(page).toHaveURL(/\/app$/)
+  await expect(page.getByRole('button', { name: /Novo desenho|Criar o primeiro desenho/ })).toBeVisible()
+  expect(await page.evaluate(() => localStorage.getItem('rabisco.mode'))).toBe('local')
+  expect(seen.filter((url) => /accounts\.google\.com|googleapis\.com/.test(url))).toEqual([])
+})

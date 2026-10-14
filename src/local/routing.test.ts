@@ -58,3 +58,21 @@ describe('routing client', () => {
     expect(keys).toEqual(expected)
   })
 })
+
+describe('opening a local id when the local database was never created', () => {
+  it('answers not found without creating the database', async () => {
+    const { IDBFactory } = await import('fake-indexeddb')
+    const { closeLocalDb } = await import('./db')
+    const { createLocalDriveClient } = await import('./client')
+    await closeLocalDb()
+    globalThis.indexedDB = new IDBFactory()
+    const router = createRoutingClient(createLocalDriveClient(), memoryDrive().client)
+
+    await expect(router.getMeta('local-xyz')).rejects.toMatchObject({ kind: 'notFound' })
+    await expect(router.download('local-xyz')).rejects.toMatchObject({ kind: 'notFound' })
+    await expect(router.save('local-xyz', '{}')).rejects.toMatchObject({ kind: 'notFound' })
+    await expect(router.rename('local-xyz', 'x')).rejects.toMatchObject({ kind: 'notFound' })
+    await expect(router.createSibling('x.md', '', 'text/markdown', 'local-xyz')).rejects.toMatchObject({ kind: 'notFound' })
+    expect((await indexedDB.databases()).map((db) => db.name)).not.toContain('rabisco-local')
+  })
+})

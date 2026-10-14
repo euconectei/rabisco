@@ -319,16 +319,17 @@ test('more than 500 edges is explained as too many elements, not as a syntax err
   await expect(page).toHaveURL(/\/app$/)
 })
 
-test('a text of open directives is refused at once', async ({ page }) => {
+test('a huge paste is not cut: the box stays responsive and the size is explained', async ({ page }) => {
   await signIn(page)
   await page.getByRole('button', { name: 'Importar Mermaid' }).first().click()
-  await textbox(page).fill('%%{'.repeat(30_000))
+  const size = 1_500_000
+  await textbox(page).fill('%%{'.repeat(size / 3))
+  expect((await textbox(page).inputValue()).length).toBe(size)
   const started = Date.now()
   await page.getByRole('button', { name: 'Criar desenho' }).click()
-  // The box itself stops at the limit; what is left is only directives, so the answer is "nothing to convert".
-  await expect(page.getByRole('alert')).toContainText('Cole um diagrama Mermaid')
+  await expect(page.getByRole('alert')).toContainText('passa de 20000 caracteres')
   expect(Date.now() - started).toBeLessThan(3000)
-  expect((await textbox(page).inputValue()).length).toBeLessThanOrEqual(20_000)
+  await expect(page).toHaveURL(/\/app$/)
 })
 
 test('after a drawing is moved to the Drive, its old local address opens the copy', async ({ page }) => {

@@ -56,3 +56,7 @@
   .editor-local-notice .local-notice-full { display: inline; }
   .editor-local-notice .local-notice-short { display: none; }
 }
+.landing-try-error { flex-basis: 100%; margin: 0; font-size: 0.9rem; color: #c92a2a; }
+@media (prefers-color-scheme: dark) {
+  .landing-try-error { color: #ff8787; }
+}

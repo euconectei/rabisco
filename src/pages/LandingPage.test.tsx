@@ -1,4 +1,7 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { useState, type ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import { LandingPage } from './LandingPage'
 import { renderWithProviders } from '../test/renderWithProviders'
 import { ModeContext, type LocalSupport, type ModeValue } from '../mode/context'
@@ -109,4 +112,45 @@ it('explains that an exported PNG becomes a drawing again, in its own section be
 it('has the editable PNG section in English', () => {
   show({ lang: 'en' })
   expect(screen.getByRole('region', { name: 'A PNG that turns back into a drawing' })).toBeInTheDocument()
+})
+
+function Where() {
+  return <p data-testid="where">{useLocation().pathname}</p>
+}
+
+/** A mode provider whose `enterLocal` takes a moment, as opening the database does. */
+function SlowMode({ succeeds, children }: { succeeds: boolean; children: ReactNode }) {
+  const [state, setState] = useState<Pick<ModeValue, 'mode' | 'localSupport'>>({ mode: 'google', localSupport: 'available' })
+  const value: ModeValue = {
+    ...state,
+    enterLocal: () => {
+      setTimeout(() => setState(succeeds ? { mode: 'local', localSupport: 'available' } : { mode: 'google', localSupport: 'unavailable' }), 20)
+    },
+    leaveLocal: vi.fn(),
+  }
+  return <ModeContext.Provider value={value}>{children}</ModeContext.Provider>
+}
+
+function showSlow(succeeds: boolean) {
+  renderWithProviders(
+    <SlowMode succeeds={succeeds}>
+      <LandingPage />
+      <Where />
+    </SlowMode>,
+  )
+}
+
+it('goes to the app only once the local mode is on, so the sign-in screen never shows', async () => {
+  showSlow(true)
+  await userEvent.click(screen.getAllByRole('link', { name: 'Experimente sem entrar' })[0])
+  expect(screen.getByTestId('where')).toHaveTextContent('/')
+  expect(screen.getByTestId('where').textContent).not.toBe('/app')
+  await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/app'))
+})
+
+it('stays on the page and explains when the browser cannot keep drawings', async () => {
+  showSlow(false)
+  await userEvent.click(screen.getAllByRole('link', { name: 'Experimente sem entrar' })[0])
+  expect(await screen.findByRole('alert')).toHaveTextContent('O modo sem entrar não está disponível neste navegador')
+  expect(screen.getByTestId('where').textContent).toBe('/')
 })

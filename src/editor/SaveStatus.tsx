@@ -30,7 +30,8 @@ function Icon({ mark }: { mark: 'check' | 'upload' | 'off' | 'alert' }): ReactNo
 
 export function SaveStatus({ status, lost, local = false, onRetry, onSaveAsNew }: Props) {
   const { t } = useI18n()
-  // Conflict, needs-auth and offline cannot happen in this browser's own storage; they keep the normal words.
+  // Only the wording that mentions the Drive differs. Conflict (two tabs on the same drawing), needs-auth and
+  // offline keep the normal words; the conflict dialog has its own local text elsewhere.
   const words = local ? { ...t.editor.status, ...t.editor.statusLocal } : t.editor.status
 
   // Quiet states: the icon says it, the text is its tooltip and what screen readers announce.

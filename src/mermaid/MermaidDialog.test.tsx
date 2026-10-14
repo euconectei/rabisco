@@ -243,9 +243,15 @@ describe('MermaidDialog', () => {
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
   })
 
-  it('gives the text box the length limit', () => {
-    setup()
-    expect(box()).toHaveAttribute('maxlength', String(MERMAID_MAX_CHARS))
+  it('does not cut a long paste: it reports the size and converts nothing', async () => {
+    const { onSubmit } = setup()
+    await userEvent.click(box())
+    await userEvent.paste('x'.repeat(MERMAID_MAX_CHARS + 1000))
+    expect((box() as HTMLTextAreaElement).value).toHaveLength(MERMAID_MAX_CHARS + 1000)
+    await userEvent.click(create())
+    expect(await screen.findByRole('alert')).toHaveTextContent(`${MERMAID_MAX_CHARS} caracteres`)
+    expect(parse).not.toHaveBeenCalled()
+    expect(onSubmit).not.toHaveBeenCalled()
   })
 
   it('ignores the Escape that ends an input method composition', () => {

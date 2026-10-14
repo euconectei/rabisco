@@ -255,7 +255,7 @@ describe('storage failures', () => {
     vi.spyOn(indexedDB, 'open').mockImplementation(() => {
       throw new Error('SecurityError')
     })
-    const error = await failure(client.getMeta('local-1'))
+    const error = await failure(client.createFile('A', '{}', 'local'))
     expect(error.kind).toBe('unknown')
   })
 
@@ -286,7 +286,7 @@ describe('storage failures', () => {
     // @ts-expect-error simulating a browser without IndexedDB
     delete globalThis.indexedDB
     try {
-      expect((await failure(client.getMeta('local-1'))).kind).toBe('unknown')
+      expect((await failure(client.createFile('A', '{}', 'local'))).kind).toBe('unknown')
     } finally {
       globalThis.indexedDB = original
     }

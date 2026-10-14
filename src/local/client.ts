@@ -55,6 +55,12 @@ function toFileMeta(meta: StoredMeta, withThumbnail = false): DriveFileMeta {
 
 const notFound = () => new DriveError('notFound', 'File not found', 404)
 
+// Reading or changing a drawing that cannot exist (the database was never created) must not create the
+// database: someone who only uses Google never gets one, even by opening a stale local link.
+async function requireDb(): Promise<void> {
+  if (!(await localDbExists())) throw notFound()
+}
+
 /** The editor sends URL-safe base64; a data URL needs the standard alphabet and padding. */
 function thumbnailDataUrl(thumbnail: DriveThumbnail | undefined): string | undefined {
   if (!thumbnail || thumbnail.mimeType !== 'image/png' || !/^[A-Za-z0-9_-]+={0,2}$/.test(thumbnail.image)) return undefined
@@ -103,6 +109,7 @@ export function createLocalDriveClient(): LocalDriveClient {
   }
 
   async function update(id: string, change: (meta: StoredMeta) => StoredMeta, content?: string): Promise<DriveFileMeta> {
+    await requireDb()
     const meta = await runTx('readwrite', async ({ meta: metaStore, content: contentStore }) => {
       const raw = await request(metaStore.get(id))
       if (raw === undefined) throw notFound()
@@ -136,6 +143,7 @@ export function createLocalDriveClient(): LocalDriveClient {
     },
 
     async getMeta(id) {
+      await requireDb()
       const raw = await runTx('readonly', ({ meta }) => request(meta.get(id)))
       if (raw === undefined) throw notFound()
       const meta = parseMeta(raw)
@@ -144,6 +152,7 @@ export function createLocalDriveClient(): LocalDriveClient {
     },
 
     async download(id) {
+      await requireDb()
       const raw = await runTx('readonly', async ({ meta, content }) => {
         if ((await request(meta.get(id))) === undefined) throw notFound()
         return request(content.get(id))
@@ -180,11 +189,13 @@ export function createLocalDriveClient(): LocalDriveClient {
     },
 
     async createSibling(name, content, mimeType, nearFileId) {
+      await requireDb()
       const stored = await toStoredContent(content, mimeType)
       return insert(name.trim().slice(0, MAX_BASE_NAME), stored, nearFileId, true)
     },
 
     async movedTo(id) {
+      if (!(await localDbExists())) return null
       const forwarded = await readMovedTo(id)
       if (forwarded) return forwarded
       // A move still in progress (or being retried) has recorded the copy on the drawing itself.

@@ -186,6 +186,18 @@ test('visiting the home page and the sign-in screen does not create the local da
   expect(names).not.toContain('rabisco-local')
 })
 
+test('signed in, a stale local link says "not found" and does not create the local database', async ({ page }) => {
+  await installFakeGoogle(page)
+  await page.goto('/app')
+  await page.getByRole('button', { name: 'Entrar com Google' }).click()
+  await expect(page.getByRole('button', { name: /Criar o primeiro desenho/ })).toBeVisible()
+  await page.goto('/edit/local-xyz')
+  await page.getByRole('button', { name: 'Continuar como Tester' }).click()
+  await expect(page.getByText('Não encontramos este desenho neste navegador.')).toBeVisible()
+  const names = await page.evaluate(async () => (await indexedDB.databases()).map((db) => db.name))
+  expect(names).not.toContain('rabisco-local')
+})
+
 test('signing in with Google from the local mode leaves it and lists the Drive again', async ({ page }) => {
   const drive = await installFakeGoogle(page)
   drive.add({ name: 'Do Drive.excalidraw', content: '{"type":"excalidraw","version":2,"elements":[],"appState":{},"files":{}}' })

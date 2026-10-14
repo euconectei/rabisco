@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useState, type MouseEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
 import { AdSlot } from '../ads/AdSlot'
 import { CookieNotice } from '../ads/CookieNotice'
@@ -13,17 +14,36 @@ const FEATURES = ['mindmap', 'draw', 'files'] as const
 
 export function LandingPage() {
   const { t } = useI18n()
-  const { localSupport, enterLocal } = useMode()
-  const start = (
+  const { mode, localSupport, enterLocal } = useMode()
+  const navigate = useNavigate()
+  const [entering, setEntering] = useState(false)
+
+  // The local mode opens its database asynchronously. Going to /app before it is on would show the
+  // sign-in screen, which loads Google's script; so wait for the mode, and only then go.
+  useEffect(() => {
+    if (!entering) return
+    if (mode === 'local') navigate('/app')
+  }, [entering, mode, navigate])
+
+  function tryWithoutSignIn(event: MouseEvent<HTMLAnchorElement>) {
+    // Middle click, new-tab shortcuts and the like keep the plain link.
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    event.preventDefault()
+    setEntering(true)
+    enterLocal()
+  }
+  const unavailable = entering && mode !== 'local' && localSupport === 'unavailable'
+  const startBlock = (showError: boolean) => (
     <div className="landing-start">
       <Link className="button button-large" to="/app">
         {t.landing.start}
       </Link>
-      {localSupport === 'available' && (
-        <Link className="landing-try" to="/app" onClick={enterLocal}>
+      {(localSupport === 'available' || entering) && (
+        <Link className="landing-try" to="/app" onClick={tryWithoutSignIn}>
           {t.landing.tryWithoutSignIn}
         </Link>
       )}
+      {unavailable && showError && <p role="alert" className="landing-try-error">{t.auth.localUnavailable}</p>}
     </div>
   )
   return (
@@ -41,7 +61,7 @@ export function LandingPage() {
           <div className="landing-hero-text">
             <h1>{t.landing.title}</h1>
             <p className="landing-lead">{t.app.tagline}</p>
-            {start}
+            {startBlock(true)}
           </div>
           <Screenshot shot="canvas" alt={t.landing.heroAlt} className="landing-hero-shot" eager />
         </section>
@@ -92,7 +112,7 @@ export function LandingPage() {
         <section className="landing-section landing-cta">
           <h2>{t.landing.ctaTitle}</h2>
           <p>{t.landing.ctaText}</p>
-          {start}
+          {startBlock(false)}
         </section>
       </main>
 
