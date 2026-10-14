@@ -7,6 +7,11 @@ const { version } = JSON.parse(readFileSync(new URL('./package.json', import.met
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    // The old tablet runs Chrome 95: make the build lower any newer syntax. (The scripting APIs
+    // newer than that are covered by src/polyfills.ts.)
+    target: 'chrome95',
+  },
   define: {
     // Required by @excalidraw/excalidraw when bundled with Vite.
     'process.env.IS_PREACT': JSON.stringify('false'),

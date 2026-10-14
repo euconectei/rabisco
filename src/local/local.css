@@ -19,12 +19,12 @@
 }
 
 /* Files page and editor: the discreet local-mode notice and the way back to local drawings. */
-.local-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; padding: 0.5rem 0.9rem; margin: 0 0 1rem; border: 1px solid color-mix(in srgb, CanvasText 16%, transparent); border-radius: 0.6rem; background: color-mix(in srgb, var(--accent) 7%, Canvas); font-size: 0.85rem; line-height: 1.45; }
+.local-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; padding: 0.5rem 0.9rem; margin: 0 0 1rem; border: 1px solid rgba(128, 128, 128, 0.16); border: 1px solid color-mix(in srgb, CanvasText 16%, transparent); border-radius: 0.6rem; background: rgba(105,101,219, 0.07); background: color-mix(in srgb, var(--accent) 7%, Canvas); font-size: 0.85rem; line-height: 1.45; }
 .local-notice-text { margin: 0; flex: 1 1 22rem; }
 .local-notice-detail { opacity: 0.75; }
 .local-notice-short { display: none; }
 .local-notice-close { flex: none; width: 1.6rem; height: 1.6rem; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; font: inherit; font-size: 1.2rem; line-height: 1; cursor: pointer; opacity: 0.7; }
-.local-notice-close:hover { opacity: 1; background: color-mix(in srgb, CanvasText 10%, transparent); }
+.local-notice-close:hover { opacity: 1; background: rgba(128, 128, 128, 0.1); background: color-mix(in srgb, CanvasText 10%, transparent); }
 .local-notice-close:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 2px; }
 .local-notice-action { margin-left: auto; }
 .local-notice-action { padding-block: 0.25rem; font-size: 0.85rem; white-space: nowrap; }
@@ -35,7 +35,7 @@
 .files-empty .files-import-hint { margin: 0; text-align: center; }
 
 /* Offer to move local drawings to Drive (files page and the local drawings page). */
-.move-offer { display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem 1.2rem; margin: 0 0 1.25rem; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 0.8rem; background: color-mix(in srgb, var(--accent) 8%, Canvas); }
+.move-offer { display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem 1.2rem; margin: 0 0 1.25rem; border: 1px solid rgba(105,101,219, 0.45); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 0.8rem; background: rgba(105,101,219, 0.08); background: color-mix(in srgb, var(--accent) 8%, Canvas); }
 .move-offer h2 { margin: 0; font-size: 1.1rem; }
 .move-offer p { margin: 0; line-height: 1.5; }
 .move-offer-body { font-size: 0.9rem; opacity: 0.8; }
