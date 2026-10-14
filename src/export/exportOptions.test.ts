@@ -13,6 +13,19 @@ it('restores the options saved last time', () => {
   expect(loadExportOptions()).toEqual(options)
 })
 
+it('embeds the editable data by default, but respects a saved choice not to', () => {
+  expect(loadExportOptions().embedScene).toBe(true)
+  saveExportOptions({ ...DEFAULT_EXPORT_OPTIONS, embedScene: false })
+  expect(loadExportOptions().embedScene).toBe(false)
+  saveExportOptions({ ...DEFAULT_EXPORT_OPTIONS, embedScene: true })
+  expect(loadExportOptions().embedScene).toBe(true)
+})
+
+it('uses the default for an invalid saved embed choice', () => {
+  localStorage.setItem('rabisco.exportOptions', JSON.stringify({ embedScene: 'yes' }))
+  expect(loadExportOptions().embedScene).toBe(true)
+})
+
 it('replaces invalid saved values with the defaults, field by field', () => {
   localStorage.setItem('rabisco.exportOptions', JSON.stringify({ format: 'gif', scale: 7, darkMode: true }))
   expect(loadExportOptions()).toEqual({ ...DEFAULT_EXPORT_OPTIONS, darkMode: true })

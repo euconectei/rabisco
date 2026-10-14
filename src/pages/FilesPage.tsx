@@ -9,6 +9,12 @@ import { useDrive } from '../drive/useDrive'
 import { format } from '../i18n/format'
 import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
 import { useI18n } from '../i18n/useI18n'
+import { LocalDrawingsLink } from '../local/LocalDrawingsLink'
+import { LocalNotice } from '../local/LocalNotice'
+import { MoveOffer } from '../local/MoveOffer'
+import { mermaidSceneJson, type MermaidResult } from '../mermaid/convert'
+import { MermaidDialog } from '../mermaid/MermaidDialog'
+import { useMode } from '../mode/useMode'
 import { AccountMenu } from './AccountMenu'
 import { FileCard } from './FileCard'
 
@@ -38,9 +44,12 @@ export function FilesPage() {
   const navigate = useNavigate()
   const drive = useDrive()
   const pick = useFilePicker()
+  const { mode } = useMode()
+  const local = mode === 'local'
   const [list, setList] = useState<ListState>({ kind: 'loading' })
   const [importError, setImportError] = useState<'image' | 'read' | null>(null)
   const [query, setQuery] = useState('')
+  const [mermaidOpen, setMermaidOpen] = useState(false)
 
   const fetchFiles = useCallback(async (): Promise<ListState> => {
     try {
@@ -85,6 +94,11 @@ export function FilesPage() {
     }
   }
 
+  // Converted inside the dialog, so a Mermaid error never leaves this page; the editor side opens the scene.
+  function openMermaid(result: MermaidResult) {
+    navigate('/edit/new', { state: { importScene: { name: result.name, json: mermaidSceneJson(result) } } })
+  }
+
   async function openFromDrive() {
     const picked = await pick().catch(() => null)
     if (picked) navigate(`/edit/${encodeURIComponent(picked.id)}`)
@@ -96,9 +110,13 @@ export function FilesPage() {
     return wanted ? files.filter((file) => fold(file.name).includes(wanted)) : files
   }, [files, query])
   const isEmpty = list.kind === 'ready' && files.length === 0
+  const countText = (count: number) => {
+    if (local) return count === 1 ? t.files.countOneLocal : format(t.files.countLocal, { count: String(count) })
+    return count === 1 ? t.files.countOne : format(t.files.count, { count: String(count) })
+  }
 
   const importInput = (
-    <label className="button-secondary">
+    <label className="button-secondary" title={t.files.importTitle}>
       {t.files.importFile}
       <input
         type="file"
@@ -108,6 +126,13 @@ export function FilesPage() {
       />
     </label>
   )
+
+  const importMermaid = (
+    <button className="button-secondary" type="button" onClick={() => setMermaidOpen(true)}>
+      {t.files.importMermaid}
+    </button>
+  )
+  const importHint = <p className="files-import-hint">{t.files.importHint}</p>
 
   return (
     <main className="files-page">
@@ -122,23 +147,30 @@ export function FilesPage() {
         </div>
       </header>
 
+      <LocalNotice />
+      {!local && <MoveOffer />}
       {isEmpty ? (
         <section className="files-empty" aria-labelledby="files-empty-title">
           <EmptyArt />
           <h1 id="files-empty-title">{t.files.emptyTitle}</h1>
-          <p>{t.files.emptyText}</p>
+          <p>{local ? t.files.emptyTextLocal : t.files.emptyText}</p>
           <div className="files-actions">
             <button className="button button-large" type="button" onClick={() => navigate('/edit/new')}>
               {t.files.createFirst}
             </button>
             {importInput}
+            {importMermaid}
           </div>
-          <p className="files-hint">
-            {t.files.alreadyHave}{' '}
-            <button type="button" className="button-link" onClick={() => void openFromDrive()}>
-              {t.files.openFromDrive}
-            </button>
-          </p>
+          {importHint}
+          {!local && (
+            <p className="files-hint">
+              {t.files.alreadyHave}{' '}
+              <button type="button" className="button-link" onClick={() => void openFromDrive()}>
+                {t.files.openFromDrive}
+              </button>
+            </p>
+          )}
+          {!local && <LocalDrawingsLink />}
           {importError === 'read' && <p role="alert">{t.files.importReadFailed}</p>}
           {importError === 'image' && <p role="alert">{t.files.importImageFailed}</p>}
           <AdSlot placement="files" />
@@ -149,7 +181,7 @@ export function FilesPage() {
             <div>
               <h1>{t.files.title}</h1>
               {list.kind === 'ready' && (
-                <p className="files-count">{files.length === 1 ? t.files.countOne : format(t.files.count, { count: String(files.length) })}</p>
+                <p className="files-count">{countText(files.length)}</p>
               )}
             </div>
             <div className="files-actions">
@@ -163,22 +195,26 @@ export function FilesPage() {
                   onChange={(event) => setQuery(event.target.value)}
                 />
               )}
-              <button className="button-secondary" type="button" onClick={() => void openFromDrive()}>
-                {t.files.openFromDrive}
-              </button>
+              {!local && (
+                <button className="button-secondary" type="button" onClick={() => void openFromDrive()}>
+                  {t.files.openFromDrive}
+                </button>
+              )}
               {importInput}
+              {importMermaid}
               <button className="button" type="button" onClick={() => navigate('/edit/new')}>
                 <span aria-hidden="true">+ </span>
                 {t.files.new}
               </button>
             </div>
           </div>
+          {importHint}
           {importError === 'read' && <p role="alert">{t.files.importReadFailed}</p>}
           {importError === 'image' && <p role="alert">{t.files.importImageFailed}</p>}
           {list.kind === 'loading' && <p>{t.files.loading}</p>}
           {list.kind === 'error' && (
             <p role="alert">
-              {t.files.loadFailed}{' '}
+              {local ? t.files.localLoadFailed : t.files.loadFailed}{' '}
               <button type="button" className="button-link" onClick={() => void retry()}>
                 {t.files.retry}
               </button>
@@ -192,9 +228,11 @@ export function FilesPage() {
               ))}
             </ul>
           )}
+          {!local && <LocalDrawingsLink />}
           <AdSlot placement="files" />
         </>
       )}
+      {mermaidOpen && <MermaidDialog title={t.mermaid.importTitle} submitLabel={t.mermaid.create} onClose={() => setMermaidOpen(false)} onSubmit={openMermaid} />}
       <AppFooter />
       <CookieNotice />
     </main>

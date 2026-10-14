@@ -43,6 +43,11 @@ export class FakeDrive {
   readonly requests: string[] = []
   /** Statuses to answer the next content uploads with (e.g. [503, 503] to exercise retries). */
   uploadFailures: number[] = []
+  /**
+   * One entry per new file uploaded from now on: a status to refuse that upload with, or null to accept it
+   * (e.g. [null, 400, null] fails only the second file).
+   */
+  createFailures: Array<number | null> = []
   private seq = 1
   private clock = Date.parse('2026-10-09T12:00:00Z')
 
@@ -135,6 +140,8 @@ export class FakeDrive {
       return route.fulfill({ json: { id: this.add({ name: body.name, mimeType: body.mimeType, content: '' }).id } })
     }
     if (method === 'POST' && isUpload) {
+      const refused = this.createFailures.shift()
+      if (refused) return route.fulfill({ status: refused, json: { error: { code: refused } } })
       const { metadata, content } = FakeDrive.parseMultipart(request.headers()['content-type'], request.postDataBuffer() ?? Buffer.alloc(0))
       const file = this.add({ name: String(metadata.name), mimeType: String(metadata.mimeType), parents: metadata.parents as string[], content })
       return route.fulfill({ json: this.meta(file) })

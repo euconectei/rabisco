@@ -2,16 +2,24 @@ import { useEffect, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { format } from '../i18n/format'
 import { useI18n } from '../i18n/useI18n'
+import { useMode } from '../mode/useMode'
+import '../local/local.css'
 import { useAuth } from './useAuth'
 
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { t } = useI18n()
   const auth = useAuth()
+  const { mode, localSupport, enterLocal } = useMode()
   const { status, hint, error, prepare } = auth
+  const local = mode === 'local'
 
   useEffect(() => {
-    if (status === 'signed-out') prepare()
-  }, [status, prepare])
+    // Using it without an account must not load anything from Google until the person asks to sign in.
+    if (status === 'signed-out' && !local) prepare()
+  }, [status, prepare, local])
+
+  // Drawings kept in this browser need no sign-in.
+  if (local) return <>{children}</>
 
   if (status === 'signed-in' || status === 'needs-reconnect') {
     // Same element structure in both states: toggling the banner must never remount the page
@@ -32,6 +40,22 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   }
 
   const missingDrive = status === 'signed-out' && error === 'missingDrive'
+  const useWithoutSigningIn = (
+    <div className="sign-in-local">
+      {localSupport === 'unavailable' ? (
+        <p className="sign-in-note" role="note">
+          {t.auth.localUnavailable}
+        </p>
+      ) : (
+        <>
+          <button type="button" className="button-secondary button-large" disabled={localSupport !== 'available'} onClick={enterLocal}>
+            {t.auth.useWithoutSignIn}
+          </button>
+          <p className="sign-in-note">{t.auth.useWithoutSignInHint}</p>
+        </>
+      )}
+    </div>
+  )
   return (
     <main className="sign-in">
       <aside className="sign-in-panel">
@@ -48,7 +72,12 @@ export function RequireAuth({ children }: { children: ReactNode }) {
       </aside>
       <section className="sign-in-card">
         <div className="sign-in-form">
-          {status === 'unavailable' && <p>{t.auth.unavailable}</p>}
+          {status === 'unavailable' && (
+            <>
+              <p>{t.auth.unavailable}</p>
+              {useWithoutSigningIn}
+            </>
+          )}
           {status === 'signing-in' && <p>{t.auth.signingIn}</p>}
           {status === 'signed-out' && missingDrive && (
             <>
@@ -95,6 +124,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
                     {t.auth.otherAccount}
                   </button>
                   <p className="sign-in-note">{t.auth.reassurance}</p>
+                  {useWithoutSigningIn}
                 </>
               ) : (
                 <>
@@ -112,6 +142,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
                     {t.auth.agreeMiddle}
                     <Link to="/privacy">{t.legal.privacyTitle}</Link>.
                   </p>
+                  {useWithoutSigningIn}
                 </>
               )}
             </>

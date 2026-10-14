@@ -13,12 +13,20 @@ const pick = vi.hoisted(() => vi.fn())
 vi.mock('../drive/usePicker', () => ({ useFilePicker: () => pick }))
 // Reading an image loads Excalidraw on demand; here that load fails (e.g. offline), the way a file
 // read can fail. No other test in this file opens an image.
+const convertMermaid = vi.hoisted(() => vi.fn())
+vi.mock('../mermaid/convert', async (importOriginal) => ({ ...(await importOriginal<typeof import('../mermaid/convert')>()), convertMermaid }))
 vi.mock('@excalidraw/excalidraw', () => {
   throw new Error('module load failed')
 })
 
 function Where() {
-  return <p data-testid="where">{useLocation().pathname}</p>
+  const location = useLocation()
+  return (
+    <>
+      <p data-testid="where">{location.pathname}</p>
+      <p data-testid="state">{JSON.stringify(location.state)}</p>
+    </>
+  )
 }
 
 function setup(drive = memoryDrive(), auth = signedInAuth(), lang: 'pt-BR' | 'en' = 'pt-BR') {
@@ -32,7 +40,11 @@ function setup(drive = memoryDrive(), auth = signedInAuth(), lang: 'pt-BR' | 'en
   return { drive, auth }
 }
 
-beforeEach(() => pick.mockReset())
+beforeEach(() => {
+  pick.mockReset()
+  convertMermaid.mockReset()
+  sessionStorage.clear()
+})
 
 it('lists drawings newest first, without the extension, with a relative date', async () => {
   const drive = memoryDrive([
@@ -149,7 +161,7 @@ it('shows the account and signs out, forgetting local drafts', async () => {
   await userEvent.click(await screen.findByRole('button', { name: 'Conta: Ana Souza' }))
   expect(screen.getByText('ana@example.com')).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Sair' }))
-  expect(auth.signOut).toHaveBeenCalled()
+  await waitFor(() => expect(auth.signOut).toHaveBeenCalled())
   await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/'))
   await expect(getDraft('d1')).resolves.toBeNull()
 })
@@ -186,4 +198,134 @@ it('shows the labeled ad after the file list', async () => {
   renderWithProviders(<FilesPage />, { route: '/app', drive: oneFile().client })
   const ad = await screen.findByRole('complementary', { name: 'Anúncio' })
   expect(await within(ad).findByRole('link', { name: /GitHub/ })).toBeInTheDocument()
+})
+
+describe('importing', () => {
+  it('has "Import Mermaid" in the action bar', async () => {
+    setup(oneFile())
+    expect(await screen.findByRole('button', { name: 'Importar Mermaid' })).toBeInTheDocument()
+  })
+
+  it('has "Import Mermaid" in the empty state too', async () => {
+    setup()
+    await screen.findByRole('heading', { level: 1, name: 'Seu primeiro rabisco começa aqui' })
+    expect(screen.getByRole('button', { name: 'Importar Mermaid' })).toBeInTheDocument()
+  })
+
+  it('opens the Mermaid dialog and goes to the new-drawing route with the converted scene', async () => {
+    convertMermaid.mockResolvedValue({ elements: [{ id: 'a', type: 'rectangle' }], files: {} })
+    setup(oneFile())
+    await userEvent.click(await screen.findByRole('button', { name: 'Importar Mermaid' }))
+    const dialog = screen.getByRole('dialog', { name: 'Importar Mermaid' })
+    await userEvent.type(within(dialog).getByLabelText('Código Mermaid'), 'flowchart TD')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Criar desenho' }))
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/edit/new'))
+    const { importScene } = JSON.parse(screen.getByTestId('state').textContent!)
+    expect(importScene.name).toBe('Sem título')
+    expect(JSON.parse(importScene.json).elements).toEqual([{ id: 'a', type: 'rectangle' }])
+  })
+
+  it('closes the dialog without going anywhere on Cancel', async () => {
+    setup(oneFile())
+    await userEvent.click(await screen.findByRole('button', { name: 'Importar Mermaid' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByTestId('where')).toHaveTextContent('/app')
+  })
+
+  it('says what Import accepts next to the drawings, and explains it in the button title', async () => {
+    setup(oneFile())
+    expect(await screen.findByText(/Importar aceita Markdown e PNG ou SVG exportados do Rabisco/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Importar').closest('label')).toHaveAttribute('title', expect.stringContaining('Markdown'))
+  })
+
+  it('says it in the empty state too, in English', async () => {
+    setup(memoryDrive(), signedInAuth(), 'en')
+    await screen.findByRole('heading', { level: 1, name: 'Your first scribble starts here' })
+    expect(screen.getByText(/Import accepts Markdown/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Import').closest('label')).toHaveAttribute('title', expect.stringContaining('Markdown'))
+  })
+})
+
+describe('without an account (drawings kept in this browser)', () => {
+  function setupLocal(files: Array<{ id: string; name: string; content: string }> = [], lang: 'pt-BR' | 'en' = 'pt-BR') {
+    const local = memoryDrive(files)
+    renderWithProviders(<FilesPage />, {
+      route: '/app',
+      mode: 'local',
+      localDrive: local.client,
+      auth: signedInAuth({ status: 'signed-out', user: null, hint: null }),
+      lang,
+    })
+    return local
+  }
+
+  it('shows the notice with a way to sign in, and never offers the Drive Picker', async () => {
+    setupLocal([{ id: 'local-1', name: 'Plano.excalidraw', content: '{}' }])
+    await screen.findByRole('list', { name: 'Seus desenhos' })
+    expect(screen.getByRole('complementary', { name: 'Aviso sobre o modo local' })).toHaveTextContent('Seus desenhos ficam só neste navegador.')
+    expect(screen.getAllByRole('button', { name: 'Entrar' }).length).toBeGreaterThanOrEqual(1)
+    expect(screen.queryByRole('button', { name: 'Abrir do Drive' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Importar Mermaid' })).toBeInTheDocument()
+  })
+
+  it('counts a single drawing as kept in this browser', async () => {
+    setupLocal([{ id: 'local-1', name: 'A.excalidraw', content: '{}' }])
+    expect(await screen.findByText('1 desenho neste navegador')).toBeInTheDocument()
+  })
+
+  it('counts several drawings as kept in this browser, in English', async () => {
+    setupLocal(
+      [
+        { id: 'local-1', name: 'A.excalidraw', content: '{}' },
+        { id: 'local-2', name: 'B.excalidraw', content: '{}' },
+      ],
+      'en',
+    )
+    expect(await screen.findByText('2 drawings in this browser')).toBeInTheDocument()
+  })
+
+  it('has an empty state that talks about this browser and does not mention the Drive', async () => {
+    setupLocal()
+    expect(await screen.findByText(/Os desenhos ficam só neste navegador\. Crie um do zero/)).toBeInTheDocument()
+    expect(screen.queryByText('Já tem desenhos no Drive?')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Abrir do Drive' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Importar Mermaid' })).toBeInTheDocument()
+  })
+
+  it('shows a clear message, and a retry, when this browser storage cannot be opened', async () => {
+    const local = memoryDrive()
+    local.client.listFiles.mockRejectedValueOnce(new DriveError('unknown', 'blocked'))
+    renderWithProviders(<FilesPage />, { route: '/app', mode: 'local', localDrive: local.client })
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível abrir o armazenamento deste navegador')
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Seu primeiro rabisco começa aqui' })).toBeInTheDocument()
+  })
+
+  it('shows a saved thumbnail as it is, not as a Drive link', async () => {
+    const local = memoryDrive()
+    const dataUrl = 'data:image/png;base64,iVBORw0KGgo='
+    local.client.listFiles.mockResolvedValue([{ id: 'local-1', name: 'A.excalidraw', version: '1', modifiedTime: new Date().toISOString(), thumbnailLink: dataUrl }])
+    renderWithProviders(<FilesPage />, { route: '/app', mode: 'local', localDrive: local.client })
+    const list = await screen.findByRole('list', { name: 'Seus desenhos' })
+    expect(list.querySelector('img')).toHaveAttribute('src', dataUrl)
+  })
+})
+
+describe('signed in, with drawings still in this browser', () => {
+  const withLocal = () => memoryDrive([{ id: 'local-1', name: 'Velho.excalidraw', content: '{}' }])
+
+  it('shows a quiet "Local drawings" link while there are any, and no notice', async () => {
+    const local = withLocal()
+    renderWithProviders(<FilesPage />, { route: '/app', drive: oneFile().client, localDrive: local.client })
+    sessionStorage.setItem('rabisco.moveOffer', 'done')
+    expect(await screen.findByRole('link', { name: 'Desenhos locais' })).toHaveAttribute('href', '/local')
+    expect(screen.queryByRole('complementary', { name: 'Aviso sobre o modo local' })).not.toBeInTheDocument()
+  })
+
+  it('has no such link when nothing is kept in this browser', async () => {
+    setup(oneFile())
+    await screen.findByRole('list', { name: 'Seus desenhos' })
+    expect(screen.queryByRole('link', { name: 'Desenhos locais' })).not.toBeInTheDocument()
+  })
 })

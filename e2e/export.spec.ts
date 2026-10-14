@@ -72,6 +72,8 @@ for (const format of ['PNG', 'SVG'] as const) {
 test('an image without editable data is refused with an explanation', async ({ page }) => {
   const drive = await drawingWithMap(page)
   const dialog = await openExportDialog(page)
+  // The option is on by default now; this image is the one exported without it.
+  await dialog.getByRole('checkbox', { name: /Incluir dados editáveis/ }).uncheck()
   await dialog.getByRole('button', { name: 'Salvar no Drive' }).click()
   await expect(dialog.getByText('Salvo no Drive como Sem título.png.')).toBeVisible()
 

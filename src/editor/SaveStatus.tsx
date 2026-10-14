@@ -5,6 +5,8 @@ import type { SaveStatus as Status } from './saveQueue'
 interface Props {
   status: Status
   lost: boolean
+  /** The drawing lives only in this browser: the words must not mention the Drive. */
+  local?: boolean
   onRetry(): void
   onSaveAsNew(): void
 }
@@ -26,8 +28,10 @@ function Icon({ mark }: { mark: 'check' | 'upload' | 'off' | 'alert' }): ReactNo
   )
 }
 
-export function SaveStatus({ status, lost, onRetry, onSaveAsNew }: Props) {
+export function SaveStatus({ status, lost, local = false, onRetry, onSaveAsNew }: Props) {
   const { t } = useI18n()
+  // Conflict, needs-auth and offline cannot happen in this browser's own storage; they keep the normal words.
+  const words = local ? { ...t.editor.status, ...t.editor.statusLocal } : t.editor.status
 
   // Quiet states: the icon says it, the text is its tooltip and what screen readers announce.
   const quiet = (tone: Tone, mark: 'check' | 'upload' | 'off', text: string) => (
@@ -55,13 +59,13 @@ export function SaveStatus({ status, lost, onRetry, onSaveAsNew }: Props) {
     </p>
   )
 
-  if (status === 'error' && lost) return loud('error', 'alert', t.editor.status.lost, { label: t.editor.saveAsNew, run: onSaveAsNew })
-  if (status === 'error') return loud('error', 'alert', t.editor.status.error, { label: t.editor.retry, run: onRetry })
-  if (status === 'conflict') return loud('warn', 'alert', t.editor.status.conflict)
-  if (status === 'needs-auth') return loud('warn', 'off', t.editor.status.needsAuth)
-  if (status === 'saved') return quiet('ok', 'check', t.editor.status.saved)
-  if (status === 'saving') return quiet('busy', 'upload', t.editor.status.saving)
+  if (status === 'error' && lost) return loud('error', 'alert', words.lost, { label: t.editor.saveAsNew, run: onSaveAsNew })
+  if (status === 'error') return loud('error', 'alert', words.error, { label: t.editor.retry, run: onRetry })
+  if (status === 'conflict') return loud('warn', 'alert', words.conflict)
+  if (status === 'needs-auth') return loud('warn', 'off', words.needsAuth)
+  if (status === 'saved') return quiet('ok', 'check', words.saved)
+  if (status === 'saving') return quiet('busy', 'upload', words.saving)
   // The change is safe on this device and waits for the Drive; offline also offers a manual retry.
-  if (status === 'offline') return loud('local', 'off', t.editor.status.offline, { label: t.editor.retry, run: onRetry })
-  return quiet('local', 'off', t.editor.status.pending)
+  if (status === 'offline') return loud('local', 'off', words.offline, { label: t.editor.retry, run: onRetry })
+  return quiet('local', 'off', words.pending)
 }

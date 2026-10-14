@@ -1,16 +1,19 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
-import { clearDrafts } from '../editor/drafts'
 import { format } from '../i18n/format'
 import { useI18n } from '../i18n/useI18n'
+import { clearDriveDrafts } from '../local/clearDrafts'
+import { LocalSignIn } from '../local/LocalSignIn'
+import { useMode } from '../mode/useMode'
 
 export function AccountMenu() {
   const { t } = useI18n()
   const { user, signOut } = useAuth()
+  const { mode } = useMode()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
-  if (!user) return null
+  if (!user) return mode === 'local' ? <LocalSignIn /> : null
 
   return (
     <div className="account-menu">
@@ -31,7 +34,7 @@ export function AccountMenu() {
             type="button"
             className="button-secondary"
             onClick={async () => {
-              await clearDrafts()
+              await clearDriveDrafts()
               await signOut()
               navigate('/')
             }}

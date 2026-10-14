@@ -8,7 +8,9 @@ export const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   background: true,
   darkMode: false,
   scale: 2,
-  embedScene: false,
+  // On for anyone who never chose: an image that carries its drawing can be reopened and edited,
+  // which people rarely discover on their own. A saved choice (either way) still wins.
+  embedScene: true,
 }
 
 function oneOf<T>(value: unknown, allowed: readonly T[], fallback: T): T {

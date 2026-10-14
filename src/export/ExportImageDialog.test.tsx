@@ -29,9 +29,9 @@ function fakeApi(selected: Record<string, true> = {}) {
   } as unknown as ExcalidrawImperativeAPI
 }
 
-function open({ selected = {}, baseName = 'Mapa', drive = memoryDrive([{ id: 'f1', name: 'Mapa.excalidraw', content: '{}' }]) } = {}) {
+function open({ selected = {}, baseName = 'Mapa', fileId = 'f1', drive = memoryDrive([{ id: 'f1', name: 'Mapa.excalidraw', content: '{}' }]) } = {}) {
   const onClose = vi.fn()
-  renderWithProviders(<ExportImageDialog api={fakeApi(selected)} baseName={baseName} fileId="f1" onClose={onClose} />, { drive: drive.client })
+  renderWithProviders(<ExportImageDialog api={fakeApi(selected)} baseName={baseName} fileId={fileId} onClose={onClose} />, { drive: drive.client })
   return { drive, onClose }
 }
 
@@ -64,9 +64,33 @@ it('downloads the image named after the drawing, with the chosen options', async
   expect(renderImage).toHaveBeenCalledWith(
     expect.objectContaining({ elements: ELEMENTS }),
     {},
-    { ...DEFAULT_EXPORT_OPTIONS, format: 'svg', scale: 3, embedScene: true },
+    { ...DEFAULT_EXPORT_OPTIONS, format: 'svg', scale: 3, embedScene: false },
   )
   expect(downloadBlob).toHaveBeenCalledWith(expect.any(Blob), 'Mapa.svg')
+})
+
+it('puts the editable-data option first, checked by default, with the hint about reopening and sharing', () => {
+  open()
+  const dialog = screen.getByRole('dialog', { name: 'Exportar imagem' })
+  const embed = screen.getByRole('checkbox', { name: 'Incluir dados editáveis (recomendado)' })
+  expect(embed).toBeChecked()
+  const firstControl = dialog.querySelector('input')!
+  expect(firstControl).toBe(embed)
+  expect(screen.getByText(/reabri-lo em "Importar"/)).toBeInTheDocument()
+  expect(screen.getByText(/quem receber o arquivo também consegue abrir e editar/)).toBeInTheDocument()
+})
+
+it('respects a saved choice not to embed the data', () => {
+  localStorage.setItem('rabisco.exportOptions', JSON.stringify({ embedScene: false }))
+  open()
+  expect(screen.getByRole('checkbox', { name: /Incluir dados editáveis/ })).not.toBeChecked()
+})
+
+it('hides "Save to Drive" for a drawing kept only in this browser, and downloading still works', async () => {
+  open({ fileId: 'local-abc' })
+  expect(screen.queryByRole('button', { name: /Drive/ })).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Baixar' }))
+  expect(downloadBlob).toHaveBeenCalledTimes(1)
 })
 
 it('names an unnamed drawing after the default title', async () => {

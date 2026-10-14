@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event'
 import { RequireAuth } from './RequireAuth'
 import { AuthContext, type AuthValue } from './context'
 import { renderWithProviders } from '../test/renderWithProviders'
+import { ModeContext, type AppMode, type LocalSupport, type ModeValue } from '../mode/context'
 
 function value(overrides: Partial<AuthValue>): AuthValue {
   return {
@@ -23,12 +24,18 @@ function value(overrides: Partial<AuthValue>): AuthValue {
   }
 }
 
-function setup(auth: AuthValue, lang: 'pt-BR' | 'en' = 'pt-BR') {
+function modeValue(mode: AppMode = 'google', localSupport: LocalSupport = 'available'): ModeValue {
+  return { mode, localSupport, enterLocal: vi.fn(), leaveLocal: vi.fn() }
+}
+
+function setup(auth: AuthValue, lang: 'pt-BR' | 'en' = 'pt-BR', mode: ModeValue = modeValue()) {
   renderWithProviders(
     <AuthContext.Provider value={auth}>
-      <RequireAuth>
-        <p>private stuff</p>
-      </RequireAuth>
+      <ModeContext.Provider value={mode}>
+        <RequireAuth>
+          <p>private stuff</p>
+        </RequireAuth>
+      </ModeContext.Provider>
     </AuthContext.Provider>,
     { lang },
   )
@@ -124,11 +131,13 @@ it('does not remount the page when the reconnect banner appears and goes away', 
   const tree = (auth: AuthValue) => (
     <I18nProvider initialLanguage="pt-BR">
       <AuthContext.Provider value={auth}>
-        <MemoryRouter>
-          <RequireAuth>
-            <Page />
-          </RequireAuth>
-        </MemoryRouter>
+        <ModeContext.Provider value={modeValue()}>
+          <MemoryRouter>
+            <RequireAuth>
+              <Page />
+            </RequireAuth>
+          </MemoryRouter>
+        </ModeContext.Provider>
       </AuthContext.Provider>
     </I18nProvider>
   )
@@ -136,4 +145,52 @@ it('does not remount the page when the reconnect banner appears and goes away', 
   rerender(tree(value({ status: 'needs-reconnect' })))
   rerender(tree(value({ status: 'signed-in' })))
   expect(mounts).toBe(1)
+})
+
+describe('using it without signing in', () => {
+  it('offers "Use without signing in" next to Google sign-in, with a one-line explanation', async () => {
+    const mode = modeValue()
+    setup(value({}), 'pt-BR', mode)
+    expect(screen.getByRole('button', { name: 'Entrar com Google' })).toBeInTheDocument()
+    expect(screen.getByText('Sem conta: os desenhos ficam só neste navegador.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Usar sem entrar' }))
+    expect(mode.enterLocal).toHaveBeenCalledTimes(1)
+  })
+
+  it('also offers it to someone with a remembered account, in English', async () => {
+    const mode = modeValue()
+    setup(value({ hint: { email: 'ana@example.com', name: 'Ana Souza' } }), 'en', mode)
+    await userEvent.click(screen.getByRole('button', { name: 'Use without signing in' }))
+    expect(mode.enterLocal).toHaveBeenCalledTimes(1)
+  })
+
+  it('offers it even when Google sign-in is not configured', () => {
+    setup(value({ status: 'unavailable' }))
+    expect(screen.getByRole('button', { name: 'Usar sem entrar' })).toBeEnabled()
+  })
+
+  it('shows the private content, with no sign-in screen and no Google script, in local mode', () => {
+    const auth = value({})
+    setup(auth, 'pt-BR', modeValue('local'))
+    expect(screen.getByText('private stuff')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Entrar com Google' })).not.toBeInTheDocument()
+    expect(auth.prepare).not.toHaveBeenCalled()
+  })
+
+  it('explains that it is not available, and keeps Google sign-in, when the browser cannot keep drawings', () => {
+    setup(value({}), 'pt-BR', modeValue('google', 'unavailable'))
+    expect(screen.queryByRole('button', { name: 'Usar sem entrar' })).not.toBeInTheDocument()
+    expect(screen.getByText(/O modo sem entrar não está disponível neste navegador/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Entrar com Google' })).toBeEnabled()
+  })
+
+  it('disables the button while the browser storage is still being checked', () => {
+    setup(value({}), 'pt-BR', modeValue('google', 'checking'))
+    expect(screen.getByRole('button', { name: 'Usar sem entrar' })).toBeDisabled()
+  })
+
+  it('does not offer it on the missing-permission screen', () => {
+    setup(value({ error: 'missingDrive' }))
+    expect(screen.queryByRole('button', { name: 'Usar sem entrar' })).not.toBeInTheDocument()
+  })
 })

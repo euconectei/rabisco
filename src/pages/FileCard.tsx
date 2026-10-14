@@ -14,8 +14,12 @@ function tintOf(id: string): string {
   return TINTS.at(sum) ?? TINTS[0]
 }
 
-/** The Drive hands out a small thumbnail (`=s220`); ask for a sharper one. */
+/**
+ * The Drive hands out a small thumbnail (`=s220`); ask for a sharper one. A `data:` URL (a drawing kept
+ * in this browser) is already the final image and is left alone.
+ */
 function thumbnailSrc(link: string): string {
+  if (link.startsWith('data:')) return link
   return link.replace(/=s\d+$/, '=s480')
 }
 

@@ -5,6 +5,7 @@ import { Dialog } from '../editor/Dialog'
 import { downloadBlob } from '../editor/download'
 import { format as formatMessage } from '../i18n/format'
 import { useI18n } from '../i18n/useI18n'
+import { isLocalId } from '../local/ids'
 import { loadExportOptions, saveExportOptions } from './exportOptions'
 import { exportFileName, renderImage, type ExportOptions, type ExportScale } from './imageExport'
 
@@ -77,6 +78,11 @@ export function ExportImageDialog({ api, baseName, fileId, onClose }: { api: Exc
   return (
     <Dialog title={labels.title}>
       <div className="export-options">
+        <label>
+          <input type="checkbox" checked={options.embedScene} onChange={(event) => change({ embedScene: event.currentTarget.checked })} />
+          {labels.embedScene}
+        </label>
+        <p className="export-hint">{labels.embedSceneHint}</p>
         <fieldset>
           <legend>{labels.format}</legend>
           {(['png', 'svg'] as const).map((value) => (
@@ -120,11 +126,6 @@ export function ExportImageDialog({ api, baseName, fileId, onClose }: { api: Exc
           <input type="checkbox" checked={options.darkMode} onChange={(event) => change({ darkMode: event.currentTarget.checked })} />
           {labels.darkMode}
         </label>
-        <label>
-          <input type="checkbox" checked={options.embedScene} onChange={(event) => change({ embedScene: event.currentTarget.checked })} />
-          {labels.embedScene}
-        </label>
-        <p className="export-hint">{labels.embedSceneHint}</p>
       </div>
       {status.kind === 'saved' && <p role="status">{formatMessage(labels.saved, { name: status.name })}</p>}
       {status.kind === 'failed' && <p role="alert">{labels.failed}</p>}
@@ -133,9 +134,11 @@ export function ExportImageDialog({ api, baseName, fileId, onClose }: { api: Exc
         <button type="button" className="button" onClick={() => void download()}>
           {labels.download}
         </button>
-        <button type="button" className="button-secondary" disabled={status.kind === 'saving'} onClick={() => void saveToDrive()}>
-          {status.kind === 'saving' ? labels.saving : labels.saveToDrive}
-        </button>
+        {!isLocalId(fileId) && (
+          <button type="button" className="button-secondary" disabled={status.kind === 'saving'} onClick={() => void saveToDrive()}>
+            {status.kind === 'saving' ? labels.saving : labels.saveToDrive}
+          </button>
+        )}
         <button type="button" className="button-secondary" onClick={onClose}>
           {labels.close}
         </button>

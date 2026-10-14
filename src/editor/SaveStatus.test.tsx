@@ -4,10 +4,10 @@ import { renderWithProviders } from '../test/renderWithProviders'
 import type { SaveStatus as Status } from './saveQueue'
 import { SaveStatus } from './SaveStatus'
 
-function show(status: Status, lost = false) {
+function show(status: Status, lost = false, local = false) {
   const onRetry = vi.fn()
   const onSaveAsNew = vi.fn()
-  renderWithProviders(<SaveStatus status={status} lost={lost} onRetry={onRetry} onSaveAsNew={onSaveAsNew} />)
+  renderWithProviders(<SaveStatus status={status} lost={lost} local={local} onRetry={onRetry} onSaveAsNew={onSaveAsNew} />)
   return { onRetry, onSaveAsNew }
 }
 
@@ -51,4 +51,30 @@ it.each([
 ] as const)('%s keeps the words', (status, text) => {
   show(status)
   expect(screen.getByRole('status')).toHaveTextContent(text)
+})
+
+describe('for a drawing kept only in this browser', () => {
+  it.each([
+    ['saved', 'Salvo neste navegador'],
+    ['saving', 'Salvando…'],
+    ['pending', 'Alterações pendentes'],
+  ] as const)('%s never mentions the Drive', (status, text) => {
+    show(status, false, true)
+    expect(screen.getByRole('status')).toHaveTextContent(text)
+    expect(screen.getByRole('status')).not.toHaveTextContent(/drive/i)
+  })
+
+  it('a failed save keeps the retry and says the drawing could not be saved', async () => {
+    const { onRetry } = show('error', false, true)
+    expect(screen.getByRole('status')).toHaveTextContent('Não foi possível salvar.')
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+    expect(onRetry).toHaveBeenCalledTimes(1)
+  })
+
+  it('a drawing that is gone offers to save it as a new one, without the Drive', async () => {
+    const { onSaveAsNew } = show('error', true, true)
+    expect(screen.getByRole('status')).toHaveTextContent('Este desenho não está mais neste navegador.')
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar como novo arquivo' }))
+    expect(onSaveAsNew).toHaveBeenCalledTimes(1)
+  })
 })
