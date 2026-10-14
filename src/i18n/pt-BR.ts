@@ -392,6 +392,7 @@ export const ptBR = {
       syntax: 'O Mermaid não entendeu este texto. Confira a sintaxe e tente de novo.',
       unsupported: 'Este tipo de diagrama ainda não pode ser convertido. Fluxogramas funcionam melhor.',
       tooLarge: 'O texto passa de {max} caracteres. Reduza o diagrama e tente de novo.',
+      tooManyElements: 'O diagrama tem elementos demais para converter. Divida-o em diagramas menores e tente de novo.',
       readFailed: 'Não foi possível ler o arquivo.',
       failed: 'Não foi possível converter o diagrama. Tente de novo.',
     },

@@ -394,6 +394,7 @@ export const en: Messages = {
       syntax: 'Mermaid could not understand this text. Check the syntax and try again.',
       unsupported: 'This type of diagram cannot be converted yet. Flowcharts work best.',
       tooLarge: 'The text is longer than {max} characters. Shorten the diagram and try again.',
+      tooManyElements: 'The diagram has too many elements to convert. Split it into smaller diagrams and try again.',
       readFailed: 'Could not read the file.',
       failed: 'Could not convert the diagram. Try again.',
     },

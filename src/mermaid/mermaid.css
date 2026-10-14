@@ -1,0 +1,19 @@
+.mermaid-dialog { width: min(36rem, 100%); max-height: 100%; overflow-y: auto; box-sizing: border-box; }
+.mermaid-dialog label { display: block; margin-top: 0.75rem; font-size: 0.9rem; font-weight: 600; }
+.mermaid-dialog textarea {
+  display: block; box-sizing: border-box; width: 100%; min-height: 10rem; margin-top: 0.35rem; padding: 0.6rem;
+  border: 1px solid color-mix(in srgb, CanvasText 35%, transparent); border-radius: 0.5rem;
+  background: Canvas; color: CanvasText; font: 0.85rem/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize: vertical;
+}
+.mermaid-dialog textarea[aria-invalid='true'] { border-color: #c92a2a; }
+.mermaid-dialog input[type='file'] { display: block; max-width: 100%; margin-top: 0.35rem; font: inherit; font-weight: 400; }
+.mermaid-error { margin: 0.75rem 0 0; color: #c92a2a; font-size: 0.9rem; }
+@media (prefers-color-scheme: dark) {
+  .mermaid-error { color: #ff8787; }
+}
+.mermaid-dialog button:disabled { opacity: 0.6; cursor: default; }
+
+/* The local-mode notice floats over the editor, at the bottom, clear of Excalidraw's own controls. */
+.editor-local-notice { position: fixed; z-index: 4; left: 50%; bottom: 5rem; transform: translateX(-50%); width: min(40rem, calc(100% - 2rem)); pointer-events: none; }
+.editor-local-notice .local-notice { margin: 0; pointer-events: auto; }
+.editor-local-notice:empty { display: none; }

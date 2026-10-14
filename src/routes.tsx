@@ -2,8 +2,10 @@ import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { RequireAuth } from './auth/RequireAuth'
 import { useI18n } from './i18n/useI18n'
+import { LocalModeGate } from './local/LocalModeGate'
 import { FilesPage } from './pages/FilesPage'
 import { LandingPage } from './pages/LandingPage'
+import { LocalDrawingsPage } from './pages/LocalDrawingsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { OpenFromDrivePage } from './pages/OpenFromDrivePage'
 import { WhatsNewPage } from './pages/WhatsNewPage'
@@ -21,6 +23,7 @@ function EditorFallback() {
 
 export function AppRoutes() {
   return (
+    <LocalModeGate>
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route
@@ -28,6 +31,14 @@ export function AppRoutes() {
         element={
           <RequireAuth>
             <FilesPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/local"
+        element={
+          <RequireAuth>
+            <LocalDrawingsPage />
           </RequireAuth>
         }
       />
@@ -86,5 +97,6 @@ export function AppRoutes() {
       />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    </LocalModeGate>
   )
 }

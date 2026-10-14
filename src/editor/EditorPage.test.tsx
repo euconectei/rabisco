@@ -9,6 +9,7 @@ import { AdsProvider } from '../ads/AdsProvider'
 import { AuthContext, type AuthValue } from '../auth/context'
 import { DriveContext } from '../drive/context'
 import { DriveError } from '../drive/errors'
+import { ModeContext, type ModeValue } from '../mode/context'
 import { I18nProvider } from '../i18n/I18nProvider'
 import { AppRoutes } from '../routes'
 import { memoryDrive } from '../test/memoryDrive'
@@ -92,6 +93,8 @@ vi.mock('@excalidraw/excalidraw', async (importOriginal) => {
   }
 })
 vi.mock('@excalidraw/excalidraw/index.css', () => ({}))
+
+const googleMode: ModeValue = { mode: 'google', localSupport: 'available', enterLocal: () => {}, leaveLocal: () => {} }
 
 function seededDrive() {
   return memoryDrive([{ id: 'f1', name: 'Mapa.excalidraw', content: fixture }])
@@ -192,6 +195,7 @@ describe('review follow-ups', () => {
     const tree = (auth: AuthValue) => (
       <I18nProvider initialLanguage="pt-BR">
         <AuthContext.Provider value={auth}>
+          <ModeContext.Provider value={googleMode}>
           <AdsProvider timeZone="Europe/Lisbon" adsense={null}>
             <DriveContext.Provider value={drive.client}>
               <MemoryRouter initialEntries={['/edit/f1']}>
@@ -199,6 +203,7 @@ describe('review follow-ups', () => {
               </MemoryRouter>
             </DriveContext.Provider>
           </AdsProvider>
+        </ModeContext.Provider>
         </AuthContext.Provider>
       </I18nProvider>
     )
@@ -565,6 +570,7 @@ describe('saving', () => {
     const tree = (auth: AuthValue) => (
       <I18nProvider initialLanguage="pt-BR">
         <AuthContext.Provider value={auth}>
+          <ModeContext.Provider value={googleMode}>
           <AdsProvider timeZone="Europe/Lisbon" adsense={null}>
             <DriveContext.Provider value={drive.client}>
               <MemoryRouter initialEntries={['/edit/f1']}>
@@ -572,6 +578,7 @@ describe('saving', () => {
               </MemoryRouter>
             </DriveContext.Provider>
           </AdsProvider>
+        </ModeContext.Provider>
         </AuthContext.Provider>
       </I18nProvider>
     )
