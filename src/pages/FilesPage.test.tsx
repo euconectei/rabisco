@@ -118,7 +118,7 @@ it('shows an error with a retry that reloads the list', async () => {
   drive.client.listFiles.mockRejectedValueOnce(new DriveError('server', 'boom', 503))
   setup(drive)
   await userEvent.click(await screen.findByRole('button', { name: 'Tentar de novo' }))
-  expect(await screen.findByRole('link', { name: /^A/ })).toBeInTheDocument()
+  expect(within(await screen.findByRole('list', { name: 'Seus desenhos' })).getByRole('link', { name: /^A/ })).toBeInTheDocument()
 })
 
 it('"New drawing" opens the new-drawing route', async () => {
