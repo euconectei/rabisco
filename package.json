@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@excalidraw/excalidraw": "0.18.1",
+    "@excalidraw/mermaid-to-excalidraw": "2.2.2",
     "idb-keyval": "^6.3.0",
     "qrcode": "1.5.4",
     "react": "^19.3.0",

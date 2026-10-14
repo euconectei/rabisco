@@ -59,7 +59,7 @@ it('downloads the image named after the drawing, with the chosen options', async
   open()
   await userEvent.click(screen.getByRole('radio', { name: 'SVG' }))
   await userEvent.click(screen.getByRole('radio', { name: '3×' }))
-  await userEvent.click(screen.getByRole('checkbox', { name: 'Incluir dados editáveis' }))
+  await userEvent.click(screen.getByRole('checkbox', { name: /Incluir dados editáveis/ }))
   await userEvent.click(screen.getByRole('button', { name: 'Baixar' }))
   expect(renderImage).toHaveBeenCalledWith(
     expect.objectContaining({ elements: ELEMENTS }),
