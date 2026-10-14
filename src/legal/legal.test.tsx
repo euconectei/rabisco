@@ -88,6 +88,16 @@ it.each([
 })
 
 it.each([
+  ['pt-BR', 'só com os ids dos desenhos que já foram copiados para o Drive', 'ainda não salvas neste navegador'],
+  ['en', 'holding only the ids of drawings already copied to Drive', 'not yet saved in this browser'],
+] as const)('the policy describes the moved list and the drafts of the local mode (%s)', (lang, moved, drafts) => {
+  renderWithProviders(<PrivacyPage />, { lang, auth: signedOut })
+  const text = document.body.textContent
+  expect(text).toContain(moved)
+  expect(text).toContain(drafts)
+})
+
+it.each([
   ['pt-BR', 'limpar os dados do navegador apaga os desenhos'],
   ['en', "clearing your browser's data deletes them"],
 ] as const)('the terms say that local drawings have no backup and clearing data deletes them (%s)', (lang, sentence) => {

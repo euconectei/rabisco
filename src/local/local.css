@@ -43,9 +43,10 @@
 .move-failed-heading { font-weight: 600; }
 .move-failures { margin: 0; padding-left: 1.2rem; font-size: 0.9rem; line-height: 1.5; }
 
-/* In the editor the notice is a small chip in the bottom-left corner, under Excalidraw's own menus and
+/* In the editor the notice is a thin strip in the bottom-left, 4.5rem up: just above the footer (zoom, undo,
+   the ad row, 50px plus its margin) and, on narrow screens, above the bottom bar. It sits under Excalidraw's own menus and
    clear of the canvas centre; on narrow screens it keeps only the short text. */
-.editor-local-notice { position: fixed; z-index: 2; left: 0.5rem; bottom: 0.5rem; max-width: calc(100% - 1rem); pointer-events: none; }
+.editor-local-notice { position: fixed; z-index: 2; left: 0.5rem; bottom: 4.5rem; max-width: calc(100% - 1rem); pointer-events: none; }
 .editor-local-notice .local-notice { margin: 0; padding: 0.25rem 0.4rem 0.25rem 0.7rem; flex-wrap: nowrap; gap: 0.4rem; pointer-events: auto; background: Canvas; box-shadow: 0 2px 10px rgb(0 0 0 / 0.15); }
 .editor-local-notice .local-notice-text { flex: 0 1 auto; }
 .editor-local-notice .local-notice-full, .editor-local-notice .local-notice-detail { display: none; }

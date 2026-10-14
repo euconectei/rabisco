@@ -98,11 +98,11 @@ export function PrivacyPtBR() {
             </li>
             <li>
               no <code>IndexedDB</code> (<code>rabisco</code> / <code>drafts</code>): um rascunho das alterações ainda
-              não salvas no Drive, apagado depois de salvar.
+              não salvas no Drive (ou, no modo sem entrar, ainda não salvas neste navegador), apagado depois de salvar.
             </li>
             <li>
               no <code>IndexedDB</code> (<code>rabisco-local</code>): os desenhos do modo sem entrar, com as suas
-              miniaturas. Esse banco só é criado quando você escolhe usar sem entrar; quem usa só o Google nunca o
+              miniaturas, e uma lista (<code>moved</code>) só com os ids dos desenhos que já foram copiados para o Drive. Esse banco só é criado quando você escolhe usar sem entrar; quem usa só o Google nunca o
               recebe.
             </li>
           </ul>
@@ -314,11 +314,11 @@ export function PrivacyEn() {
             </li>
             <li>
               in <code>IndexedDB</code> (<code>rabisco</code> / <code>drafts</code>): a draft of changes not yet saved to
-              Drive, deleted after saving.
+              Drive (or, in the mode without signing in, not yet saved in this browser), deleted after saving.
             </li>
             <li>
               in <code>IndexedDB</code> (<code>rabisco-local</code>): the drawings of the use-without-signing-in mode, with
-              their thumbnails. This database is created only when you choose to use without signing in; people who use
+              their thumbnails, plus a list (<code>moved</code>) holding only the ids of drawings already copied to Drive. This database is created only when you choose to use without signing in; people who use
               only Google never receive it.
             </li>
           </ul>
