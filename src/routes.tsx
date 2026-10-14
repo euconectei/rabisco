@@ -12,6 +12,7 @@ const EditorPage = lazy(() => import('./editor/EditorPage'))
 const NewFileRedirect = lazy(() => import('./editor/NewFileRedirect'))
 const PrivacyPage = lazy(() => import('./legal/PrivacyPage'))
 const TermsPage = lazy(() => import('./legal/TermsPage'))
+const SupportPage = lazy(() => import('./support/SupportPage'))
 
 function EditorFallback() {
   const { t } = useI18n()
@@ -72,6 +73,14 @@ export function AppRoutes() {
         element={
           <Suspense fallback={<EditorFallback />}>
             <TermsPage />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/apoie"
+        element={
+          <Suspense fallback={<EditorFallback />}>
+            <SupportPage />
           </Suspense>
         }
       />
