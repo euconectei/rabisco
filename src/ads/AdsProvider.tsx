@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useAuth } from '../auth/useAuth'
+import { ModeContext } from '../mode/context'
 import { adsenseConfig, type AdsenseConfig } from './config'
 import { readConsent, writeConsent, type AdConsent } from './consent'
 import { AdsContext } from './context'
@@ -18,7 +19,9 @@ export function AdsProvider({ children, timeZone = browserTimeZone(), adsense = 
   const { user, hint } = useAuth()
   // The landing page has no signed-in user: the remembered account (local only) still tells whether it is exempt.
   // With no account at all, nobody can be exempt, so there is nothing to wait for.
-  const email = user?.email ?? hint?.email ?? null
+  // In the local mode the person is anonymous whatever account was remembered: no exemption by email.
+  const local = useContext(ModeContext)?.mode === 'local'
+  const email = local ? null : (user?.email ?? hint?.email ?? null)
   // Tagged with the email it was computed for, so a new account never inherits the previous answer.
   const [exemption, setExemption] = useState<{ email: string; exempt: boolean } | null>(null)
   const [consent, setConsentState] = useState<AdConsent | null>(readConsent)

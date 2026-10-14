@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AuthContext } from '../auth/context'
+import { ModeContext, type AppMode } from '../mode/context'
 import { signedInAuth } from '../test/renderWithProviders'
 import { AdsProvider } from './AdsProvider'
 import { hashEmail } from './exempt'
@@ -103,4 +104,39 @@ it('uses the remembered account to exempt a signed-out visitor', async () => {
   )
   expect(screen.getByTestId('decision')).toHaveTextContent('pending')
   await waitFor(() => expect(screen.getByTestId('decision')).toHaveTextContent('none'))
+})
+
+describe('local mode', () => {
+  const hint = { email: 'ana@example.com', name: 'Ana' }
+
+  async function renderInMode(mode: AppMode, auth = signedInAuth({ status: 'signed-out', user: null, hint })) {
+    const exemptHashes = [await hashEmail('ana@example.com')]
+    render(
+      <AuthContext.Provider value={auth}>
+        <ModeContext.Provider value={{ mode, localSupport: 'available', enterLocal: vi.fn(), leaveLocal: vi.fn() }}>
+          <AdsProvider adsense={ADSENSE} timeZone="America/New_York" exemptHashes={exemptHashes}>
+            <Probe />
+          </AdsProvider>
+        </ModeContext.Provider>
+      </AuthContext.Provider>,
+    )
+  }
+
+  it('treats the owner remembered on this device as a plain visitor', async () => {
+    await renderInMode('local')
+    // Decided at once (nothing to look up) and never exempt: ads follow the visitor rules.
+    expect(screen.getByTestId('decision')).toHaveTextContent('adsense')
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(screen.getByTestId('decision')).toHaveTextContent('adsense')
+  })
+
+  it('does not exempt a still-signed-in owner either', async () => {
+    await renderInMode('local', signedInAuth({ user: { email: 'ana@example.com', name: 'Ana' } }))
+    expect(screen.getByTestId('decision')).toHaveTextContent('adsense')
+  })
+
+  it('still exempts the same owner in the google mode', async () => {
+    await renderInMode('google')
+    await waitFor(() => expect(screen.getByTestId('decision')).toHaveTextContent('none'))
+  })
 })
