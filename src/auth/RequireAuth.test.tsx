@@ -69,8 +69,34 @@ it('shows the failure message after a refused sign-in', () => {
 
 it('explains that Drive access is required when it was not granted', () => {
   setup(value({ error: 'missingDrive' }))
+  expect(screen.getByRole('heading', { level: 1, name: 'Falta só uma permissão' })).toBeInTheDocument()
+  expect(screen.getByRole('alert')).toHaveTextContent('O acesso ao Google Drive não foi concedido')
   expect(screen.getByRole('alert')).toHaveTextContent('o Rabisco precisa de acesso ao seu Google Drive')
-  expect(screen.getByRole('button', { name: 'Entrar com Google' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Tentar de novo' })).toBeInTheDocument()
+})
+
+it('retries the sign-in from the missing Drive permission screen', async () => {
+  const auth = value({ error: 'missingDrive' })
+  setup(auth)
+  await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+  expect(auth.signIn).toHaveBeenCalled()
+})
+
+it('shows the remembered account as a row, with a short button that still names the account', () => {
+  setup(value({ hint: { email: 'ana@example.com', name: 'Ana Souza' } }))
+  expect(screen.getByRole('heading', { level: 1, name: 'Que bom ver você de novo' })).toBeInTheDocument()
+  expect(screen.getByText('Ana Souza')).toBeInTheDocument()
+  expect(screen.getByText('ana@example.com')).toBeInTheDocument()
+  const button = screen.getByRole('button', { name: 'Continuar como Ana Souza' })
+  expect(button).toHaveTextContent(/^Continuar$/)
+})
+
+it('first visit: gives the reasons to trust and links the terms and the policy', () => {
+  setup(value({}))
+  expect(screen.getByRole('heading', { level: 1, name: 'Entre para começar' })).toBeInTheDocument()
+  expect(screen.getByText(/Seus desenhos ficam no seu Google Drive, não em um servidor nosso/)).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Termos' })).toHaveAttribute('href', '/terms')
+  expect(screen.getByRole('link', { name: 'Política de Privacidade' })).toHaveAttribute('href', '/privacy')
 })
 
 it('renders the private content when signed in', () => {
