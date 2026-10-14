@@ -252,6 +252,21 @@ export const ptBR = {
           'Cada mapa guarda a própria organização e o próprio estilo, sem atrapalhar os outros.',
         ],
       },
+      newLogo: {
+        title: 'Logo novo',
+        items: [
+          'O Rabisco ganhou um logo novo: um nó central com três ramos, como um mapa mental.',
+          'Ele aparece na aba do navegador e na página inicial.',
+        ],
+      },
+      saveStatus: {
+        title: 'Salvamento mais claro',
+        items: [
+          'O "Salvo" saiu do rodapé e foi para o topo do editor, junto do nome do desenho, como um ícone de nuvem.',
+          'Nuvem verde com ✓: salvou no Drive. Com uma seta: está salvando. Riscada: as mudanças estão só neste aparelho e vão para o Drive quando der.',
+          'Se algo der errado, o aviso continua com texto e com o botão para tentar de novo.',
+        ],
+      },
       adsAndPrivacy: {
         title: 'Privacidade e anúncios',
         items: [

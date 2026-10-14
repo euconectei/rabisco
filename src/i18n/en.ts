@@ -254,6 +254,21 @@ export const en: Messages = {
           'Each map keeps its own arrangement and style, without affecting the others.',
         ],
       },
+      newLogo: {
+        title: 'New logo',
+        items: [
+          'Rabisco has a new logo: a central node with three branches, like a mind map.',
+          'It shows up in the browser tab and on the home page.',
+        ],
+      },
+      saveStatus: {
+        title: 'Clearer saving',
+        items: [
+          '"Saved" moved from the footer to the top of the editor, next to the drawing\'s name, as a cloud icon.',
+          'Green cloud with a check: saved to the Drive. With an arrow: saving. Crossed out: the changes are only on this device and go to the Drive when they can.',
+          'If something goes wrong, the notice still comes with text and a button to try again.',
+        ],
+      },
       adsAndPrivacy: {
         title: 'Privacy and ads',
         items: [
