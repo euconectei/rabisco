@@ -5,7 +5,7 @@ export function TermsPtBR() {
   return (
     <>
       <p>
-        Estes termos valem para o uso do Rabisco (<External href="https://rabisco.euconectei.com.br">https://rabisco.euconectei.com.br</External>
+        Estes termos valem para o uso do Rabisco (<External href="https://rabisco.dev">https://rabisco.dev</External>
         ). Ao usar o Rabisco, você concorda com eles.
       </p>
 
@@ -65,7 +65,7 @@ export function TermsEn() {
   return (
     <>
       <p>
-        These terms apply to your use of Rabisco (<External href="https://rabisco.euconectei.com.br">https://rabisco.euconectei.com.br</External>
+        These terms apply to your use of Rabisco (<External href="https://rabisco.dev">https://rabisco.dev</External>
         ). By using Rabisco, you agree to them.
       </p>
 

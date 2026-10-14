@@ -16,8 +16,8 @@ pnpm test:e2e   # Playwright
 
 ## Deploy
 
-Cada push na `main` publica no Cloudflare Pages (`https://rabisco.euconectei.com.br`) depois do CI, se os segredos `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID` estiverem configurados no repositório. Sem eles, o job de deploy só registra um aviso e não faz nada.
+Cada push na `main` publica no Cloudflare Pages (`https://rabisco.dev`) depois do CI, se os segredos `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID` estiverem configurados no repositório. Sem eles, o job de deploy só registra um aviso e não faz nada.
 
-Contribuir: veja o [CONTRIBUTING.md](CONTRIBUTING.md). Privacidade e termos: https://rabisco.euconectei.com.br/privacy e https://rabisco.euconectei.com.br/terms.
+Contribuir: veja o [CONTRIBUTING.md](CONTRIBUTING.md). Privacidade e termos: https://rabisco.dev/privacy e https://rabisco.dev/terms.
 
 Licença: MIT.
