@@ -33,14 +33,53 @@ it('the policy lists every scope and every piece of local data the app uses', ()
     'rabisco.whatsNew.lastSeen',
     'rabisco.exportOptions',
     'rabisco.adConsent',
+    'rabisco.moveOffer',
+    'rabisco.localNotice',
   ]) {
     expect(screen.getAllByText(item).length).toBeGreaterThan(0)
   }
 })
 
 it.each([
-  ['pt-BR', 'rabisco-local', 'O Rabisco não envia seus desenhos a nenhum servidor', 'não apaga os desenhos locais'],
-  ['en', 'rabisco-local', 'Rabisco does not send your drawings to any server', 'does not delete local drawings'],
+  [
+    'pt-BR',
+    'No modo sem entrar, o Rabisco não envia seus desenhos a nenhum servidor: eles ficam só neste navegador. Com a conta Google, os desenhos vão para o seu próprio Google Drive. Os anúncios e o login do Google, quando usados, são carregados à parte.',
+    'Esse banco só é criado quando você escolhe usar sem entrar; quem usa só o Google nunca o recebe.',
+    'O script de login do Google é carregado na tela de entrada e também quando você aponta o mouse ou foca (Tab) o botão "Entrar"',
+    'Ele não é carregado durante o uso sem entrar.',
+  ],
+  [
+    'en',
+    'In local mode (without signing in), Rabisco does not send your drawings to any server: they stay only in this browser. With a Google account, drawings go to your own Google Drive. Ads and Google sign-in, when used, are loaded separately.',
+    'This database is created only when you choose to use without signing in; people who use only Google never receive it.',
+    'The Google sign-in script is loaded on the sign-in screen and also when you hover over or focus (Tab) the "Sign in" button',
+    'It is not loaded while you use Rabisco without signing in.',
+  ],
+] as const)('the policy states the storage and sign-in script rules exactly (%s)', (lang, server, db, script, notLoaded) => {
+  renderWithProviders(<PrivacyPage />, { lang, auth: signedOut })
+  const text = document.body.textContent ?? ''
+  expect(text).toContain(server)
+  expect(text).toContain(db)
+  expect(text).toContain(script)
+  expect(text).toContain(notLoaded)
+  expect(text).not.toContain('só é carregado na tela de entrada ou ao clicar')
+  expect(text).not.toContain('only on the sign-in screen or when you click')
+})
+
+it.each([
+  ['pt-BR', 'rabisco.moveOffer', 'nesta sessão do navegador'],
+  ['en', 'rabisco.localNotice', 'during this browser session'],
+] as const)('the policy lists the sessionStorage keys (%s)', (lang, key, scope) => {
+  renderWithProviders(<PrivacyPage />, { lang, auth: signedOut })
+  const code = screen.getByText(key)
+  expect(code.tagName).toBe('CODE')
+  expect(code.closest('li')).toHaveTextContent(scope)
+  expect(screen.getByText('sessionStorage')).toBeInTheDocument()
+})
+
+it.each([
+  ['pt-BR', 'rabisco-local', 'No modo sem entrar, o Rabisco não envia seus desenhos a nenhum servidor', 'não apaga os desenhos locais'],
+  ['en', 'rabisco-local', 'In local mode (without signing in), Rabisco does not send your drawings to any server', 'does not delete local drawings'],
 ] as const)('the policy says where local drawings live and that none go to a server (%s)', (lang, db, noServer, signOut) => {
   renderWithProviders(<PrivacyPage />, { lang, auth: signedOut })
   expect(document.body.textContent).toContain(db)

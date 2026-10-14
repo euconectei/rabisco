@@ -84,20 +84,35 @@ export function PrivacyPtBR() {
               </ul>
             </li>
             <li>
+              no <code>sessionStorage</code>:
+              <ul>
+                <li>
+                  <code>rabisco.moveOffer</code>: se você já respondeu à oferta de mover os desenhos locais nesta sessão
+                  do navegador;
+                </li>
+                <li>
+                  <code>rabisco.localNotice</code>: se você já dispensou o aviso do modo sem entrar nesta sessão do
+                  navegador;
+                </li>
+              </ul>
+            </li>
+            <li>
               no <code>IndexedDB</code> (<code>rabisco</code> / <code>drafts</code>): um rascunho das alterações ainda
               não salvas no Drive, apagado depois de salvar.
             </li>
             <li>
               no <code>IndexedDB</code> (<code>rabisco-local</code>): os desenhos do modo sem entrar, com as suas
-              miniaturas.
+              miniaturas. Esse banco só é criado quando você escolhe usar sem entrar; quem usa só o Google nunca o
+              recebe.
             </li>
           </ul>
         </li>
       </ul>
       <p>
-        O Rabisco não envia seus desenhos a nenhum servidor; os anúncios e o login do Google, quando usados, são
-        carregados à parte. O script de login do Google só é carregado na tela de entrada ou ao clicar em "Entrar", e
-        não durante o uso sem entrar.
+        No modo sem entrar, o Rabisco não envia seus desenhos a nenhum servidor: eles ficam só neste navegador. Com a
+        conta Google, os desenhos vão para o seu próprio Google Drive. Os anúncios e o login do Google, quando usados,
+        são carregados à parte. O script de login do Google é carregado na tela de entrada e também quando você aponta o
+        mouse ou foca (Tab) o botão "Entrar", para o login abrir rápido. Ele não é carregado durante o uso sem entrar.
       </p>
       <p>
         "Sair" não apaga os desenhos locais: a conta sai, mas eles continuam neste navegador. Em computador compartilhado,
@@ -285,20 +300,35 @@ export function PrivacyEn() {
               </ul>
             </li>
             <li>
+              in <code>sessionStorage</code>:
+              <ul>
+                <li>
+                  <code>rabisco.moveOffer</code>: whether you already answered the offer to move local drawings during
+                  this browser session;
+                </li>
+                <li>
+                  <code>rabisco.localNotice</code>: whether you already dismissed the use-without-signing-in notice during
+                  this browser session;
+                </li>
+              </ul>
+            </li>
+            <li>
               in <code>IndexedDB</code> (<code>rabisco</code> / <code>drafts</code>): a draft of changes not yet saved to
               Drive, deleted after saving.
             </li>
             <li>
               in <code>IndexedDB</code> (<code>rabisco-local</code>): the drawings of the use-without-signing-in mode, with
-              their thumbnails.
+              their thumbnails. This database is created only when you choose to use without signing in; people who use
+              only Google never receive it.
             </li>
           </ul>
         </li>
       </ul>
       <p>
-        Rabisco does not send your drawings to any server; ads and Google sign-in, when used, are loaded separately. The
-        Google sign-in script is loaded only on the sign-in screen or when you click "Sign in", and not while you use
-        Rabisco without signing in.
+        In local mode (without signing in), Rabisco does not send your drawings to any server: they stay only in this
+        browser. With a Google account, drawings go to your own Google Drive. Ads and Google sign-in, when used, are
+        loaded separately. The Google sign-in script is loaded on the sign-in screen and also when you hover over or focus
+        (Tab) the "Sign in" button, so sign-in opens quickly. It is not loaded while you use Rabisco without signing in.
       </p>
       <p>
         "Sign out" does not delete local drawings: the account signs out, but they stay in this browser. On a shared
