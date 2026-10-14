@@ -1,6 +1,9 @@
 import type { ExportOptions } from './imageExport'
 
 const STORAGE_KEY = 'rabisco.exportOptions'
+// Bump when a saved field's meaning changes. Objects without this marker were written by an
+// older version, which stored every field (including embedScene: false) without a real choice.
+const STORAGE_VERSION = 2
 
 export const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   format: 'png',
@@ -29,19 +32,21 @@ export function loadExportOptions(): ExportOptions {
     // Unreadable or unavailable storage: start from the defaults.
   }
   const d = DEFAULT_EXPORT_OPTIONS
+  // A save from before the version marker has no real embed choice, so the new default applies.
+  const savedEmbed = saved.v === STORAGE_VERSION ? saved.embedScene : undefined
   return {
     format: oneOf(saved.format, ['png', 'svg'] as const, d.format),
     scope: oneOf(saved.scope, ['scene', 'selection'] as const, d.scope),
     background: oneOf(saved.background, BOOLEANS, d.background),
     darkMode: oneOf(saved.darkMode, BOOLEANS, d.darkMode),
     scale: oneOf(saved.scale, [1, 2, 3] as const, d.scale),
-    embedScene: oneOf(saved.embedScene, BOOLEANS, d.embedScene),
+    embedScene: oneOf(savedEmbed, BOOLEANS, d.embedScene),
   }
 }
 
 export function saveExportOptions(options: ExportOptions): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(options))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...options, v: STORAGE_VERSION }))
   } catch {
     // Storage unavailable: the options are simply not remembered.
   }

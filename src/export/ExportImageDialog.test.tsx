@@ -81,7 +81,7 @@ it('puts the editable-data option first, checked by default, with the hint about
 })
 
 it('respects a saved choice not to embed the data', () => {
-  localStorage.setItem('rabisco.exportOptions', JSON.stringify({ embedScene: false }))
+  localStorage.setItem('rabisco.exportOptions', JSON.stringify({ v: 2, embedScene: false }))
   open()
   expect(screen.getByRole('checkbox', { name: /Incluir dados editáveis/ })).not.toBeChecked()
 })
