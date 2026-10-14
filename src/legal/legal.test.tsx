@@ -27,6 +27,7 @@ it('the policy lists every scope and every piece of local data the app uses', ()
     'drive.file',
     'drive.install',
     'rabisco.lang',
+    'rabisco.mode',
     'rabisco.account',
     'rabisco.folderId',
     'rabisco.whatsNew.lastSeen',
@@ -35,6 +36,24 @@ it('the policy lists every scope and every piece of local data the app uses', ()
   ]) {
     expect(screen.getAllByText(item).length).toBeGreaterThan(0)
   }
+})
+
+it.each([
+  ['pt-BR', 'rabisco-local', 'O Rabisco não envia seus desenhos a nenhum servidor', 'não apaga os desenhos locais'],
+  ['en', 'rabisco-local', 'Rabisco does not send your drawings to any server', 'does not delete local drawings'],
+] as const)('the policy says where local drawings live and that none go to a server (%s)', (lang, db, noServer, signOut) => {
+  renderWithProviders(<PrivacyPage />, { lang, auth: signedOut })
+  expect(document.body.textContent).toContain(db)
+  expect(document.body.textContent).toContain(noServer)
+  expect(document.body.textContent).toContain(signOut)
+})
+
+it.each([
+  ['pt-BR', 'limpar os dados do navegador apaga os desenhos'],
+  ['en', "clearing your browser's data deletes them"],
+] as const)('the terms say that local drawings have no backup and clearing data deletes them (%s)', (lang, sentence) => {
+  renderWithProviders(<TermsPage />, { lang, auth: signedOut })
+  expect(document.body.textContent).toContain(sentence)
 })
 
 it('the policy carries the Google API Limited Use statement', () => {

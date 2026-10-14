@@ -12,7 +12,9 @@ export function TermsPtBR() {
       <h2>1. O serviço</h2>
       <p>
         O Rabisco é um editor gratuito de mapas mentais e desenhos. Ele funciona no seu navegador e salva seus arquivos no{' '}
-        <strong>seu</strong> Google Drive. O Rabisco não guarda os seus desenhos.
+        <strong>seu</strong> Google Drive. Com a conta Google, o Rabisco não guarda os seus desenhos. No modo sem entrar, os
+        desenhos ficam só no seu navegador, sem backup: limpar os dados do navegador apaga os desenhos. Para guardar uma
+        cópia, exporte-os (PNG com dados editáveis, Markdown, entre outros).
       </p>
 
       <h2>2. Grátis e "no estado em que se encontra"</h2>
@@ -43,7 +45,8 @@ export function TermsPtBR() {
 
       <h2>6. Conta e acesso</h2>
       <p>
-        Para usar o Rabisco, você entra com uma conta Google. Você pode revogar o acesso a qualquer momento em{' '}
+        Para salvar no seu Drive, você entra com uma conta Google; sem entrar, o Rabisco funciona só no seu navegador (seção
+        1). Você pode revogar o acesso a qualquer momento em{' '}
         <External href={GOOGLE_PERMISSIONS_URL}>{GOOGLE_PERMISSIONS_URL}</External>.
       </p>
 
@@ -72,7 +75,9 @@ export function TermsEn() {
       <h2>1. The service</h2>
       <p>
         Rabisco is a free editor for mind maps and drawings. It runs in your browser and saves your files to{' '}
-        <strong>your own</strong> Google Drive. Rabisco does not store your drawings.
+        <strong>your own</strong> Google Drive. With a Google account, Rabisco does not store your drawings. In the
+        use-without-signing-in mode, drawings stay only in your browser, with no backup: clearing your browser's data
+        deletes them. To keep a copy, export them (PNG with editable data, Markdown, among others).
       </p>
 
       <h2>2. Free and "as is"</h2>
@@ -101,7 +106,8 @@ export function TermsEn() {
 
       <h2>6. Account and access</h2>
       <p>
-        To use Rabisco, you sign in with a Google account. You can revoke access at any time at{' '}
+        To save to your Drive, you sign in with a Google account; without signing in, Rabisco works only in your browser
+        (section 1). You can revoke access at any time at{' '}
         <External href={GOOGLE_PERMISSIONS_URL}>{GOOGLE_PERMISSIONS_URL}</External>.
       </p>
 

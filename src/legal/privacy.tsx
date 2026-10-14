@@ -63,6 +63,9 @@ export function PrivacyPtBR() {
                   <code>rabisco.lang</code>: o idioma;
                 </li>
                 <li>
+                  <code>rabisco.mode</code>: <code>local</code> quando você escolhe usar sem entrar;
+                </li>
+                <li>
                   <code>rabisco.account</code>: nome e e-mail da última conta, para o "Continuar como" (
                   <strong>nunca o token</strong>);
                 </li>
@@ -84,9 +87,23 @@ export function PrivacyPtBR() {
               no <code>IndexedDB</code> (<code>rabisco</code> / <code>drafts</code>): um rascunho das alterações ainda
               não salvas no Drive, apagado depois de salvar.
             </li>
+            <li>
+              no <code>IndexedDB</code> (<code>rabisco-local</code>): os desenhos do modo sem entrar, com as suas
+              miniaturas.
+            </li>
           </ul>
         </li>
       </ul>
+      <p>
+        O Rabisco não envia seus desenhos a nenhum servidor; os anúncios e o login do Google, quando usados, são
+        carregados à parte. O script de login do Google só é carregado na tela de entrada ou ao clicar em "Entrar", e
+        não durante o uso sem entrar.
+      </p>
+      <p>
+        "Sair" não apaga os desenhos locais: a conta sai, mas eles continuam neste navegador. Em computador compartilhado,
+        apague os dados do site no navegador para remover os desenhos locais. Depois de "Entrar" com o Google, os
+        desenhos locais continuam neste navegador até serem movidos para o Drive ou apagados.
+      </p>
 
       <h2>5. Com quem compartilhamos</h2>
       <ul>
@@ -247,6 +264,9 @@ export function PrivacyEn() {
                   <code>rabisco.lang</code>: the language;
                 </li>
                 <li>
+                  <code>rabisco.mode</code>: <code>local</code> when you choose to use without signing in;
+                </li>
+                <li>
                   <code>rabisco.account</code>: name and email of the last account, for "Continue as" (
                   <strong>never the token</strong>);
                 </li>
@@ -268,9 +288,23 @@ export function PrivacyEn() {
               in <code>IndexedDB</code> (<code>rabisco</code> / <code>drafts</code>): a draft of changes not yet saved to
               Drive, deleted after saving.
             </li>
+            <li>
+              in <code>IndexedDB</code> (<code>rabisco-local</code>): the drawings of the use-without-signing-in mode, with
+              their thumbnails.
+            </li>
           </ul>
         </li>
       </ul>
+      <p>
+        Rabisco does not send your drawings to any server; ads and Google sign-in, when used, are loaded separately. The
+        Google sign-in script is loaded only on the sign-in screen or when you click "Sign in", and not while you use
+        Rabisco without signing in.
+      </p>
+      <p>
+        "Sign out" does not delete local drawings: the account signs out, but they stay in this browser. On a shared
+        computer, delete the site's data in the browser to remove the local drawings. After you sign in with Google, local
+        drawings stay in this browser until they are moved to Drive or deleted.
+      </p>
 
       <h2>5. Who we share with</h2>
       <ul>
