@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { I18nProvider } from '../i18n/I18nProvider'
 import { MERMAID_MAX_CHARS, type MermaidResult } from './convert'
 import { MermaidDialog } from './MermaidDialog'
+import { useState } from 'react'
 
 const parse = vi.fn()
 const convert = vi.fn()
@@ -176,7 +177,7 @@ describe('MermaidDialog', () => {
     const { onSubmit } = setup()
     fireEvent.change(box(), { target: { value: 'pie title Pets\n"Dogs": 2' } })
     await userEvent.click(create())
-    expect(await screen.findByRole('alert')).toHaveTextContent('Este tipo de diagrama ainda não pode ser convertido')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Este diagrama usa recursos que ainda não podem ser convertidos')
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
@@ -240,5 +241,39 @@ describe('MermaidDialog', () => {
     )
     expect(screen.getByRole('textbox', { name: 'Mermaid code' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+  })
+
+  it('gives the text box the length limit', () => {
+    setup()
+    expect(box()).toHaveAttribute('maxlength', String(MERMAID_MAX_CHARS))
+  })
+
+  it('ignores the Escape that ends an input method composition', () => {
+    const { onClose } = setup()
+    fireEvent.keyDown(box(), { key: 'Escape', isComposing: true })
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['Escape', async () => userEvent.keyboard('{Escape}')],
+    ['Cancel', async () => userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))],
+  ])('puts the focus back on the button that opened it (%s)', async (_name, close) => {
+    function Host() {
+      const [shown, setShown] = useState(false)
+      return (
+        <I18nProvider initialLanguage="pt-BR">
+          <button type="button" onClick={() => setShown(true)}>
+            abrir
+          </button>
+          {shown && <MermaidDialog title="Importar Mermaid" submitLabel="Criar desenho" onClose={() => setShown(false)} onSubmit={() => {}} />}
+        </I18nProvider>
+      )
+    }
+    render(<Host />)
+    await userEvent.click(screen.getByRole('button', { name: 'abrir' }))
+    expect(box()).toHaveFocus()
+    await close()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'abrir' })).toHaveFocus()
   })
 })

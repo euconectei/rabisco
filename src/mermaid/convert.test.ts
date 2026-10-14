@@ -103,14 +103,58 @@ describe('convertMermaid', () => {
     ['script', 'flowchart TD\nA["<script>alert(1)</script>"]'],
     ['anchor', 'flowchart TD\nA["<a href=x>y</a>"]'],
     ['javascript url', 'flowchart TD\nA-->B\nclick A "javascript:alert(1)"'],
-    ['spaced tag', 'flowchart TD\nA["< img src=x>"]'],
+    ['br with attributes', 'flowchart TD\nA["<br onclick=x>"]'],
   ])('refuses text with %s and never reaches the library', async (_name, text) => {
     expect(await code(convertMermaid(text))).toBe('syntax')
     expect(parse).not.toHaveBeenCalled()
   })
 
-  it('does not refuse a plain comparison written with angle brackets', async () => {
-    expect(await code(convertMermaid('flowchart TD\nA[x < 5] --> B[y > 3]'))).toBe('none')
+  it.each([
+    ['a comparison', 'flowchart TD\nA[x < 5] --> B[y > 3]'],
+    ['a diamond with "<" and a space', 'flowchart TD\nA --> B{i < a ?}'],
+    ['a label that mentions a tag name', 'flowchart TD\nA["x < svg count"] --> B'],
+    ['a spaced tag, which a browser does not read as a tag', 'flowchart TD\nA["< img src=x>"]'],
+  ])('does not refuse %s', async (_name, text) => {
+    expect(await code(convertMermaid(text))).toBe('none')
+  })
+
+  it.each(['<br>', '<br/>', '<br />', '<BR>'])('turns %s inside a quoted label into a line break', (tag) => {
+    expect(prepareMermaidText(`flowchart TD\nA["um${tag}dois"] --> B`)).toBe('flowchart TD\nA["um\ndois"] --> B')
+  })
+
+  it('turns <br> outside quotes into a space, so the statement stays on one line', () => {
+    expect(prepareMermaidText('flowchart TD\nA[um<br>dois] --> B')).toBe('flowchart TD\nA[um dois] --> B')
+  })
+
+  it('uses the content of the first mermaid fence of a Markdown note', () => {
+    const note = '---\ntitle: Nota\n---\nTexto antes.\n\n```mermaid\nflowchart TD\n  A --> B\n```\n\nMais texto.\n\n```mermaid\nflowchart TD\n  X --> Y\n```\n'
+    expect(prepareMermaidText(note)).toBe('flowchart TD\n  A --> B')
+  })
+
+  it('keeps the whole text when there is no fence, and ignores other kinds of fence', () => {
+    expect(prepareMermaidText('flowchart TD\nA-->B')).toBe('flowchart TD\nA-->B')
+    expect(prepareMermaidText('```js\nx\n```\nflowchart TD\nA-->B')).toContain('flowchart TD')
+  })
+
+  it('reads a fence that never closes up to the end', () => {
+    expect(prepareMermaidText('texto\n```mermaid\nflowchart TD\nA-->B')).toBe('flowchart TD\nA-->B')
+  })
+
+  it('maps the library edge limit error to the "too many elements" message', async () => {
+    parse.mockRejectedValue(new Error('Edge limit exceeded. 501 edges found, but the limit is 500.'))
+    expect(await code(convertMermaid(FLOW))).toBe('tooManyElements')
+  })
+
+  it('rejects a huge text of open directives at once, before any scanning', () => {
+    const started = performance.now()
+    expect(() => prepareMermaidText('%%{'.repeat(40_000))).toThrow(MermaidError)
+    expect(performance.now() - started).toBeLessThan(50)
+  })
+
+  it('drops an unterminated directive without hanging on a text at the limit', () => {
+    const started = performance.now()
+    expect(() => prepareMermaidText('%%{'.repeat(Math.floor(MERMAID_MAX_CHARS / 3)))).toThrow(MermaidError)
+    expect(performance.now() - started).toBeLessThan(200)
   })
 
   it('rejects a result that came back as a picture', async () => {

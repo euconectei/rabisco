@@ -49,6 +49,8 @@ function EditorScreen({ fileId }: { fileId: string }) {
   const [exportingImage, setExportingImage] = useState(false)
   const [insertingMermaid, setInsertingMermaid] = useState(false)
   const local = isLocalId(fileId)
+  // The context is typed as the plain DriveClient (it is also provided by tests with one); the real
+  // provider supplies the local client, which is the one that knows `movedTo`.
   const localDrive = useContext(LocalDriveContext) as Partial<LocalDriveClient> | null
   // The map the export items act on (null: they are disabled).
   const [exportMapId, setExportMapId] = useState<string | null>(null)
@@ -274,7 +276,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
   if (file.load.kind === 'draft') {
     return (
       <Dialog title={t.editor.draft.title}>
-        <p>{t.editor.draft.body}</p>
+        <p>{local ? t.editor.draftLocal.body : t.editor.draft.body}</p>
         <div className="dialog-actions">
           <button type="button" className="button" onClick={file.restoreDraft}>
             {t.editor.draft.restore}
@@ -394,7 +396,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
               {t.editor.conflict.keepMine}
             </button>
             <button type="button" className="button-secondary" onClick={() => void attempt(file.useRemote)}>
-              {t.editor.conflict.useRemote}
+              {local ? t.editor.conflictLocal.useRemote : t.editor.conflict.useRemote}
             </button>
           </div>
         </Dialog>

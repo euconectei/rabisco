@@ -274,3 +274,81 @@ test('the Mermaid chunk is only downloaded after the dialog is used', async ({ p
   await expect(page.locator('.excalidraw')).toBeVisible()
   expect(scripts.filter((path) => heavy.test(path)).length).toBeGreaterThan(0)
 })
+
+test('<br> inside labels becomes a line break, never a literal tag in the drawing', async ({ page }) => {
+  await signIn(page)
+  await importMermaid(page, 'flowchart TD\n  A["Primeira<br>segunda<br/>terceira"] --> B[Um<br />dois]')
+  const texts = (await liveElements(page)).filter((e) => e.type === 'text').map((e) => e.text ?? '')
+  expect(texts.join('|')).not.toMatch(/<br|&lt;/i)
+  const first = texts.find((text) => text.includes('Primeira'))!
+  expect(first.split('\n').map((line) => line.trim())).toEqual(expect.arrayContaining(['Primeira', 'segunda', 'terceira']))
+  expect(texts.some((text) => /Um\s+dois/.test(text.replace(/\n/g, ' ')))).toBe(true)
+})
+
+test('a Markdown note with a mermaid fence fills the box as chosen and converts only the diagram', async ({ page }) => {
+  await signIn(page)
+  const note = '---\ntitle: Nota\ntags: [a]\n---\n# Minha nota\n\nTexto antes.\n\n```mermaid\nflowchart TD\n  A[Início] --> B[Fim]\n```\n\nMais texto.\n'
+  await page.getByRole('button', { name: 'Importar Mermaid' }).first().click()
+  await page.getByLabel(/Ou escolha um arquivo/).setInputFiles({ name: 'nota.md', mimeType: 'text/markdown', buffer: Buffer.from(note) })
+  await expect(textbox(page)).toHaveValue(note)
+  await page.getByRole('button', { name: 'Criar desenho' }).click()
+  await expect(page).toHaveURL(/\/edit\//)
+  await expect.poll(async () => (await liveElements(page)).map((e) => e.text ?? '').join('|')).toContain('Início')
+  expect((await liveElements(page)).map((e) => e.text ?? '').join('|')).not.toContain('Minha nota')
+})
+
+test('a flowchart with a subgraph converts', async ({ page }) => {
+  await signIn(page)
+  await page.getByRole('button', { name: 'Importar Mermaid' }).first().click()
+  await textbox(page).fill('flowchart TD\n  subgraph Grupo\n    A[Um] --> B[Dois]\n  end\n  B --> C[Fora]')
+  await page.getByRole('button', { name: 'Criar desenho' }).click()
+  await expect(page.getByRole('alert').or(page.locator('.excalidraw'))).toBeVisible({ timeout: 20_000 })
+  // Whatever the library decides, the person gets a drawing or a message, never a blank page.
+  if (/\/edit\//.test(page.url())) expect((await liveElements(page)).length).toBeGreaterThan(0)
+  else await expect(page.getByRole('alert')).toBeVisible()
+  test.info().annotations.push({ type: 'subgraph', description: page.url().includes('/edit/') ? 'converted' : await page.getByRole('alert').innerText() })
+})
+
+test('more than 500 edges is explained as too many elements, not as a syntax error', async ({ page }) => {
+  await signIn(page)
+  const lines = Array.from({ length: 700 }, (_, i) => `  N${i}-->M${i}`)
+  await page.getByRole('button', { name: 'Importar Mermaid' }).first().click()
+  await textbox(page).fill(`flowchart TD\n${lines.join('\n')}`)
+  await page.getByRole('button', { name: 'Criar desenho' }).click()
+  await expect(page.getByRole('alert')).toContainText('elementos demais', { timeout: 30_000 })
+  await expect(page).toHaveURL(/\/app$/)
+})
+
+test('a text of open directives is refused at once', async ({ page }) => {
+  await signIn(page)
+  await page.getByRole('button', { name: 'Importar Mermaid' }).first().click()
+  await textbox(page).fill('%%{'.repeat(30_000))
+  const started = Date.now()
+  await page.getByRole('button', { name: 'Criar desenho' }).click()
+  // The box itself stops at the limit; what is left is only directives, so the answer is "nothing to convert".
+  await expect(page.getByRole('alert')).toContainText('Cole um diagrama Mermaid')
+  expect(Date.now() - started).toBeLessThan(3000)
+  expect((await textbox(page).inputValue()).length).toBeLessThanOrEqual(20_000)
+})
+
+test('after a drawing is moved to the Drive, its old local address opens the copy', async ({ page }) => {
+  const drive = await installFakeGoogle(page)
+  await page.goto('/app')
+  await page.getByRole('button', { name: 'Usar sem entrar' }).click()
+  await page.getByRole('button', { name: /Novo desenho|Criar o primeiro desenho/ }).click()
+  await expect(page.locator('.excalidraw')).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: /^Salvo/ })).toBeVisible({ timeout: 10_000 })
+  const oldUrl = page.url()
+  expect(oldUrl).toContain('/edit/local-')
+  await page.getByTestId('main-menu-trigger').click()
+  await page.getByText('Meus arquivos').click()
+  await page.getByRole('complementary', { name: 'Aviso sobre o modo local' }).getByRole('button', { name: 'Entrar' }).click()
+  await page.getByRole('button', { name: 'Mover para o Drive' }).click()
+  await expect(page.getByText('Seu desenho foi movido para o Drive.')).toBeVisible()
+  const copy = [...drive.files.values()].find((f) => f.name.endsWith('.excalidraw'))!
+
+  await page.goto(oldUrl)
+  await page.getByRole('button', { name: 'Continuar como Tester' }).click()
+  await expect.poll(() => new URL(page.url()).pathname, { timeout: 15_000 }).toBe(`/edit/${copy.id}`)
+  await expect(page.locator('.excalidraw')).toBeVisible()
+})

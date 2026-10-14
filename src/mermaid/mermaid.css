@@ -13,7 +13,3 @@
 }
 .mermaid-dialog button:disabled { opacity: 0.6; cursor: default; }
 
-/* The local-mode notice floats over the editor, at the bottom, clear of Excalidraw's own controls. */
-.editor-local-notice { position: fixed; z-index: 4; left: 50%; bottom: 5rem; transform: translateX(-50%); width: min(40rem, calc(100% - 2rem)); pointer-events: none; }
-.editor-local-notice .local-notice { margin: 0; pointer-events: auto; }
-.editor-local-notice:empty { display: none; }

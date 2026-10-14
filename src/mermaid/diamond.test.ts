@@ -17,6 +17,15 @@ describe('widenDiamonds', () => {
     expect(widenDiamonds([wide])[0]).toBe(wide)
   })
 
+  it('widens a circle into a bigger circle when its word does not fit', () => {
+    const circle = { type: 'ellipse', id: 'c', x: 100, y: 50, width: 60, height: 60, label: { text: 'Circulo' } } as unknown as ExcalidrawElementSkeleton
+    const [grown] = widenDiamonds([circle]) as unknown as Array<{ width: number; height: number; x: number; y: number }>
+    expect(grown.width).toBeGreaterThan(60)
+    expect(grown.height).toBe(grown.width)
+    expect(grown.x + grown.width / 2).toBeCloseTo(130)
+    expect(grown.y + grown.height / 2).toBeCloseTo(80)
+  })
+
   it('leaves other shapes and unlabeled diamonds alone', () => {
     const box = { type: 'rectangle', x: 0, y: 0, width: 10, height: 10, label: { text: 'Pagamento ok?' } } as ExcalidrawElementSkeleton
     const bare = { type: 'diamond', x: 0, y: 0, width: 10, height: 10 } as ExcalidrawElementSkeleton

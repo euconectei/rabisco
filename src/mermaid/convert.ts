@@ -27,19 +27,59 @@ export class MermaidError extends Error {
   }
 }
 
-// Directives (`%%{init: ...}%%`, `%%{config: ...}%%`) can change Mermaid's configuration from inside
-// the text; the security level must stay the one this app sets.
-const DIRECTIVE = /%%\{[\s\S]*?\}%%/g
-// Markup that has no place in a diagram and could make the renderer load or run something.
-const HTML_MARKUP = /<\s*(img|iframe|svg|script|object|embed|link|style|a)[\s>/]|javascript:/i
+// Markup that has no place in a diagram and could make the renderer load or run something. A tag is
+// `<` glued to its name: browsers do not read `< img` as a tag, so comparisons like `i < a ?` stay valid.
+const HTML_MARKUP = /<(img|iframe|svg|script|object|embed|link|style|a|br)[\s>/]|javascript:/i
+const LINE_BREAK = /<br\s*\/?>/gi
 
 const MERMAID_CONFIG = { securityLevel: 'strict', maxTextSize: MERMAID_MAX_CHARS, maxEdges: 500 }
 
+/** Content of the first ```mermaid fence of a Markdown note; the whole text when there is none. */
+function fencedDiagram(text: string): string {
+  const open = text.toLowerCase().indexOf('```mermaid')
+  if (open === -1) return text
+  const lineEnd = text.indexOf('\n', open)
+  if (lineEnd === -1) return ''
+  const close = text.indexOf('```', lineEnd)
+  return text.slice(lineEnd + 1, close === -1 ? undefined : close)
+}
+
+// Directives (`%%{init: ...}%%`, `%%{config: ...}%%`) can change Mermaid's configuration from inside
+// the text; the security level must stay the one this app sets. A directive that never closes is
+// dropped up to the end. Single pass, so a hostile text cannot make it slow.
+function stripDirectives(text: string): string {
+  let result = ''
+  let from = 0
+  for (;;) {
+    const open = text.indexOf('%%{', from)
+    if (open === -1) return result + text.slice(from)
+    result += text.slice(from, open)
+    const close = text.indexOf('}%%', open + 3)
+    if (close === -1) return result
+    from = close + 3
+  }
+}
+
+// `<br>` is how Mermaid labels spell a line break. Inside a quoted label it becomes a real one; outside
+// quotes a newline would end the statement, so it becomes a space.
+function lineBreaks(text: string): string {
+  let result = ''
+  let from = 0
+  let quoted = false
+  for (const match of text.matchAll(LINE_BREAK)) {
+    for (let i = from; i < match.index; i += 1) if (text.charAt(i) === '"') quoted = !quoted
+    result += text.slice(from, match.index) + (quoted ? '\n' : ' ')
+    from = match.index + match[0].length
+  }
+  return result + text.slice(from)
+}
+
 /** The text that is actually handed to Mermaid, or a MermaidError when it must not be rendered. */
 export function prepareMermaidText(text: string): string {
-  const cleaned = text.replace(DIRECTIVE, '').trim()
-  if (!cleaned) throw new MermaidError('empty')
+  // The size check comes first: everything below is linear, but there is no reason to touch a huge text.
   if (text.length > MERMAID_MAX_CHARS) throw new MermaidError('tooLarge')
+  const cleaned = lineBreaks(stripDirectives(fencedDiagram(text))).trim()
+  if (!cleaned) throw new MermaidError('empty')
   if (HTML_MARKUP.test(cleaned)) throw new MermaidError('syntax')
   return cleaned
 }
@@ -84,6 +124,7 @@ export async function convertMermaid(text: string): Promise<{ elements: Excalidr
     if (skeletons.some(isImage)) throw new MermaidError('unsupported')
   } catch (error) {
     if (error instanceof MermaidError) throw error
+    if (error instanceof Error && /edge limit exceeded/i.test(error.message)) throw new MermaidError('tooManyElements')
     throw new MermaidError('syntax')
   } finally {
     removeMermaidLeftovers()

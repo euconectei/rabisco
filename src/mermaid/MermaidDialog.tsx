@@ -62,9 +62,12 @@ export function MermaidDialog({ title, submitLabel, onClose, onSubmit }: Mermaid
   // e.g. after the submit button got disabled, and so the editor underneath never sees them.
   useEffect(() => {
     open.current = true
+    const opener = document.activeElement
     textRef.current?.focus()
     function onKeyDown(event: globalThis.KeyboardEvent) {
       if (event.key === 'Escape') {
+        // Esc that confirms or cancels an input method composition is not a request to close.
+        if (event.isComposing) return
         event.preventDefault()
         event.stopPropagation()
         open.current = false
@@ -91,6 +94,8 @@ export function MermaidDialog({ title, submitLabel, onClose, onSubmit }: Mermaid
     return () => {
       open.current = false
       document.removeEventListener('keydown', onKeyDown, true)
+      // Back to the control that opened the dialog, whichever way it closed.
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus()
     }
   }, [])
 
@@ -146,6 +151,7 @@ export function MermaidDialog({ title, submitLabel, onClose, onSubmit }: Mermaid
           value={text}
           placeholder={t.mermaid.placeholder}
           spellCheck={false}
+          maxLength={MERMAID_MAX_CHARS}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           onChange={(event) => setText(event.currentTarget.value)}
