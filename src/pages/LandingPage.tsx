@@ -36,6 +36,10 @@ export function LandingPage() {
           <Screenshot shot="canvas" alt={t.landing.heroAlt} className="landing-hero-shot" eager />
         </section>
 
+        <section className="landing-ad">
+          <AdSlot placement="landing" />
+        </section>
+
         <section className="landing-section" aria-labelledby="landing-features">
           <h2 id="landing-features">{t.landing.featuresTitle}</h2>
           <div className="landing-features">
@@ -65,10 +69,6 @@ export function LandingPage() {
             </li>
             <li>{t.landing.trust.offline}</li>
           </ul>
-        </section>
-
-        <section className="landing-ad">
-          <AdSlot placement="landing" />
         </section>
 
         <section className="landing-section landing-cta">

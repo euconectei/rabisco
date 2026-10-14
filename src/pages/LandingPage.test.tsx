@@ -43,7 +43,7 @@ it('is in English', () => {
   expect(screen.getAllByRole('link', { name: "Get started, it's free" })[0]).toHaveAttribute('href', '/app')
 })
 
-it('shows one labeled, discreet ad between the trust section and the closing call', async () => {
+it('shows one labeled, discreet ad right below the hero, in the first screen', async () => {
   renderWithProviders(<LandingPage />)
   const ad = await screen.findByRole('complementary', { name: 'Anúncio' })
   expect(await within(ad).findByRole('link', { name: /GitHub/ })).toBeInTheDocument()
@@ -53,4 +53,13 @@ it('asks about ad cookies in Brazil, as in the app', async () => {
   const adsense = { client: 'ca-pub-1', slots: { editor: '1', files: '2' } }
   renderWithProviders(<LandingPage />, { ads: { timeZone: 'America/Sao_Paulo', adsense } })
   expect(await screen.findByRole('region', { name: 'Cookies' })).toBeInTheDocument()
+})
+
+it('puts the ad between the hero and the features', () => {
+  renderWithProviders(<LandingPage />)
+  const hero = document.querySelector('.landing-hero')!
+  const ad = document.querySelector('.landing-ad')!
+  const features = screen.getByRole('region', { name: 'O que dá para fazer' })
+  expect(hero.nextElementSibling).toBe(ad)
+  expect(ad.nextElementSibling).toBe(features)
 })
