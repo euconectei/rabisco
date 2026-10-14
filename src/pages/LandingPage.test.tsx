@@ -154,3 +154,8 @@ it('stays on the page and explains when the browser cannot keep drawings', async
   expect(await screen.findByRole('alert')).toHaveTextContent('O modo sem entrar não está disponível neste navegador')
   expect(screen.getByTestId('where').textContent).toBe('/')
 })
+
+it('the logo goes straight to the home page', () => {
+  renderWithProviders(<LandingPage />)
+  expect(screen.getByRole('link', { name: 'Rabisco' })).toHaveAttribute('href', '/')
+})

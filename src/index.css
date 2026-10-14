@@ -241,3 +241,7 @@ label.button-secondary:focus-within { outline: 3px solid var(--accent-text); out
 .files-hint { font-size: 0.9rem; }
 .files-page .app-footer { margin-top: auto; }
 @media (prefers-reduced-motion: reduce) { .file-card { transition: none; } .file-card:hover { transform: none; } }
+
+/* The logo is a link to the home page: keep it looking like the brand, not like a link. */
+a.sign-in-brand, a.files-brand, a.landing-logo { color: inherit; text-decoration: none; }
+a.sign-in-brand:focus-visible, a.files-brand:focus-visible, a.landing-logo:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 3px; border-radius: 0.4rem; }

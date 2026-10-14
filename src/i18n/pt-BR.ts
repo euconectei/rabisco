@@ -1,6 +1,7 @@
 export const ptBR = {
   app: {
     name: 'Rabisco',
+    goHome: 'Ir para a página inicial',
     tagline: 'Mapas mentais e fluxos à mão no mesmo canvas, salvos no seu Google Drive.',
   },
   landing: {

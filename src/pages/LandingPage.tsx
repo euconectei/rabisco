@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
 import { AdSlot } from '../ads/AdSlot'
 import { CookieNotice } from '../ads/CookieNotice'
+import { BrandLink } from '../components/BrandLink'
 import { AppFooter } from '../components/AppFooter'
 import { Screenshot } from '../components/Screenshot'
 import { REPOSITORY_URL } from '../components/links'
@@ -49,10 +50,7 @@ export function LandingPage() {
   return (
     <div className="landing">
       <header className="landing-header">
-        <span className="landing-logo">
-          <img src="/favicon.svg" alt="" width="28" height="28" />
-          {t.app.name}
-        </span>
+        <BrandLink className="landing-logo" size={28} />
         <LanguageSwitcher />
       </header>
 

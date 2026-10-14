@@ -83,3 +83,9 @@ it('sends someone who is not signed in to the files page, where the local drawin
   setup([], { mode: 'local' })
   await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/app'))
 })
+
+it('the logo goes straight to the home page', async () => {
+  setup([{ id: 'local-1', name: 'Plano.excalidraw', content: '{}' }])
+  await screen.findByRole('list', { name: 'Seus desenhos' })
+  expect(screen.getByRole('link', { name: 'Rabisco' })).toHaveAttribute('href', '/')
+})

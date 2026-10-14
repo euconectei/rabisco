@@ -218,3 +218,8 @@ describe('a saved local mode and links into the Drive', () => {
     expect(mode.leaveLocal).not.toHaveBeenCalled()
   })
 })
+
+it('the logo on the sign-in screen goes straight to the home page', () => {
+  setup(value({}))
+  expect(screen.getByRole('link', { name: 'Rabisco' })).toHaveAttribute('href', '/')
+})

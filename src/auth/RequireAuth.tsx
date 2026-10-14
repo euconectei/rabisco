@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { BrandLink } from '../components/BrandLink'
 import { format } from '../i18n/format'
 import { useI18n } from '../i18n/useI18n'
 import { isLocalId } from '../local/ids'
@@ -80,10 +81,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   return (
     <main className="sign-in">
       <aside className="sign-in-panel">
-        <span className="sign-in-brand">
-          <img src="/favicon.svg" alt="" width="32" height="32" />
-          {t.app.name}
-        </span>
+        <BrandLink className="sign-in-brand" size={32} />
         <div className="sign-in-pitch">
           <MindMapArt />
           <p className="sign-in-tagline">{t.landing.title}</p>

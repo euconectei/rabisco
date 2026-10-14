@@ -3,6 +3,7 @@ import type { Messages } from './pt-BR'
 export const en: Messages = {
   app: {
     name: 'Rabisco',
+    goHome: 'Go to the home page',
     tagline: 'Mind maps and hand-drawn flows on one canvas, saved to your Google Drive.',
   },
   landing: {

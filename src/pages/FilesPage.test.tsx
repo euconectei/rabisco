@@ -347,3 +347,9 @@ describe('after moving local drawings to the Drive', () => {
     expect(within(list).getByRole('link', { name: /Velho/ })).toBeInTheDocument()
   })
 })
+
+it('the logo goes straight to the home page', async () => {
+  setup(oneFile())
+  await screen.findByRole('list', { name: 'Seus desenhos' })
+  expect(screen.getByRole('link', { name: 'Rabisco' })).toHaveAttribute('href', '/')
+})

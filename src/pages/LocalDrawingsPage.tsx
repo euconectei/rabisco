@@ -1,4 +1,5 @@
 import { Link, Navigate } from 'react-router-dom'
+import { BrandLink } from '../components/BrandLink'
 import { AppFooter } from '../components/AppFooter'
 import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
 import { useI18n } from '../i18n/useI18n'
@@ -35,10 +36,7 @@ export function LocalDrawingsPage() {
   return (
     <main className="files-page">
       <header className="files-topbar">
-        <span className="files-brand">
-          <img src="/favicon.svg" alt="" width="30" height="30" />
-          {t.app.name}
-        </span>
+        <BrandLink className="files-brand" size={30} />
         <div className="files-topbar-end">
           <LanguageSwitcher />
           <AccountMenu />
