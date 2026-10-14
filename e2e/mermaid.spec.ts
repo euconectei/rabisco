@@ -3,7 +3,6 @@ import { FakeDrive, installFakeGoogle } from './fakes/google'
 
 test.use({ locale: 'pt-BR' })
 
-const SHOTS = '/private/tmp/claude-502/-Users-rsilva-Projects-Pessoal-rabisco/3d75ad3d-8685-4952-b8ec-24798050f627/scratchpad/shots'
 
 const FLOW = `flowchart TD
   A[Início] --> B{Pagamento ok?}
@@ -84,8 +83,6 @@ test('a flowchart becomes an editable drawing, with the diamond label whole and 
   expect(Math.abs(endX - (diamond.x + diamond.width / 2))).toBeLessThan(20)
   expect(Math.abs(endY - diamond.y)).toBeLessThan(20)
 
-  // Selectable and editable: double click the node text.
-  await page.screenshot({ path: `${SHOTS}/flowchart.png` })
 })
 
 test('a name taken from the chosen file, and an .mmd file fills the box with its exact content', async ({ page }) => {
@@ -178,7 +175,6 @@ test('Insert Mermaid adds the diagram to the open drawing and leaves the other e
   }
   const ids = after.map((e) => e.id)
   expect(new Set(ids).size).toBe(ids.length)
-  await page.screenshot({ path: `${SHOTS}/inserted.png` })
 })
 
 test('inserting an invalid diagram shows the error and leaves the scene as it was', async ({ page }) => {
