@@ -2,6 +2,9 @@
 .sign-in-local { display: flex; flex-direction: column; gap: 0.6rem; padding-top: 0.25rem; }
 .sign-in-local .button-large { box-shadow: none; transform: none; }
 .local-sign-in-error { color: #c92a2a; font-size: 0.85rem; }
+@media (prefers-color-scheme: dark) {
+  .local-sign-in-error { color: #ff8787; }
+}
 
 /* Landing: "try without signing in" under the main button, and the editable-PNG section. */
 .landing-start { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.5rem; }
@@ -19,9 +22,15 @@
 .local-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; padding: 0.5rem 0.9rem; margin: 0 0 1rem; border: 1px solid color-mix(in srgb, CanvasText 16%, transparent); border-radius: 0.6rem; background: color-mix(in srgb, var(--accent) 7%, Canvas); font-size: 0.85rem; line-height: 1.45; }
 .local-notice-text { margin: 0; flex: 1 1 22rem; }
 .local-notice-detail { opacity: 0.75; }
+.local-notice-short { display: none; }
+.local-notice-close { flex: none; width: 1.6rem; height: 1.6rem; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; font: inherit; font-size: 1.2rem; line-height: 1; cursor: pointer; opacity: 0.7; }
+.local-notice-close:hover { opacity: 1; background: color-mix(in srgb, CanvasText 10%, transparent); }
+.local-notice-close:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 2px; }
+.local-notice-action { margin-left: auto; }
 .local-notice-action { padding-block: 0.25rem; font-size: 0.85rem; white-space: nowrap; }
 .local-drawings-link { margin: 1rem 0 0; font-size: 0.9rem; text-align: center; }
-.local-drawings-link a { color: var(--accent-text); }
+.local-drawings-link a { color: inherit; text-decoration: underline; cursor: pointer; }
+.local-drawings-link a:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 2px; }
 .files-import-hint { margin: -0.6rem 0 1rem; font-size: 0.85rem; opacity: 0.75; max-width: 40rem; }
 .files-empty .files-import-hint { margin: 0; text-align: center; }
 
@@ -31,3 +40,19 @@
 .move-offer p { margin: 0; line-height: 1.5; }
 .move-offer-body { font-size: 0.9rem; opacity: 0.8; }
 .move-offer-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; padding-top: 0.25rem; }
+.move-failed-heading { font-weight: 600; }
+.move-failures { margin: 0; padding-left: 1.2rem; font-size: 0.9rem; line-height: 1.5; }
+
+/* In the editor the notice is a small chip in the bottom-left corner, under Excalidraw's own menus and
+   clear of the canvas centre; on narrow screens it keeps only the short text. */
+.editor-local-notice { position: fixed; z-index: 2; left: 0.5rem; bottom: 0.5rem; max-width: calc(100% - 1rem); pointer-events: none; }
+.editor-local-notice .local-notice { margin: 0; padding: 0.25rem 0.4rem 0.25rem 0.7rem; flex-wrap: nowrap; gap: 0.4rem; pointer-events: auto; background: Canvas; box-shadow: 0 2px 10px rgb(0 0 0 / 0.15); }
+.editor-local-notice .local-notice-text { flex: 0 1 auto; }
+.editor-local-notice .local-notice-full, .editor-local-notice .local-notice-detail { display: none; }
+.editor-local-notice .local-notice-short { display: inline; }
+.editor-local-notice .local-notice-action { margin-left: 0; }
+.editor-local-notice:empty { display: none; }
+@media (min-width: 40.01rem) {
+  .editor-local-notice .local-notice-full { display: inline; }
+  .editor-local-notice .local-notice-short { display: none; }
+}

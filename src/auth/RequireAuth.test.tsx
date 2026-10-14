@@ -28,7 +28,7 @@ function modeValue(mode: AppMode = 'google', localSupport: LocalSupport = 'avail
   return { mode, localSupport, enterLocal: vi.fn(), leaveLocal: vi.fn() }
 }
 
-function setup(auth: AuthValue, lang: 'pt-BR' | 'en' = 'pt-BR', mode: ModeValue = modeValue()) {
+function setup(auth: AuthValue, lang: 'pt-BR' | 'en' = 'pt-BR', mode: ModeValue = modeValue(), route = '/') {
   renderWithProviders(
     <AuthContext.Provider value={auth}>
       <ModeContext.Provider value={mode}>
@@ -37,7 +37,7 @@ function setup(auth: AuthValue, lang: 'pt-BR' | 'en' = 'pt-BR', mode: ModeValue 
         </RequireAuth>
       </ModeContext.Provider>
     </AuthContext.Provider>,
-    { lang },
+    { lang, route },
   )
 }
 
@@ -192,5 +192,29 @@ describe('using it without signing in', () => {
   it('does not offer it on the missing-permission screen', () => {
     setup(value({ error: 'missingDrive' }))
     expect(screen.queryByRole('button', { name: 'Usar sem entrar' })).not.toBeInTheDocument()
+  })
+})
+
+describe('a saved local mode and links into the Drive', () => {
+  it.each(['/open?state=%7B%22ids%22%3A%5B%22abc%22%5D%7D', '/edit/1AbCdEfGh'])('leaves the local mode on %s, to sign in on the same page', (route) => {
+    const mode = modeValue('local')
+    setup(value({}), 'pt-BR', mode, route)
+    expect(mode.leaveLocal).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText('private stuff')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Entrar com Google' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Usar sem entrar' })).not.toBeInTheDocument()
+  })
+
+  it.each(['/app', '/edit/local-1234', '/edit/new'])('keeps %s free in the local mode', (route) => {
+    const mode = modeValue('local')
+    setup(value({}), 'pt-BR', mode, route)
+    expect(mode.leaveLocal).not.toHaveBeenCalled()
+    expect(screen.getByText('private stuff')).toBeInTheDocument()
+  })
+
+  it('does not touch the Google mode', () => {
+    const mode = modeValue('google')
+    setup(value({}), 'pt-BR', mode, '/edit/1AbCdEfGh')
+    expect(mode.leaveLocal).not.toHaveBeenCalled()
   })
 })

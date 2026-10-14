@@ -68,6 +68,8 @@ test('signing in with local drawings offers to move them, and moving copies them
   const folder = drive.byName('Rabisco')!
   expect(drive.byName('Alfa.excalidraw')!.parents).toContain(folder.id)
   expect(await storedScenes(page)).toEqual([])
+  // The Drive list shows them right away, without reloading the page.
+  await expect(page.getByRole('list', { name: 'Seus desenhos' }).getByRole('link', { name: 'Alfa' })).toBeVisible()
 
   await page.reload()
   await page.getByRole('button', { name: 'Continuar como Tester' }).click()

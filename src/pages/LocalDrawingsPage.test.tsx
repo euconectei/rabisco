@@ -7,6 +7,7 @@ import { renderWithProviders } from '../test/renderWithProviders'
 import { LocalDrawingsPage } from './LocalDrawingsPage'
 
 const moveLocalDrawings = vi.hoisted(() => vi.fn())
+vi.mock('../local/db', async (importOriginal) => ({ ...(await importOriginal<typeof import('../local/db')>()), localDbExists: async () => true }))
 vi.mock('../local/move', async (importOriginal) => ({ ...(await importOriginal<typeof import('../local/move')>()), moveLocalDrawings }))
 
 function Where() {

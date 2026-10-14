@@ -6,6 +6,7 @@ import { MoveOffer } from './MoveOffer'
 import { moveOfferAnswered, resetMoveOffer, type MoveReport } from './move'
 
 const moveLocalDrawings = vi.hoisted(() => vi.fn())
+vi.mock('./db', async (importOriginal) => ({ ...(await importOriginal<typeof import('./db')>()), localDbExists: async () => true }))
 vi.mock('./move', async (importOriginal) => ({ ...(await importOriginal<typeof import('./move')>()), moveLocalDrawings }))
 
 const drawing = (n: number) => ({ id: `local-${n}`, name: `Desenho ${n}.excalidraw`, content: '{}' })

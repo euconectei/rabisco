@@ -116,6 +116,9 @@ export const en: Messages = {
       restore: 'Restore',
       discard: 'Discard',
     },
+    draftLocal: {
+      body: 'This drawing has changes that have not been saved in this browser yet. Do you want to restore them?',
+    },
     statusLocal: {
       saved: 'Saved in this browser',
       saving: 'Saving…',
@@ -125,6 +128,7 @@ export const en: Messages = {
     },
     conflictLocal: {
       body: 'This drawing was changed in this browser after you opened it (in another tab).',
+      useRemote: 'Use the saved version',
     },
     localNotFound: 'We could not find this drawing in this browser.',
   },
@@ -392,7 +396,7 @@ export const en: Messages = {
     errors: {
       empty: 'Paste a Mermaid diagram to continue.',
       syntax: 'Mermaid could not understand this text. Check the syntax and try again.',
-      unsupported: 'This type of diagram cannot be converted yet. Flowcharts work best.',
+      unsupported: 'This diagram uses features that cannot be converted yet. Simple flowcharts work best.',
       tooLarge: 'The text is longer than {max} characters. Shorten the diagram and try again.',
       tooManyElements: 'The diagram has too many elements to convert. Split it into smaller diagrams and try again.',
       readFailed: 'Could not read the file.',
@@ -404,9 +408,11 @@ export const en: Messages = {
     notice: 'Your drawings stay only in this browser. Sign in with Google to keep them in Drive.',
     noticeDetail: "Clearing the browser's data deletes the drawings. You can export a PNG with editable data or a Markdown file.",
     signIn: 'Sign in',
+    dismiss: 'Dismiss the notice',
+    noticeShort: 'Drawings only in this browser.',
   },
   move: {
-    offerTitle: 'Move to Drive?',
+    offerTitle: 'Drawings in this browser',
     offer: 'Move your {count} local drawings to Drive?',
     offerOne: 'Move your local drawing to Drive?',
     offerBody: 'They are copied to the Rabisco folder in your Drive and only then deleted from this browser.',
@@ -421,5 +427,14 @@ export const en: Messages = {
     pageIntro: 'These drawings are only in this browser.',
     moveAll: 'Move all to Drive',
     empty: 'No local drawings.',
+    noneMoved: 'No drawing was moved.',
+    failedHeading: 'Not moved:',
+    reasons: {
+      draft: 'it has unsaved changes; open the drawing, restore or discard the draft and try again.',
+      changed: 'it changed while we were moving it; try again.',
+      mismatch: 'the copy in Drive did not match; nothing was deleted here.',
+      damaged: 'the drawing is damaged in this browser.',
+      error: 'it could not be uploaded right now; check the connection and try again.',
+    },
   },
 }

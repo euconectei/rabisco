@@ -14,7 +14,7 @@ import './local.css'
  * them to the Drive. Declining keeps them where they are (the "Local drawings" link stays); nothing is
  * deleted before its copy in Drive was checked.
  */
-export function MoveOffer() {
+export function MoveOffer({ onMoved }: { onMoved?(): void | Promise<void> }) {
   const { t } = useI18n()
   const { mode } = useMode()
   const auth = useAuth()
@@ -35,11 +35,13 @@ export function MoveOffer() {
     markMoveOfferAnswered()
     await start(undefined, count)
     await reload()
+    await onMoved?.()
   }
 
   async function retry(ids: string[]) {
     await start(ids)
     await reload()
+    await onMoved?.()
   }
 
   return (

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { AdSlot } from '../ads/AdSlot'
 import { CookieNotice } from '../ads/CookieNotice'
 import { AppFooter } from '../components/AppFooter'
-import type { DriveFileMeta } from '../drive/client'
+import type { DriveClient, DriveFileMeta } from '../drive/client'
 import { useFilePicker } from '../drive/usePicker'
 import { useDrive } from '../drive/useDrive'
 import { format } from '../i18n/format'
@@ -46,10 +46,14 @@ export function FilesPage() {
   const pick = useFilePicker()
   const { mode } = useMode()
   const local = mode === 'local'
-  const [list, setList] = useState<ListState>({ kind: 'loading' })
+  // The list remembers which client it came from: after the client or the mode changes, it is loading
+  // again instead of showing the previous source's cards.
+  const [loaded, setLoaded] = useState<{ source: DriveClient; state: ListState } | null>(null)
+  const list: ListState = loaded?.source === drive ? loaded.state : { kind: 'loading' }
   const [importError, setImportError] = useState<'image' | 'read' | null>(null)
   const [query, setQuery] = useState('')
   const [mermaidOpen, setMermaidOpen] = useState(false)
+  const [movedRounds, setMovedRounds] = useState(0)
 
   const fetchFiles = useCallback(async (): Promise<ListState> => {
     try {
@@ -62,16 +66,26 @@ export function FilesPage() {
   useEffect(() => {
     let cancelled = false
     void fetchFiles().then((next) => {
-      if (!cancelled) setList(next)
+      if (!cancelled) setLoaded({ source: drive, state: next })
     })
     return () => {
       cancelled = true
     }
-  }, [fetchFiles])
+  }, [fetchFiles, drive])
+
+  async function reloadList() {
+    setLoaded({ source: drive, state: await fetchFiles() })
+  }
+
+  // Whatever was moved is now in the Drive list, and the "Local drawings" link may no longer apply.
+  async function afterMove() {
+    setMovedRounds((rounds) => rounds + 1)
+    await reloadList()
+  }
 
   async function retry() {
-    setList({ kind: 'loading' })
-    setList(await fetchFiles())
+    setLoaded(null)
+    await reloadList()
   }
 
   // The editor side (lazy, with Excalidraw) builds the map: see NewFileRedirect.
@@ -148,7 +162,7 @@ export function FilesPage() {
       </header>
 
       <LocalNotice />
-      {!local && <MoveOffer />}
+      {!local && <MoveOffer onMoved={afterMove} />}
       {isEmpty ? (
         <section className="files-empty" aria-labelledby="files-empty-title">
           <EmptyArt />
@@ -170,7 +184,7 @@ export function FilesPage() {
               </button>
             </p>
           )}
-          {!local && <LocalDrawingsLink />}
+          {!local && <LocalDrawingsLink key={movedRounds} />}
           {importError === 'read' && <p role="alert">{t.files.importReadFailed}</p>}
           {importError === 'image' && <p role="alert">{t.files.importImageFailed}</p>}
           <AdSlot placement="files" />
@@ -228,7 +242,7 @@ export function FilesPage() {
               ))}
             </ul>
           )}
-          {!local && <LocalDrawingsLink />}
+          {!local && <LocalDrawingsLink key={movedRounds} />}
           <AdSlot placement="files" />
         </>
       )}

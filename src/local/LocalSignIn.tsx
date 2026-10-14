@@ -24,7 +24,7 @@ export function LocalSignIn({ className = 'button-secondary' }: { className?: st
       </button>
       {auth.error && (
         <span role="alert" className="local-sign-in-error">
-          {t.auth.failed}
+          {auth.error === 'missingDrive' ? t.auth.missingDrive : t.auth.failed}
         </span>
       )}
     </>

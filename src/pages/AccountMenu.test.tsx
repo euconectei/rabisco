@@ -56,3 +56,8 @@ it('signs out forgetting the Drive drafts, but keeps the drafts of drawings kept
   await expect(getDraft('drive-file')).resolves.toBeNull()
   await expect(getDraft('local-abc')).resolves.not.toBeNull()
 })
+
+it('says which permission is missing when the sign-in lacked Drive access', () => {
+  setup('local', signedOut({ error: 'missingDrive' }))
+  expect(screen.getByRole('alert')).toHaveTextContent('precisa de acesso ao seu Google Drive')
+})

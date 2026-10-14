@@ -1,17 +1,37 @@
 import { useEffect, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { format } from '../i18n/format'
 import { useI18n } from '../i18n/useI18n'
+import { isLocalId } from '../local/ids'
 import { useMode } from '../mode/useMode'
 import '../local/local.css'
 import { useAuth } from './useAuth'
 
+/** Pages that only make sense with a Drive account: the "Open with" hand-off and a Drive file's editor. */
+function needsDrive(pathname: string): boolean {
+  if (pathname === '/open' || pathname.startsWith('/open/')) return true
+  const id = pathname.match(/^\/edit\/([^/]+)\/?$/)?.[1]
+  if (id === undefined || id === 'new') return false
+  try {
+    return !isLocalId(decodeURIComponent(id))
+  } catch {
+    return true
+  }
+}
+
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { t } = useI18n()
   const auth = useAuth()
-  const { mode, localSupport, enterLocal } = useMode()
+  const { mode, localSupport, enterLocal, leaveLocal } = useMode()
+  const { pathname } = useLocation()
   const { status, hint, error, prepare } = auth
-  const local = mode === 'local'
+  // A saved local mode must not trap a link that points into the Drive: leave it and sign in on the same URL.
+  const driveOnly = mode === 'local' && needsDrive(pathname)
+  const local = mode === 'local' && !driveOnly
+
+  useEffect(() => {
+    if (driveOnly) leaveLocal()
+  }, [driveOnly, leaveLocal])
 
   useEffect(() => {
     // Using it without an account must not load anything from Google until the person asks to sign in.
@@ -40,7 +60,8 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   }
 
   const missingDrive = status === 'signed-out' && error === 'missingDrive'
-  const useWithoutSigningIn = (
+  // A Drive link cannot be opened without signing in, so the alternative is not offered there.
+  const useWithoutSigningIn = needsDrive(pathname) ? null : (
     <div className="sign-in-local">
       {localSupport === 'unavailable' ? (
         <p className="sign-in-note" role="note">

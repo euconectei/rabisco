@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { DriveFileMeta } from '../drive/client'
+import { localDbExists } from './db'
 import { useLocalDrive } from './useLocalDrive'
 
 export type LocalDrawings = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; files: DriveFileMeta[] }
@@ -11,6 +12,8 @@ export function useLocalDrawings(): { drawings: LocalDrawings; reload(): Promise
 
   const load = useCallback(async (): Promise<LocalDrawings> => {
     try {
+      // Listing would create the database; whoever only uses the Drive must not get one.
+      if (!(await localDbExists())) return { kind: 'ready', files: [] }
       return { kind: 'ready', files: await local.listFiles() }
     } catch {
       return { kind: 'error' }

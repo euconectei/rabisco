@@ -2,6 +2,12 @@ import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders, signedInAuth } from '../test/renderWithProviders'
 import { LocalNotice } from './LocalNotice'
+import { resetLocalNoticeDismissal } from './noticeDismissal'
+
+beforeEach(() => {
+  resetLocalNoticeDismissal()
+  sessionStorage.clear()
+})
 
 const signedOut = () => signedInAuth({ status: 'signed-out', user: null, hint: null })
 
@@ -38,4 +44,25 @@ it('for a local drawing opened after signing in, points to the list where it can
   renderWithProviders(<LocalNotice fileId="local-1234" />, { mode: 'google' })
   expect(screen.queryByRole('button', { name: 'Entrar' })).not.toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Desenhos locais' })).toHaveAttribute('href', '/local')
+})
+
+it('can be dismissed with a named button, and stays dismissed for the session', async () => {
+  const { unmount } = renderWithProviders(<LocalNotice />, { mode: 'local', auth: signedOut() })
+  await userEvent.click(screen.getByRole('button', { name: 'Dispensar o aviso' }))
+  expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
+  unmount()
+  renderWithProviders(<LocalNotice />, { mode: 'local', auth: signedOut() })
+  expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
+})
+
+it('stays dismissed even when session storage is blocked', async () => {
+  const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    throw new Error('blocked')
+  })
+  const { unmount } = renderWithProviders(<LocalNotice />, { mode: 'local', auth: signedOut() })
+  await userEvent.click(screen.getByRole('button', { name: 'Dispensar o aviso' }))
+  unmount()
+  renderWithProviders(<LocalNotice />, { mode: 'local', auth: signedOut() })
+  expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
+  spy.mockRestore()
 })

@@ -10,10 +10,13 @@ import { memoryDrive } from '../test/memoryDrive'
 import { renderWithProviders, signedInAuth } from '../test/renderWithProviders'
 
 const pick = vi.hoisted(() => vi.fn())
+vi.mock('../local/db', async (importOriginal) => ({ ...(await importOriginal<typeof import('../local/db')>()), localDbExists: async () => true }))
 vi.mock('../drive/usePicker', () => ({ useFilePicker: () => pick }))
 // Reading an image loads Excalidraw on demand; here that load fails (e.g. offline), the way a file
 // read can fail. No other test in this file opens an image.
 const convertMermaid = vi.hoisted(() => vi.fn())
+const moveLocalDrawings = vi.hoisted(() => vi.fn())
+vi.mock('../local/move', async (importOriginal) => ({ ...(await importOriginal<typeof import('../local/move')>()), moveLocalDrawings }))
 vi.mock('../mermaid/convert', async (importOriginal) => ({ ...(await importOriginal<typeof import('../mermaid/convert')>()), convertMermaid }))
 vi.mock('@excalidraw/excalidraw', () => {
   throw new Error('module load failed')
@@ -327,5 +330,20 @@ describe('signed in, with drawings still in this browser', () => {
     setup(oneFile())
     await screen.findByRole('list', { name: 'Seus desenhos' })
     expect(screen.queryByRole('link', { name: 'Desenhos locais' })).not.toBeInTheDocument()
+  })
+})
+
+describe('after moving local drawings to the Drive', () => {
+  it('reloads the Drive list without reloading the page', async () => {
+    const drive = memoryDrive()
+    const local = memoryDrive([{ id: 'local-1', name: 'Velho.excalidraw', content: '{}' }])
+    moveLocalDrawings.mockImplementation(async () => {
+      await drive.client.createFile('Velho.excalidraw', '{}', 'folder-1')
+      return { total: 1, moved: 1, failed: 0, failures: [], busy: false }
+    })
+    renderWithProviders(<FilesPage />, { route: '/app', drive: drive.client, localDrive: local.client })
+    await userEvent.click(await screen.findByRole('button', { name: 'Mover para o Drive' }))
+    const list = await screen.findByRole('list', { name: 'Seus desenhos' })
+    expect(within(list).getByRole('link', { name: /Velho/ })).toBeInTheDocument()
   })
 })

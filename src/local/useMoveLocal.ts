@@ -1,12 +1,12 @@
 import { useCallback, useRef, useState } from 'react'
 import { useDrive } from '../drive/useDrive'
-import { moveLocalDrawings } from './move'
+import { moveLocalDrawings, type MoveFailure } from './move'
 
 export type MoveState =
   | { phase: 'idle' }
   | { phase: 'running'; done: number; total: number }
-  /** `failedIds` are the drawings still in this browser after the last attempt. */
-  | { phase: 'finished'; moved: number; failed: number; failedIds: string[] }
+  /** `failures` are the drawings still in this browser after the last attempt, with why. */
+  | { phase: 'finished'; moved: number; failed: number; failures: MoveFailure[] }
 
 /**
  * Runs "move to Drive" and keeps what the screen needs: progress while it runs and, after a partial
@@ -38,11 +38,11 @@ export function useMoveLocal(): { state: MoveState; start(ids?: readonly string[
           phase: 'finished',
           moved: movedBefore.current,
           failed: report.failed,
-          failedIds: report.failures.map((failure) => failure.id),
+          failures: report.failures,
         })
       } catch {
         // The local database could not even be listed: nothing moved, and the retry starts from scratch.
-        setState({ phase: 'finished', moved: movedBefore.current, failed: Math.max(ids?.length ?? 0, 1), failedIds: ids ? [...ids] : [] })
+        setState({ phase: 'finished', moved: movedBefore.current, failed: Math.max(ids?.length ?? 0, 1), failures: [] })
       } finally {
         running.current = false
       }

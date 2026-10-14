@@ -114,6 +114,9 @@ export const ptBR = {
       restore: 'Restaurar',
       discard: 'Descartar',
     },
+    draftLocal: {
+      body: 'Há alterações deste desenho que ainda não foram salvas neste navegador. Quer restaurá-las?',
+    },
     statusLocal: {
       saved: 'Salvo neste navegador',
       saving: 'Salvando…',
@@ -123,6 +126,7 @@ export const ptBR = {
     },
     conflictLocal: {
       body: 'O desenho foi alterado neste navegador depois que você o abriu (em outra aba).',
+      useRemote: 'Usar a versão salva',
     },
     localNotFound: 'Não encontramos este desenho neste navegador.',
   },
@@ -390,7 +394,7 @@ export const ptBR = {
     errors: {
       empty: 'Cole um diagrama Mermaid para continuar.',
       syntax: 'O Mermaid não entendeu este texto. Confira a sintaxe e tente de novo.',
-      unsupported: 'Este tipo de diagrama ainda não pode ser convertido. Fluxogramas funcionam melhor.',
+      unsupported: 'Este diagrama usa recursos que ainda não podem ser convertidos. Fluxogramas simples funcionam melhor.',
       tooLarge: 'O texto passa de {max} caracteres. Reduza o diagrama e tente de novo.',
       tooManyElements: 'O diagrama tem elementos demais para converter. Divida-o em diagramas menores e tente de novo.',
       readFailed: 'Não foi possível ler o arquivo.',
@@ -402,9 +406,11 @@ export const ptBR = {
     notice: 'Seus desenhos ficam só neste navegador. Entre com Google para guardá-los no Drive.',
     noticeDetail: 'Limpar os dados do navegador apaga os desenhos. Dá para exportar um PNG com dados editáveis ou um Markdown.',
     signIn: 'Entrar',
+    dismiss: 'Dispensar o aviso',
+    noticeShort: 'Desenhos só neste navegador.',
   },
   move: {
-    offerTitle: 'Mover para o Drive?',
+    offerTitle: 'Desenhos neste navegador',
     offer: 'Mover seus {count} desenhos locais para o Drive?',
     offerOne: 'Mover seu desenho local para o Drive?',
     offerBody: 'Eles são copiados para a pasta Rabisco do seu Drive e só depois apagados deste navegador.',
@@ -419,6 +425,15 @@ export const ptBR = {
     pageIntro: 'Estes desenhos estão só neste navegador.',
     moveAll: 'Mover todos para o Drive',
     empty: 'Nenhum desenho local.',
+    noneMoved: 'Nenhum desenho foi movido.',
+    failedHeading: 'Não foram movidos:',
+    reasons: {
+      draft: 'tem alterações não salvas; abra o desenho, restaure ou descarte o rascunho e tente de novo.',
+      changed: 'foi alterado enquanto movíamos; tente de novo.',
+      mismatch: 'a cópia no Drive não ficou igual; nada foi apagado daqui.',
+      damaged: 'o desenho está danificado neste navegador.',
+      error: 'não foi possível enviar agora; confira a conexão e tente de novo.',
+    },
   },
 } as const
 
