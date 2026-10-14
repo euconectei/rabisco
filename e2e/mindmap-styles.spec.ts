@@ -26,7 +26,7 @@ async function openNewDrawing(page: Page): Promise<FakeDrive> {
   const drive = await installFakeGoogle(page)
   await page.goto('/app')
   await page.getByRole('button', { name: 'Entrar com Google' }).click()
-  await page.getByRole('button', { name: 'Novo' }).click()
+  await page.getByRole('button', { name: /Novo desenho|Criar o primeiro desenho/ }).click()
   await expect(page.locator('.excalidraw')).toBeVisible()
   await expect(page.getByRole('status').filter({ hasText: 'Salvo' })).toBeVisible()
   return drive

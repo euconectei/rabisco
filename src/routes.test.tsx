@@ -16,13 +16,13 @@ it('landing shows the title, tagline and leads to the files page', async () => {
   expect(screen.getByRole('heading', { level: 1, name: 'Pense no papel. Guarde no seu Drive.' })).toBeInTheDocument()
   expect(screen.getByText(/salvos no seu Google Drive/)).toBeInTheDocument()
   await userEvent.click(screen.getAllByRole('link', { name: 'Começar, é grátis' })[0])
-  expect(screen.getByRole('heading', { name: 'Meus arquivos' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Seu primeiro rabisco começa aqui' })).toBeInTheDocument()
 })
 
 it('files page shows the empty state and opens a new drawing', async () => {
   renderWithProviders(<AppRoutes />, { route: '/app' })
-  expect(await screen.findByText('Nenhum arquivo ainda.')).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: 'Novo' }))
+  expect(await screen.findByText('Seu primeiro rabisco começa aqui')).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Criar o primeiro desenho' }))
   expect(await screen.findByTestId('editor-page', {}, { timeout: 10_000 })).toBeInTheDocument()
 })
 
@@ -41,7 +41,7 @@ it('unknown routes show the 404 page with a way home', async () => {
 it('asks to sign in before showing private pages', () => {
   renderWithProviders(<AppRoutes />, { route: '/app', auth: signedInAuth({ status: 'signed-out', user: null, hint: null }) })
   expect(screen.getByRole('button', { name: 'Entrar com Google' })).toBeInTheDocument()
-  expect(screen.queryByText('Nenhum arquivo ainda.')).not.toBeInTheDocument()
+  expect(screen.queryByText('Seu primeiro rabisco começa aqui')).not.toBeInTheDocument()
 })
 
 it('legal pages are public and linked from the footer', async () => {

@@ -11,7 +11,7 @@ async function signIn(page: Page) {
   await installFakeGoogle(page)
   await page.goto('/app')
   await page.getByRole('button', { name: 'Entrar com Google' }).click()
-  await expect(page.getByRole('heading', { name: 'Meus arquivos' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Meus rabiscos|Seu primeiro rabisco/ })).toBeVisible()
 }
 
 test.describe('Europe', () => {
@@ -21,7 +21,7 @@ test.describe('Europe', () => {
     const adsense = await installFakeAdsense(page)
     await signIn(page)
     await expect(adSlot(page).getByRole('link', { name: /GitHub/ })).toBeVisible()
-    await page.getByRole('button', { name: 'Novo' }).click()
+    await page.getByRole('button', { name: /Novo desenho|Criar o primeiro desenho/ }).click()
     await expect(page.locator('.excalidraw')).toBeVisible()
     await expect(adSlot(page).getByRole('link', { name: /GitHub/ })).toBeVisible()
     await expect(notice(page)).toHaveCount(0)
@@ -77,7 +77,7 @@ test.describe('other regions', () => {
     await signIn(page)
     await expect(adSlot(page).getByText('Fake AdSense')).toBeVisible()
     await expect(notice(page)).toHaveCount(0)
-    await page.getByRole('button', { name: 'Novo' }).click()
+    await page.getByRole('button', { name: /Novo desenho|Criar o primeiro desenho/ }).click()
     await expect(page.locator('.excalidraw')).toBeVisible()
     await expect(adSlot(page).locator('ins.adsbygoogle[data-ad-slot="1111111111"]')).toHaveAttribute('data-ad-status', 'filled')
     expect(adsense.requests).toHaveLength(1) // injected once for the whole session
@@ -136,7 +136,7 @@ test('legal pages open without signing in, in both languages, with no ad', async
 
 test('the editor menu leads to the cookie choice', async ({ page }) => {
   await signIn(page)
-  await page.getByRole('button', { name: 'Novo' }).click()
+  await page.getByRole('button', { name: /Novo desenho|Criar o primeiro desenho/ }).click()
   await expect(page.locator('.excalidraw')).toBeVisible()
   await page.getByTestId('main-menu-trigger').click()
   await page.getByText('Privacidade e cookies').click()
