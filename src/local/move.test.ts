@@ -1,3 +1,4 @@
+import 'vitest-canvas-mock'
 import 'fake-indexeddb/auto'
 import { IDBFactory } from 'fake-indexeddb'
 import { DriveError } from '../drive/errors'
@@ -47,6 +48,10 @@ describe('moving local drawings to Drive', () => {
     await expect(local.getMeta(a.id)).rejects.toMatchObject({ kind: 'notFound' })
     await expect(local.download(b.id)).rejects.toMatchObject({ kind: 'notFound' })
     await expect(local.listFiles()).resolves.toEqual([])
+    // The old local address still leads to the copy (no simulated bookkeeping: the real client answers).
+    const byName = Object.fromEntries(remote.map((f) => [f.name, f.id]))
+    await expect(local.movedTo(a.id)).resolves.toBe(byName['A.excalidraw'])
+    await expect(local.movedTo(b.id)).resolves.toBe(byName['B.excalidraw'])
   })
 
   it('sends the thumbnail along', async () => {
@@ -195,17 +200,47 @@ describe('moving local drawings to Drive', () => {
   })
 
   it('does not move a drawing that has unsaved edits waiting in a draft', async () => {
-    const [a, b] = await seed('A', 'B')
-    await putDraft({ fileId: a.id, json: scene('A, typed but not saved'), baseVersion: a.headRevisionId!, updatedAt: 1 })
+    const rectangle = (x: number) => JSON.stringify({ type: 'excalidraw', version: 2, elements: [{ id: 'r1', type: 'rectangle', x, y: 0, width: 10, height: 10 }], appState: {}, files: {} })
+    const a = await local.createFile('A', rectangle(0), 'local')
+    const [b] = await seed('B')
+    await putDraft({ fileId: a.id, json: rectangle(250), baseVersion: a.headRevisionId!, updatedAt: 1 })
     const drive = memoryDrive()
 
     const report = await moveLocalDrawings(drive.client)
 
     expect(report.failures).toEqual([{ id: a.id, name: 'A.excalidraw', reason: 'draft' }])
     expect(report.moved).toBe(1)
-    await expect(local.download(a.id)).resolves.toBe(scene('A'))
-    await expect(getDraft(a.id)).resolves.toMatchObject({ json: scene('A, typed but not saved') })
+    await expect(local.download(a.id)).resolves.toBe(rectangle(0))
+    await expect(getDraft(a.id)).resolves.toMatchObject({ json: rectangle(250) })
     await expect(local.getMeta(b.id)).rejects.toMatchObject({ kind: 'notFound' })
+    await deleteDraft(a.id)
+  })
+
+  it('matches a draft to the drawing by content, not by exact text', async () => {
+    const element = (nonce: number) => ({ id: 'r1', type: 'rectangle', x: 0, y: 0, width: 10, height: 10, version: nonce, versionNonce: nonce, updated: nonce })
+    const json = (nonce: number) => JSON.stringify({ type: 'excalidraw', version: 2, elements: [element(nonce)], appState: {}, files: {} })
+    const created = await local.createFile('A', json(1), 'local')
+    await putDraft({ fileId: created.id, json: json(99), baseVersion: created.headRevisionId!, updatedAt: 1 })
+
+    const report = await moveLocalDrawings(memoryDrive().client)
+
+    expect(report.moved).toBe(1)
+    await expect(getDraft(created.id)).resolves.toBeNull()
+  })
+
+  it('keeps a draft written while the move was running', async () => {
+    const [a] = await seed('A')
+    await putDraft({ fileId: a.id, json: scene('A'), baseVersion: a.headRevisionId!, updatedAt: 1 })
+    const drive = memoryDrive()
+    const download = drive.client.download.getMockImplementation()!
+    drive.client.download.mockImplementation(async (id) => {
+      await putDraft({ fileId: a.id, json: scene('A, typed meanwhile'), baseVersion: a.headRevisionId!, updatedAt: 2 })
+      return download(id)
+    })
+
+    await moveLocalDrawings(drive.client)
+
+    await expect(getDraft(a.id)).resolves.toMatchObject({ json: scene('A, typed meanwhile') })
     await deleteDraft(a.id)
   })
 
@@ -301,5 +336,14 @@ describe('countLocalDrawings', () => {
       throw new Error('SecurityError')
     })
     await expect(countLocalDrawings()).resolves.toBe(0)
+  })
+})
+
+describe('a browser that never used the local mode', () => {
+  it('counts and moves nothing without creating the database', async () => {
+    const drive = memoryDrive()
+    await expect(countLocalDrawings()).resolves.toBe(0)
+    await expect(moveLocalDrawings(drive.client)).resolves.toEqual({ total: 0, moved: 0, failed: 0, failures: [], busy: false })
+    expect((await indexedDB.databases()).map((db) => db.name)).not.toContain('rabisco-local')
   })
 })

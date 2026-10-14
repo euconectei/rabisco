@@ -34,20 +34,21 @@ beforeEach(async () => {
 })
 afterEach(() => vi.restoreAllMocks())
 
-it('starts in the google mode and finds the local storage available', async () => {
+it('starts in the google mode with support decided at once and never creates the database', async () => {
   renderMode()
   expect(screen.getByTestId('mode')).toHaveTextContent('google')
-  expect(screen.getByTestId('support')).toHaveTextContent('checking')
-  await waitFor(() => expect(screen.getByTestId('support')).toHaveTextContent('available'))
+  expect(screen.getByTestId('support')).toHaveTextContent('available')
+  await new Promise((resolve) => setTimeout(resolve, 30))
+  expect((await indexedDB.databases()).map((db) => db.name)).not.toContain('rabisco-local')
 })
 
 it('enters the local mode, remembers it for the next visit and leaves it again', async () => {
   const user = userEvent.setup()
   const first = renderMode()
-  await waitFor(() => expect(screen.getByTestId('support')).toHaveTextContent('available'))
   await user.click(screen.getByRole('button', { name: 'enter' }))
-  expect(screen.getByTestId('mode')).toHaveTextContent('local')
+  await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('local'))
   expect(localStorage.getItem('rabisco.mode')).toBe('local')
+  expect((await indexedDB.databases()).map((db) => db.name)).toContain('rabisco-local')
   first.unmount()
 
   renderMode()
@@ -64,31 +65,44 @@ it('keeps the mode for the session when storage refuses it', async () => {
   const user = userEvent.setup()
   renderMode()
   await user.click(screen.getByRole('button', { name: 'enter' }))
-  expect(screen.getByTestId('mode')).toHaveTextContent('local')
+  await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('local'))
 })
 
-it('reports the local storage as unavailable and refuses to enter the local mode', async () => {
+it('does not enter the local mode when the database cannot be opened, and says it is unavailable', async () => {
   vi.spyOn(indexedDB, 'open').mockImplementation(() => {
     throw new Error('SecurityError')
   })
   const user = userEvent.setup()
   renderMode()
-  await waitFor(() => expect(screen.getByTestId('support')).toHaveTextContent('unavailable'))
   await user.click(screen.getByRole('button', { name: 'enter' }))
+  await waitFor(() => expect(screen.getByTestId('support')).toHaveTextContent('unavailable'))
   expect(screen.getByTestId('mode')).toHaveTextContent('google')
   expect(localStorage.getItem('rabisco.mode')).toBeNull()
 })
 
-it('follows another tab that enters or leaves the local mode', async () => {
+it('reports unavailable at once when the browser has no IndexedDB', () => {
+  const original = globalThis.indexedDB
+  // @ts-expect-error simulating a browser without IndexedDB
+  delete globalThis.indexedDB
+  try {
+    renderMode()
+    expect(screen.getByTestId('support')).toHaveTextContent('unavailable')
+  } finally {
+    globalThis.indexedDB = original
+  }
+})
+
+it('opens the database on load when the page starts in the local mode', async () => {
+  localStorage.setItem('rabisco.mode', 'local')
+  renderMode()
+  await waitFor(async () => expect((await indexedDB.databases()).map((db) => db.name)).toContain('rabisco-local'))
+})
+
+it('ignores the mode another tab writes: each tab keeps its own', async () => {
   renderMode()
   localStorage.setItem('rabisco.mode', 'local')
   act(() => {
     window.dispatchEvent(new StorageEvent('storage', { key: 'rabisco.mode', newValue: 'local' }))
-  })
-  expect(screen.getByTestId('mode')).toHaveTextContent('local')
-  localStorage.removeItem('rabisco.mode')
-  act(() => {
-    window.dispatchEvent(new StorageEvent('storage', { key: 'rabisco.mode', newValue: null }))
   })
   expect(screen.getByTestId('mode')).toHaveTextContent('google')
 })

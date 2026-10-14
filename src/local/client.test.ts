@@ -255,7 +255,7 @@ describe('storage failures', () => {
     vi.spyOn(indexedDB, 'open').mockImplementation(() => {
       throw new Error('SecurityError')
     })
-    const error = await failure(client.listFiles())
+    const error = await failure(client.getMeta('local-1'))
     expect(error.kind).toBe('unknown')
   })
 
@@ -264,9 +264,9 @@ describe('storage failures', () => {
     const open = vi.spyOn(indexedDB, 'open').mockImplementationOnce(() => {
       throw new Error('SecurityError')
     })
-    await failure(client.listFiles())
+    await failure(client.getMeta('local-1'))
     open.mockRestore()
-    await expect(client.listFiles()).resolves.toEqual([])
+    expect((await failure(client.getMeta('local-1'))).kind).toBe('notFound')
   })
 
   it('reports a full disk on create as an unknown error and leaves the list intact', async () => {
@@ -286,7 +286,7 @@ describe('storage failures', () => {
     // @ts-expect-error simulating a browser without IndexedDB
     delete globalThis.indexedDB
     try {
-      expect((await failure(client.listFiles())).kind).toBe('unknown')
+      expect((await failure(client.getMeta('local-1'))).kind).toBe('unknown')
     } finally {
       globalThis.indexedDB = original
     }
@@ -297,5 +297,16 @@ describe('movedTo', () => {
   it('is null until a Drive copy is recorded', async () => {
     const { id } = await client.createFile('A', '{}', 'local')
     await expect(client.movedTo(id)).resolves.toBeNull()
+  })
+
+  it('is null for an id that never existed', async () => {
+    await expect(client.movedTo('local-never')).resolves.toBeNull()
+  })
+})
+
+describe('a browser that never used the local mode', () => {
+  it('lists nothing without creating the database', async () => {
+    await expect(client.listFiles()).resolves.toEqual([])
+    expect((await indexedDB.databases()).map((db) => db.name)).not.toContain('rabisco-local')
   })
 })

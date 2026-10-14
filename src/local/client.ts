@@ -7,6 +7,8 @@ import {
   parseContent,
   parseMeta,
   readMetas,
+  readMovedTo,
+  localDbExists,
   request,
   requestPersistence,
   runTx,
@@ -25,7 +27,7 @@ const MAX_BASE_NAME = 400
 const MAX_NAME_ATTEMPTS = 100
 
 export interface LocalDriveClient extends DriveClient {
-  /** Drive id of the copy made by "move to Drive", if one was recorded. */
+  /** Drive id of the copy made by "move to Drive" (also after the local drawing was deleted), if any. */
   movedTo(id: string): Promise<string | null>
 }
 
@@ -120,6 +122,8 @@ export function createLocalDriveClient(): LocalDriveClient {
     },
 
     async listFiles() {
+      // Nothing to list, and nothing worth creating a database for.
+      if (!(await localDbExists())) return []
       const metas = await runTx('readonly', async (stores) => readMetas(stores))
       return metas
         .filter((meta) => meta.name.toLowerCase().endsWith(EXTENSION))
@@ -181,6 +185,9 @@ export function createLocalDriveClient(): LocalDriveClient {
     },
 
     async movedTo(id) {
+      const forwarded = await readMovedTo(id)
+      if (forwarded) return forwarded
+      // A move still in progress (or being retried) has recorded the copy on the drawing itself.
       const raw = await runTx('readonly', ({ meta }) => request(meta.get(id)))
       return parseMeta(raw)?.movedTo ?? null
     },

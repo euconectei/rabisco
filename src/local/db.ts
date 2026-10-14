@@ -1,12 +1,15 @@
 import { DriveError } from '../drive/errors'
+import { readMode } from '../mode/modeStorage'
 
 // Drawings made without signing in live in their own database, apart from the drafts one ("rabisco"),
 // so wiping drafts on sign-out can never touch them. `meta` holds what the file list needs;
 // `content` holds the scene, and both are always written in the same transaction.
 export const LOCAL_DB_NAME = 'rabisco-local'
-const DB_VERSION = 1
+// Version 2 added `moved`; upgrading from version 1 keeps every drawing.
+const DB_VERSION = 2
 const META = 'meta'
 const CONTENT = 'content'
+const MOVED = 'moved'
 
 const MAX_NAME_LENGTH = 500
 const MAX_THUMBNAIL_LENGTH = 1_000_000
@@ -28,9 +31,17 @@ export interface StoredMeta {
 /** Text for scenes; bytes for the rare binary file saved next to a drawing (an exported PNG). */
 export type StoredContent = string | { bytes: ArrayBuffer; mimeType: string }
 
+/** Left behind when a drawing is moved to Drive, so its old local address can still lead to the copy. */
+export interface MovedRecord {
+  id: string
+  driveId: string
+  movedAt: number
+}
+
 export interface Stores {
   meta: IDBObjectStore
   content: IDBObjectStore
+  moved: IDBObjectStore
 }
 
 export function toDriveError(error: unknown): DriveError {
@@ -58,6 +69,7 @@ function open(): Promise<IDBDatabase> {
       const db = request.result
       if (!db.objectStoreNames.contains(META)) db.createObjectStore(META, { keyPath: 'id' })
       if (!db.objectStoreNames.contains(CONTENT)) db.createObjectStore(CONTENT, { keyPath: 'id' })
+      if (!db.objectStoreNames.contains(MOVED)) db.createObjectStore(MOVED, { keyPath: 'id' })
     }
     request.onsuccess = () => {
       const db = request.result
@@ -85,6 +97,24 @@ export function openLocalDb(): Promise<IDBDatabase> {
   return opening
 }
 
+/**
+ * Whether the local database already exists, answered without creating it: visiting the app in the
+ * Google mode must leave no database behind. Browsers that cannot list databases fall back to the
+ * mode flag (the local mode creates the database as soon as it is entered).
+ */
+export async function localDbExists(): Promise<boolean> {
+  if (typeof indexedDB === 'undefined') return false
+  if (opening) return true
+  if (typeof indexedDB.databases === 'function') {
+    try {
+      return (await indexedDB.databases()).some((info) => info.name === LOCAL_DB_NAME)
+    } catch {
+      // Fall through to the flag.
+    }
+  }
+  return readMode() === 'local'
+}
+
 /** Closes the connection and forgets it; the next call opens the database again. */
 export async function closeLocalDb(): Promise<void> {
   const pending = opening
@@ -108,7 +138,7 @@ export async function runTx<T>(mode: IDBTransactionMode, body: (stores: Stores) 
   return new Promise<T>((resolve, reject) => {
     let tx: IDBTransaction
     try {
-      tx = db.transaction([META, CONTENT], mode)
+      tx = db.transaction([META, CONTENT, MOVED], mode)
     } catch (error) {
       reject(toDriveError(error))
       return
@@ -118,7 +148,7 @@ export async function runTx<T>(mode: IDBTransactionMode, body: (stores: Stores) 
     let failed = false
     tx.oncomplete = () => (failed ? reject(toDriveError(failure)) : resolve(result))
     tx.onabort = () => reject(toDriveError(failed ? failure : tx.error))
-    body({ meta: tx.objectStore(META), content: tx.objectStore(CONTENT) }).then(
+    body({ meta: tx.objectStore(META), content: tx.objectStore(CONTENT), moved: tx.objectStore(MOVED) }).then(
       (value) => {
         result = value
       },
@@ -246,14 +276,23 @@ export async function clearMoved(id: string): Promise<void> {
  * Deletes a drawing only if it is still at the revision that was read earlier. Returns false when it
  * changed meanwhile (another tab kept editing): then nothing is deleted.
  */
-export async function deleteIfUnchanged(id: string, headRevisionId: string): Promise<boolean> {
-  return runTx('readwrite', async ({ meta, content }) => {
+export async function deleteIfUnchanged(id: string, headRevisionId: string, driveId: string): Promise<boolean> {
+  return runTx('readwrite', async ({ meta, content, moved }) => {
     const raw = await request(meta.get(id))
     if (raw === undefined) return true // already gone
     const current = parseMeta(raw)
     if (!current || current.headRevisionId !== headRevisionId) return false
     await request(meta.delete(id))
     await request(content.delete(id))
+    // Same transaction as the delete: the drawing is never gone without its forwarding address.
+    await request(moved.put({ id, driveId, movedAt: Date.now() } satisfies MovedRecord))
     return true
   })
+}
+
+/** Drive id of a drawing that was moved, read from what the move left behind. */
+export async function readMovedTo(id: string): Promise<string | null> {
+  const raw = await runTx('readonly', ({ moved }) => request(moved.get(id)))
+  const record = raw as Partial<MovedRecord> | undefined
+  return typeof record?.driveId === 'string' && record.driveId !== '' ? record.driveId : null
 }

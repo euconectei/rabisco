@@ -1,7 +1,7 @@
 import type { DriveClient, DriveThumbnail } from '../drive/client'
 import { DriveError } from '../drive/errors'
-import { deleteDraft, getDraft } from '../editor/drafts'
-import { clearMoved, deleteIfUnchanged, listMetas, markMoved, readRecord, toDriveError, type StoredMeta } from './db'
+import { deleteDraft, getDraft, type Draft } from '../editor/drafts'
+import { clearMoved, deleteIfUnchanged, listMetas, localDbExists, markMoved, readRecord, toDriveError, type StoredMeta } from './db'
 
 /** sessionStorage key: the offer to move local drawings was answered during this browser session. */
 export const MOVE_OFFER_KEY = 'rabisco.moveOffer'
@@ -34,6 +34,7 @@ export function resetMoveOffer(): void {
 /** How many drawings are waiting in this browser (0 when the storage cannot be read). */
 export async function countLocalDrawings(): Promise<number> {
   try {
+    if (!(await localDbExists())) return 0
     return (await listMetas()).filter((meta) => meta.name.toLowerCase().endsWith('.excalidraw')).length
   } catch {
     return 0
@@ -118,6 +119,21 @@ async function copyToDrive(drive: DriveClient, meta: StoredMeta, content: string
   return created.id
 }
 
+/**
+ * Whether a draft holds nothing beyond the saved drawing. Compared the way the editor does (by the
+ * scene's content signature), since the same drawing serialises differently from one pass to the next.
+ */
+async function draftMatches(draft: Draft, content: string): Promise<boolean> {
+  if (draft.json === content) return true
+  try {
+    // Loaded on demand: the editor's scene code pulls in Excalidraw, which the file list must not.
+    const { parseScene, sceneSignature } = await import('../editor/scene')
+    return sceneSignature(parseScene(draft.json)) === sceneSignature(parseScene(content))
+  } catch {
+    return false
+  }
+}
+
 async function moveOne(drive: DriveClient, folder: () => Promise<string>, meta: StoredMeta): Promise<void> {
   const record = await readRecord(meta.id)
   if (!record || typeof record.content !== 'string') throw new MoveFailed('damaged')
@@ -125,7 +141,7 @@ async function moveOne(drive: DriveClient, folder: () => Promise<string>, meta: 
 
   // Unsaved edits live in the draft store, not in the record: copying now would lose them.
   const draft = await getDraft(meta.id)
-  if (draft && draft.json !== content) throw new MoveFailed('draft')
+  if (draft && !(await draftMatches(draft, content))) throw new MoveFailed('draft')
 
   let driveId = record.meta.movedTo
   if (!driveId) {
@@ -150,8 +166,12 @@ async function moveOne(drive: DriveClient, folder: () => Promise<string>, meta: 
   }
 
   // Only the revision that was copied may be deleted; anything saved since stays.
-  if (!(await deleteIfUnchanged(meta.id, record.meta.headRevisionId))) throw new MoveFailed('changed')
-  if (draft) await deleteDraft(meta.id)
+  if (!(await deleteIfUnchanged(meta.id, record.meta.headRevisionId, driveId))) throw new MoveFailed('changed')
+  // The draft goes only if it is still the one that was checked; an edit typed meanwhile keeps it.
+  if (draft) {
+    const now = await getDraft(meta.id)
+    if (now && now.updatedAt === draft.updatedAt && now.json === draft.json) await deleteDraft(meta.id)
+  }
 }
 
 /**
@@ -162,6 +182,7 @@ export async function moveLocalDrawings(drive: DriveClient, options: MoveOptions
   const empty: MoveReport = { total: 0, moved: 0, failed: 0, failures: [], busy: false }
   return exclusive(
     async () => {
+      if (!(await localDbExists())) return { ...empty }
       let metas: StoredMeta[]
       try {
         metas = (await listMetas()).filter((meta) => meta.name.toLowerCase().endsWith('.excalidraw'))

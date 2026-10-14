@@ -6,6 +6,7 @@ import { useAuth } from '../auth/useAuth'
 import { contentRevision, type DriveFileMeta } from '../drive/client'
 import { DriveError } from '../drive/errors'
 import { useDrive } from '../drive/useDrive'
+import { isLocalId } from '../local/ids'
 import { deleteDraft, getDraft, putDraft } from './drafts'
 import { createSaveQueue, type SaveQueue, type SaveStatus } from './saveQueue'
 import { parseScene, sceneSignature, serializeScene, type SceneData } from './scene'
@@ -101,7 +102,8 @@ export function useDriveFile(fileId: string) {
             }),
           putDraft: (draftJson, baseVersion) => putDraft({ fileId, json: draftJson, baseVersion, updatedAt: Date.now() }),
           deleteDraft: () => deleteDraft(fileId),
-          isOnline: () => navigator.onLine,
+          // A drawing kept in this browser needs no network, so being offline never holds its saves back.
+          isOnline: () => isLocalId(fileId) || navigator.onLine,
           onOnline: (listener) => {
             window.addEventListener('online', listener)
             return () => window.removeEventListener('online', listener)

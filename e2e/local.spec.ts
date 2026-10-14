@@ -169,6 +169,23 @@ test('a failed write to IndexedDB shows "could not save", keeps the text, and re
   await expect(page.getByRole('list', { name: 'Seus desenhos' }).getByRole('link', { name: /Sem título/ })).toBeVisible()
 })
 
+test('a local drawing keeps saving while the browser is offline', async ({ page, context }) => {
+  await createDrawing(page)
+  await context.setOffline(true)
+  await typeOnCanvas(page, 'Escrito sem rede')
+  await expect.poll(async () => (await storedScenes(page)).join(''), { timeout: 15_000 }).toContain('Escrito sem rede')
+  await expect(saved(page)).toBeVisible({ timeout: 15_000 })
+  await context.setOffline(false)
+})
+
+test('visiting the home page and the sign-in screen does not create the local database', async ({ page }) => {
+  await page.goto('/')
+  await page.goto('/app')
+  await expect(page.getByRole('button', { name: 'Usar sem entrar' })).toBeVisible()
+  const names = await page.evaluate(async () => (await indexedDB.databases()).map((db) => db.name))
+  expect(names).not.toContain('rabisco-local')
+})
+
 test('signing in with Google from the local mode leaves it and lists the Drive again', async ({ page }) => {
   const drive = await installFakeGoogle(page)
   drive.add({ name: 'Do Drive.excalidraw', content: '{"type":"excalidraw","version":2,"elements":[],"appState":{},"files":{}}' })
