@@ -13,9 +13,12 @@ rmSync(target, { recursive: true, force: true })
 cpSync(source, target, { recursive: true })
 console.log('Excalidraw fonts copied to public/excalidraw-assets/fonts')
 
-// src/index.css names Excalidraw font files directly (the landing page titles); a package update
-// renames them, so fail the build instead of shipping a page that silently falls back.
-const css = readFileSync(fileURLToPath(new URL('../src/index.css', import.meta.url)), 'utf8')
+// src/index.css (the landing page titles) and the kids page (public/kids, its title and offline
+// cache) name Excalidraw font files directly; a package update renames them, so fail the build
+// instead of shipping a page that silently falls back.
+const css = ['../src/index.css', '../public/kids/index.html', '../public/kids/sw.js']
+  .map((file) => readFileSync(fileURLToPath(new URL(file, import.meta.url)), 'utf8'))
+  .join('\n')
 const missing = [...css.matchAll(/\/excalidraw-assets\/fonts\/([\w/.-]+\.woff2)/g)]
   .map((match) => match[1])
   .filter((file) => !existsSync(`${target}/${file}`))

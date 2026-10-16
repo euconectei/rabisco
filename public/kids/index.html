@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Caderno de Traçar</title>
+<meta name="description" content="Caderno de Traçar: cobrir traços, letras, números e desenhos com a caneta ou o dedo. Feito para crianças pequenas, funciona sem internet.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#6965db">
+<link rel="manifest" href="/kids/manifest.webmanifest">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+/* Tracing notebook for small children (rabisco.dev/kids). A standalone static page, outside the
+   React app: no sign-in, no Drive, no links back to the editor. Drawings stay on the device.
+   Made for kids who can't read yet: every control is a picture; grown-up options sit behind a
+   press-and-hold button. Looks like Rabisco: Excalifont, the purple accent, Excalidraw colors.
+   JS and CSS target old Chrome (Android 5 tablets): no ?. or ??, no flex gap, no inset. */
+@font-face{
+  font-family:'Excalifont';
+  src:url('/excalidraw-assets/fonts/Excalifont/Excalifont-Regular-a88b72a24fb54c9f94e3b5fdaa7481c9.woff2') format('woff2');
+  font-display:swap;
+}
+:root{
+  --paper:#ffffff; --line:#eeedf9; --margin:#f3c0c4;
+  --ink:#1e1e1e; --muted:#6b6b76;
+  --track:#ecebfb; --dash:#9a97e6; --filled:#ffec99;
+  --accent:#6965db; --accent-ink:#ffffff; --go:#2f9e44;
+  --island:#ffffff; --island-edge:#e4e3f7; --shadow:rgba(30,30,60,.12);
+  --star:#f59f00; --star-off:#e2e1ef;
+  --c1:#1971c2; --c2:#e03131; --c3:#2f9e44; --c4:#f08c00; --c5:#9c36b5;
+  --shade:rgba(30,30,40,.5);
+  --hand:'Excalifont','Comic Sans MS',cursive;
+  --ui:system-ui,Roboto,'Segoe UI',sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#121212; --line:#1f1e27; --margin:#4a272c;
+    --ink:#e3e3e8; --muted:#a3a3b0;
+    --track:#26253a; --dash:#8a87e0; --filled:rgba(255,236,153,.36);
+    --accent:#a8a5ff; --accent-ink:#121212; --go:#69db7c;
+    --island:#232329; --island-edge:#34333f; --shadow:rgba(0,0,0,.4);
+    --star:#ffd43b; --star-off:#3a3946;
+    --c1:#74c0fc; --c2:#ff8787; --c3:#8ce99a; --c4:#ffc078; --c5:#e599f7;
+    --shade:rgba(0,0,0,.6); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121212; --line:#1f1e27; --margin:#4a272c;
+  --ink:#e3e3e8; --muted:#a3a3b0;
+  --track:#26253a; --dash:#8a87e0; --filled:rgba(255,236,153,.36);
+  --accent:#a8a5ff; --accent-ink:#121212; --go:#69db7c;
+  --island:#232329; --island-edge:#34333f; --shadow:rgba(0,0,0,.4);
+  --star:#ffd43b; --star-off:#3a3946;
+  --c1:#74c0fc; --c2:#ff8787; --c3:#8ce99a; --c4:#ffc078; --c5:#e599f7;
+  --shade:rgba(0,0,0,.6); color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;overscroll-behavior:none}
+body{background:var(--paper);color:var(--ink);font-family:var(--ui);margin:0;overflow:hidden;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+button{font-family:inherit;color:inherit;cursor:pointer}
+button:focus{outline:none}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.app{position:relative;height:100%}
+.screen{position:absolute;top:0;left:0;right:0;bottom:0}
+/* Excalidraw "island": the floating toolbar look */
+.island{background:var(--island);border:1px solid var(--island-edge);border-radius:12px;box-shadow:0 1px 6px var(--shadow)}
+.pic path{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+.ico{fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- Picker ---------- */
+#menu{overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-top:14px;padding-bottom:28px}
+.menu-in{max-width:1120px;margin:0 auto}
+.head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.head h1{font-family:var(--hand);font-weight:400;font-size:30px;line-height:1;margin:0;color:var(--accent)}
+.tabs{display:flex;flex-wrap:wrap;margin:0 -6px 14px}
+.tab{margin:6px;width:92px;height:80px;padding:8px;display:flex;align-items:center;justify-content:center}
+.tab svg{width:100%;height:100%}
+.tab .pic path{stroke-width:5}
+.tab[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));grid-gap:14px}
+.tile{display:flex;flex-direction:column;align-items:center;padding:12px 8px 8px;min-width:0}
+.tile svg.pic{width:100%;height:104px;color:var(--ink)}
+.tile svg.pic path{stroke-width:5}
+.stars{display:flex;margin-top:6px}
+.stars svg{width:22px;height:22px;margin:0 1px}
+.st-on{fill:var(--star)} .st-off{fill:var(--star-off)}
+.shot{padding:6px}
+.shot img{display:block;width:100%;height:110px;object-fit:contain;border-radius:8px;background:var(--paper)}
+.empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;padding:40px 0;color:var(--muted)}
+.empty svg{width:120px;height:120px}
+.empty p{font-family:var(--hand);font-size:24px;margin:10px 0 0}
+.gear{width:52px;height:52px;border-radius:50%;padding:0;position:relative;color:var(--muted)}
+.gear svg{width:26px;height:26px}
+.gear .ring{position:absolute;top:-4px;left:-4px;width:60px;height:60px;transform:rotate(-90deg)}
+.gear .ring circle{fill:none;stroke:var(--accent);stroke-width:4;stroke-dasharray:176;stroke-dashoffset:176}
+.gear.holding .ring circle{transition:stroke-dashoffset 1.5s linear;stroke-dashoffset:0}
+
+/* ---------- Grown-up panel ---------- */
+.overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--shade);display:flex;align-items:center;justify-content:center;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));z-index:5}
+.panel{padding:20px 22px;max-width:520px;width:100%}
+.panel h2{font-family:var(--hand);font-weight:400;font-size:30px;margin:0 0 4px;color:var(--accent)}
+.panel .why{margin:0 0 14px;color:var(--muted);font-size:15px;line-height:1.45}
+.row{display:flex;flex-wrap:wrap;align-items:center;margin:0 -5px}
+.row > *{margin:5px}
+.lbl{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;width:100%;margin-top:10px}
+.seg{display:flex;border:1px solid var(--island-edge);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--island);padding:8px 16px;min-height:44px;font-size:16px;font-weight:600}
+.seg button + button{border-left:1px solid var(--island-edge)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.pill{border:1px solid var(--island-edge);background:var(--island);border-radius:10px;padding:8px 14px;min-height:44px;font-size:16px;font-weight:600}
+.pill.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+/* ---------- Sheet ---------- */
+#sheet{display:flex;flex-direction:column}
+.bar{display:flex;align-items:center;padding-top:8px;padding-bottom:8px;
+  padding-left:max(12px, env(safe-area-inset-left, 0px));padding-right:max(12px, env(safe-area-inset-right, 0px))}
+.bar > *{margin:0 4px}
+.btn{width:60px;height:60px;display:flex;align-items:center;justify-content:center;padding:0;flex:none}
+.btn svg{width:32px;height:32px}
+.now{flex:1;min-width:0;height:60px;display:flex;justify-content:center}
+.now svg{height:100%;width:120px;color:var(--accent)}
+.now svg path{stroke-width:7}
+.crayons{display:flex;align-items:center;padding:6px 4px;flex:none}
+.cr{width:44px;height:44px;border-radius:50%;margin:0 4px;border:3px solid var(--island);box-shadow:0 0 0 1px var(--island-edge);padding:0}
+.cr[aria-pressed="true"]{box-shadow:0 0 0 3px var(--ink)}
+.stage{position:relative;flex:1;overflow:hidden;touch-action:none;
+  background-image:linear-gradient(90deg, transparent 52px, var(--margin) 52px, var(--margin) 54px, transparent 54px),
+    repeating-linear-gradient(180deg, transparent 0, transparent 41px, var(--line) 41px, var(--line) 43px)}
+.stage canvas{position:absolute;top:0;left:0;touch-action:none}
+
+/* ---------- Celebration ---------- */
+.card{padding:22px 26px 24px;text-align:center;max-width:460px;width:100%}
+.bigstars{display:flex;justify-content:center;margin-bottom:4px}
+.bigstars svg{width:96px;height:96px;margin:0 4px}
+.bigstars svg.on{animation:pop .5s cubic-bezier(.3,1.6,.5,1) both}
+.bigstars svg:nth-child(2).on{animation-delay:.15s}
+.bigstars svg:nth-child(3).on{animation-delay:.3s}
+@keyframes pop{0%{transform:scale(.2) rotate(-30deg);opacity:0}100%{transform:none;opacity:1}}
+.card h2{font-family:var(--hand);font-weight:400;font-size:40px;margin:0 0 16px;line-height:1.1}
+.acts{display:flex;justify-content:center}
+.act{margin:0 10px;width:96px;height:80px;display:flex;align-items:center;justify-content:center;padding:0}
+.act svg{width:44px;height:44px}
+.act.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);width:132px}
+.viewer{padding:10px;max-width:92%;max-height:88%;display:flex;flex-direction:column;align-items:flex-end}
+.viewer img{display:block;max-width:100%;max-height:70vh;border-radius:8px}
+.viewer .btn{margin-bottom:8px}
+@media (prefers-reduced-motion: reduce){ .bigstars svg.on{animation:none} .gear.holding .ring circle{transition:none} }
+@media (max-width:600px){ .tab{width:64px;height:58px} .btn{width:50px;height:50px} .cr{width:34px;height:34px;margin:0 2px} .now{display:none} }
+</style>
+</head>
+<body>
+<div class="app">
+  <section id="menu" class="screen" aria-label="Escolher desenho">
+    <div class="menu-in">
+      <div class="head">
+        <h1>Caderno de Traçar</h1>
+        <button class="gear island" id="gear" aria-label="Opções para adultos (segure)">
+          <svg class="ring" viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="28"/></svg>
+          <svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="4.5"/><path d="M16 3v4M16 25v4M3 16h4M25 16h4M6.8 6.8l2.8 2.8M22.4 22.4l2.8 2.8M6.8 25.2l2.8-2.8M22.4 9.6l2.8-2.8"/></svg>
+        </button>
+      </div>
+      <div class="tabs" id="tabs" role="group" aria-label="Cadernos"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <section id="sheet" class="screen" hidden aria-label="Folha de traçar">
+    <div class="bar">
+      <button class="btn island" id="b-menu" aria-label="Voltar ao caderno">
+        <svg class="ico" viewBox="0 0 32 32"><rect x="5" y="5" width="9" height="9" rx="2"/><rect x="18" y="5" width="9" height="9" rx="2"/><rect x="5" y="18" width="9" height="9" rx="2"/><rect x="18" y="18" width="9" height="9" rx="2"/></svg>
+      </button>
+      <button class="btn island" id="b-prev" aria-label="Anterior"><svg class="ico" viewBox="0 0 32 32"><path d="M20 6 10 16l10 10"/></svg></button>
+      <div class="now" id="now" aria-hidden="true"></div>
+      <button class="btn island" id="b-next" aria-label="Próximo"><svg class="ico" viewBox="0 0 32 32"><path d="M12 6l10 10-10 10"/></svg></button>
+      <button class="btn island" id="b-clear" aria-label="Apagar e começar de novo">
+        <svg class="ico" viewBox="0 0 32 32"><path d="M19 6 27 14 15 26H8l-3-3z"/><path d="M13 12l8 8"/><path d="M15 26h12"/></svg>
+      </button>
+      <div class="crayons island" id="crayons" role="group" aria-label="Cor do lápis"></div>
+    </div>
+    <div class="stage" id="stage">
+      <canvas id="guide"></canvas>
+      <canvas id="ink"></canvas>
+      <canvas id="hint"></canvas>
+    </div>
+    <div id="win" class="overlay" hidden>
+      <div class="card island" role="dialog" aria-modal="true" aria-labelledby="win-t">
+        <div class="bigstars" id="bigstars"></div>
+        <h2 id="win-t">Muito bem!</h2>
+        <div class="acts">
+          <button class="act island" id="w-again" aria-label="De novo">
+            <svg class="ico" viewBox="0 0 32 32"><path d="M7 16a9 9 0 1 0 3-6.7"/><path d="M6 5v6h6"/></svg>
+          </button>
+          <button class="act island main" id="w-next" aria-label="Próximo">
+            <svg class="ico" viewBox="0 0 32 32"><path d="M6 16h20M18 8l8 8-8 8"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="grown" class="overlay" hidden>
+    <div class="panel island" role="dialog" aria-modal="true" aria-labelledby="grown-t">
+      <h2 id="grown-t">Para os adultos</h2>
+      <p class="why">Os desenhos terminados ficam guardados só neste aparelho. Nada vai para a internet, e esta página não abre o Rabisco nem seus arquivos.</p>
+      <div class="row">
+        <span class="lbl">Espessura da linha</span>
+        <div class="seg" id="diff" role="group" aria-label="Espessura da linha">
+          <button id="d-facil" data-d="facil">Grossa</button>
+          <button id="d-medio" data-d="medio">Média</button>
+          <button id="d-dificil" data-d="dificil">Fina</button>
+        </div>
+        <span class="lbl">Aparelho</span>
+        <button class="pill" id="snd" aria-pressed="true">Som ligado</button>
+        <button class="pill" id="fs">Tela cheia</button>
+        <span class="lbl">Apagar</span>
+        <button class="pill" id="reset">Zerar estrelas</button>
+        <button class="pill" id="wipe">Apagar desenhos guardados</button>
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-top:14px">
+        <button class="pill main" id="grown-close">Pronto</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view" class="overlay" hidden>
+    <div class="viewer" role="dialog" aria-modal="true" aria-label="Desenho guardado">
+      <button class="btn island" id="view-close" aria-label="Fechar"><svg class="ico" viewBox="0 0 32 32"><path d="M8 8l16 16M24 8 8 24"/></svg></button>
+      <img id="view-img" alt="">
+    </div>
+  </div>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><path id="probe" d="M0 0"/></svg>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ================= Content =================
+   Each page: a w×h box in "units" and a list of strokes (SVG paths).
+   Stroke order and direction follow how the shape is written. */
+function it(id, name, say, w, h, p){ return {id:id, name:name, say:say, w:w, h:h, p:p}; }
+function circle(cx, cy, r){ // starts at the top, counterclockwise (how an "o" is written)
+  return 'M'+cx+' '+(cy-r)+' A'+r+' '+r+' 0 0 0 '+cx+' '+(cy+r)+' A'+r+' '+r+' 0 0 0 '+cx+' '+(cy-r);
+}
+function wheel(cx, cy, r){ return 'M'+(cx-r)+' '+cy+' A'+r+' '+r+' 0 0 0 '+(cx+r)+' '+cy+' A'+r+' '+r+' 0 0 0 '+(cx-r)+' '+cy; }
+function spiral(){
+  var d = '', a, r;
+  for (a = 0; a <= 6*Math.PI + 0.001; a += 0.12){
+    r = 4 + a*2.55;
+    d += (d ? ' L' : 'M') + (100 + r*Math.cos(a)).toFixed(1) + ' ' + (60 + r*Math.sin(a)).toFixed(1);
+  }
+  return d;
+}
+
+var LET = {
+  A:['M50 10 L15 110','M50 10 L85 110','M29 72 L71 72'],
+  B:['M22 10 L22 110','M22 10 L55 10 Q80 10 80 34 Q80 58 55 58 L22 58','M22 58 L60 58 Q86 58 86 84 Q86 110 60 110 L22 110'],
+  C:['M80 30 A35 50 0 1 0 80 90'],
+  D:['M22 10 L22 110','M22 10 L45 10 A40 50 0 0 1 45 110 L22 110'],
+  E:['M22 10 L22 110','M22 10 L78 10','M22 60 L70 60','M22 110 L78 110'],
+  F:['M22 10 L22 110','M22 10 L78 10','M22 60 L68 60'],
+  G:['M80 30 A35 50 0 1 0 86 70 L58 70'],
+  H:['M22 10 L22 110','M78 10 L78 110','M22 60 L78 60'],
+  I:['M50 10 L50 110'],
+  J:['M72 10 L72 82 A23 26 0 0 1 26 82'],
+  K:['M22 10 L22 110','M78 10 L22 66','M40 50 L80 110'],
+  L:['M22 10 L22 110 L78 110'],
+  M:['M15 110 L15 10 L50 70 L85 10 L85 110'],
+  N:['M20 110 L20 10 L80 110 L80 10'],
+  O:[circle(50, 60, 50).replace(/A50 50/g, 'A35 50')],
+  P:['M22 110 L22 10','M22 10 L55 10 A25 25 0 0 1 55 60 L22 60'],
+  Q:[circle(50, 60, 50).replace(/A50 50/g, 'A35 50'),'M60 85 L88 116'],
+  R:['M22 110 L22 10','M22 10 L55 10 A25 25 0 0 1 55 60 L22 60','M50 60 L80 110'],
+  S:['M78 26 C70 6 22 6 22 34 C22 60 80 58 80 86 C80 114 28 114 20 94'],
+  T:['M15 10 L85 10','M50 10 L50 110'],
+  U:['M20 10 L20 75 A30 35 0 0 0 80 75 L80 10'],
+  V:['M15 10 L50 110 L85 10'],
+  W:['M8 10 L28 110 L50 40 L72 110 L92 10'],
+  X:['M18 10 L82 110','M82 10 L18 110'],
+  Y:['M15 10 L50 60 L50 110','M85 10 L50 60'],
+  Z:['M18 10 L82 10 L18 110 L82 110']
+};
+var NUM = [
+  ['M50 10 A30 50 0 0 0 50 110 A30 50 0 0 0 50 10'],
+  ['M30 32 L56 10 L56 110'],
+  ['M24 34 C24 6 76 6 76 34 C76 58 40 80 22 110 L80 110'],
+  ['M24 22 C34 4 76 6 74 30 C72 50 50 56 44 56 C64 56 80 66 80 84 C80 108 40 116 22 98'],
+  ['M58 10 L16 78 L86 78','M66 40 L66 110'],
+  ['M76 10 L30 10 L26 50 C40 40 80 40 80 76 C80 112 34 116 22 98'],
+  ['M70 14 C40 4 22 40 24 80 A27 28 0 0 0 78 80 A27 28 0 0 0 24 80'],
+  ['M20 10 L80 10 L40 110'],
+  ['M50 58 A24 24 0 0 1 50 10 A24 24 0 0 1 50 58 A27 26 0 0 0 50 110 A27 26 0 0 0 50 58'],
+  ['M76 36 A26 25 0 0 0 24 36 A26 25 0 0 0 76 36 L76 110']
+];
+/* Lowercase cursive: ruled lines at top 15, middle 62, baseline 100, descender 135.
+   Each letter enters from the baseline on the left and exits to the right, as in school notebooks. */
+var DOT = 'M38 44 L42 47';
+var CUR = {
+  a:[100,['M6 96 C12 72 38 54 62 66 C44 56 20 66 20 86 C20 104 52 104 62 66 L60 92 C60 102 76 102 92 90']],
+  b:[100,['M6 96 C30 90 54 50 52 26 C50 8 30 12 32 36 L32 92 C40 104 62 100 62 80 C62 66 50 62 42 70 C54 70 70 68 88 64']],
+  c:[100,['M6 96 C12 72 42 52 66 68 C58 58 22 62 22 86 C22 104 60 104 86 90']],
+  d:[100,['M6 96 C12 72 38 54 62 66 C44 56 20 66 20 86 C20 104 52 104 62 66 L66 15 L60 92 C60 102 76 102 92 90']],
+  e:[100,['M6 92 C30 92 64 82 60 68 C56 56 26 62 24 82 C22 104 60 104 86 90']],
+  f:[100,['M6 96 C30 88 52 50 50 26 C48 8 28 12 32 40 L34 128 C34 138 22 136 24 124 C26 110 44 100 54 96 C64 92 74 92 88 90']],
+  g:[100,['M6 96 C12 72 38 54 62 66 C44 56 20 66 20 86 C20 104 52 104 62 66 L60 124 C58 138 34 138 34 126 C34 114 60 104 90 92']],
+  h:[100,['M6 96 C30 90 54 50 52 26 C50 8 30 12 32 36 L32 100 C34 66 64 56 64 82 L64 92 C64 102 80 102 94 90']],
+  i:[80,['M6 96 C20 92 34 78 40 64 L38 92 C38 102 56 102 72 90', DOT]],
+  j:[80,['M6 96 C20 92 34 78 40 64 L40 124 C38 138 16 138 18 126 C20 114 46 104 74 92', DOT]],
+  k:[100,['M6 96 C30 90 54 50 52 26 C50 8 30 12 32 36 L32 100 C34 74 60 58 64 70 C66 82 44 86 38 84 C52 86 54 100 66 100 C76 100 86 96 94 90']],
+  l:[90,['M6 96 C30 90 58 50 56 26 C54 8 34 12 36 36 L38 90 C40 102 60 102 82 90']],
+  m:[130,['M6 96 C14 92 20 78 22 64 L22 100 C24 66 52 56 52 82 L52 100 C54 66 84 56 84 82 L84 92 C84 102 104 102 122 90']],
+  n:[100,['M6 96 C14 92 20 78 22 64 L22 100 C24 66 56 54 56 82 L56 92 C56 102 74 102 92 90']],
+  o:[100,['M6 96 C12 74 30 58 48 62 C34 62 24 76 26 88 C28 104 60 102 62 82 C64 68 56 60 48 64 C58 70 76 68 92 64']],
+  p:[100,['M6 96 C14 92 20 78 24 64 L24 134 L25 90 C30 64 62 60 62 82 C62 104 40 102 26 96 C44 98 68 96 90 90']],
+  q:[100,['M6 96 C12 72 38 54 62 66 C44 56 20 66 20 86 C20 104 52 104 62 66 L60 132 C60 120 72 104 92 94']],
+  r:[90,['M6 96 C16 90 22 78 26 64 C32 68 40 68 46 62 C44 76 44 90 48 96 C54 102 68 100 84 90']],
+  s:[90,['M6 96 C18 92 30 78 38 62 C48 74 58 84 52 94 C46 102 30 100 26 92 C40 100 62 100 82 90']],
+  t:[90,['M6 96 C18 90 30 70 38 30 L36 90 C36 102 56 102 76 90', 'M22 56 L56 56']],
+  u:[100,['M6 96 C16 90 22 76 26 64 L24 88 C24 104 50 102 56 64 L56 92 C56 102 72 102 90 90']],
+  v:[100,['M6 92 C14 80 20 66 24 66 C26 80 34 98 42 100 C50 98 58 76 60 64 C64 70 76 70 90 64']],
+  w:[120,['M6 96 C14 90 20 78 24 64 L22 88 C22 104 46 102 50 72 C50 104 78 102 80 64 C82 72 94 70 110 64']],
+  x:[100,['M6 96 C16 88 26 62 36 66 C46 70 50 92 60 98 C66 102 78 98 88 90', 'M64 64 L30 100']],
+  y:[100,['M6 96 C14 90 20 78 24 64 L22 88 C22 104 50 102 56 64 L56 124 C54 138 30 138 30 126 C30 114 58 104 88 92']],
+  z:[100,['M14 68 C28 60 54 62 62 66 L22 100 C40 92 62 98 62 112 C62 128 40 134 36 120']]
+};
+var NUM_SAY = ['zero','um','dois','três','quatro','cinco','seis','sete','oito','nove'];
+
+var SETS = [
+  {id:'tracos', name:'Traços', items:[
+    it('t-deitado','Deitado','Linhas deitadas',200,120,['M20 25 L180 25','M20 60 L180 60','M20 95 L180 95']),
+    it('t-empe','Em pé','Linhas em pé',200,120,['M40 12 L40 108','M80 12 L80 108','M120 12 L120 108','M160 12 L160 108']),
+    it('t-tobogã','Tobogã','Linhas inclinadas',200,120,['M25 15 L65 105','M80 15 L120 105','M135 15 L175 105']),
+    it('t-zigue','Zigue-zague','Zigue-zague',200,120,['M10 90 L35 30 L60 90 L85 30 L110 90 L135 30 L160 90 L185 30']),
+    it('t-ondas','Ondas','Ondas do mar',200,120,['M10 60 Q27.5 15 45 60 T80 60 T115 60 T150 60 T185 60']),
+    it('t-pontes','Pontes','Pontes',200,120,['M10 95 A20 45 0 0 1 55 95 A20 45 0 0 1 100 95 A20 45 0 0 1 145 95 A20 45 0 0 1 190 95']),
+    it('t-bolas','Bolinhas','Bolinhas',200,120,[circle(40,60,24),circle(100,60,24),circle(160,60,24)]),
+    it('t-caracol','Caracol','Caracol',200,120,[spiral()])
+  ]},
+  {id:'letras', name:'Letras', items:Object.keys(LET).map(function(k){ return it('l-'+k, k, 'Letra '+k, 100, 120, LET[k]); })},
+  {id:'numeros', name:'Números', items:NUM.map(function(p, i){ return it('n-'+i, String(i), NUM_SAY[i], 100, 120, p); })},
+  {id:'cursiva', name:'Cursiva', pauta:[15, 62, 100, 135], items:Object.keys(CUR).map(function(k){ return it('c-'+k, k, 'Letra '+k, CUR[k][0], 140, CUR[k][1]); })},
+  {id:'desenhos', name:'Desenhos', items:[
+    it('d-carro','Carro','Carro',200,120,[
+      'M32 85 L15 85 L15 64 Q15 56 25 55 L55 52 L74 28 L130 28 L152 52 L180 56 Q190 58 190 68 L190 85 L170 85 A20 20 0 0 0 130 85 L72 85 A20 20 0 0 0 32 85',
+      wheel(52,88,14), wheel(150,88,14)]),
+    it('d-caminhao','Caminhão','Caminhão',220,120,[
+      'M12 88 L12 18 L130 18 L130 88','M136 88 L136 36 L176 36 L198 60 L208 62 L208 88',
+      'M12 88 L208 88',
+      wheel(42,94,14), wheel(102,94,14), wheel(176,94,14)]),
+    it('d-casa','Casa','Casa',160,150,['M20 70 L80 15 L140 70','M35 60 L35 140 L125 140 L125 60','M68 140 L68 100 L92 100 L92 140']),
+    it('d-sol','Sol','Sol',140,140,[
+      'M40 70 A30 30 0 0 1 100 70 A30 30 0 0 1 40 70',
+      'M110 70 L130 70','M98.3 98.3 L112.4 112.4','M70 110 L70 130','M41.7 98.3 L27.6 112.4',
+      'M30 70 L10 70','M41.7 41.7 L27.6 27.6','M70 30 L70 10','M98.3 41.7 L112.4 27.6']),
+    it('d-barco','Barco','Barco',180,140,['M12 88 L168 88 L142 124 L38 124 Z','M90 88 L90 12','M90 16 L148 76 L90 76']),
+    it('d-peixe','Peixe','Peixe',190,120,['M30 60 Q85 0 140 60 Q85 120 30 60','M140 60 L172 32 L172 88 Z']),
+    it('d-coracao','Coração','Coração',140,130,['M70 120 L18 62 A26 26 0 0 1 70 30 A26 26 0 0 1 122 62 Z']),
+    it('d-estrela','Estrela','Estrela',140,140,['M70 14 L105 122 L13 55 L127 55 L35 122 Z'])
+  ]}
+];
+
+var GALLERY = SETS.length;   // the "Meus desenhos" tab sits after the notebooks
+var TAB_ICONS = [3, 0, 2, 0, 0];   // which page of each notebook draws its tab button
+
+var DIFF = {
+  facil:  {band:66, thr:0.85},
+  medio:  {band:48, thr:0.90},
+  dificil:{band:34, thr:0.94}
+};
+var CRAYONS = ['--c1','--c2','--c3','--c4','--c5'];
+var STAR_D = 'M12 2l2.9 6.2 6.8.8-5 4.6 1.3 6.7L12 17l-6 3.3 1.3-6.7-5-4.6 6.8-.8z';
+var FRAME_D = ['M8 10 L92 10 L92 90 L8 90 Z', 'M18 78 L40 50 L56 66 L66 56 L82 78', 'M70 30 A6 6 0 1 0 70.1 30'];
+
+/* ================= Saved state (this device only) ================= */
+var KEY = 'cadernoTracar.v1';
+var store = {stars:{}, diff:'facil', sound:true, set:0, color:0};
+try { var raw = localStorage.getItem(KEY); if (raw){ var o = JSON.parse(raw); for (var k in o) store[k] = o[k]; } } catch(e){}
+if (!DIFF[store.diff]) store.diff = 'facil';
+if (!(store.set >= 0 && store.set <= GALLERY)) store.set = 0;
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e){} }
+
+/* Finished drawings, as JPEG data URLs in IndexedDB. Only the newest MAX_SHOTS are kept. */
+var MAX_SHOTS = 100, dbp = null;
+function db(cb){
+  if (!window.indexedDB){ cb(null); return; }
+  if (!dbp){
+    dbp = [];
+    try {
+      var req = indexedDB.open('caderno-de-tracar', 1);
+      req.onupgradeneeded = function(){ req.result.createObjectStore('drawings', {keyPath:'id'}); };
+      req.onsuccess = function(){ var w = dbp; dbp = req.result; w.forEach(function(f){ f(dbp); }); };
+      req.onerror = function(){ var w = dbp; dbp = false; w.forEach(function(f){ f(null); }); };
+    } catch(e){ dbp = false; }
+  }
+  if (dbp === false) cb(null); else if (Array.isArray(dbp)) dbp.push(cb); else cb(dbp);
+}
+function shots(cb){
+  db(function(d){
+    if (!d){ cb([]); return; }
+    try {
+      var r = d.transaction('drawings').objectStore('drawings').getAll();
+      r.onsuccess = function(){ cb(r.result.sort(function(a, b){ return b.id - a.id; })); };
+      r.onerror = function(){ cb([]); };
+    } catch(e){ cb([]); }
+  });
+}
+function keepShot(item, url){
+  db(function(d){
+    if (!d) return;
+    try {
+      var st = d.transaction('drawings', 'readwrite').objectStore('drawings');
+      st.put({id:Date.now(), item:item, png:url});
+      var keys = st.getAllKeys();
+      keys.onsuccess = function(){
+        var all = keys.result.sort(function(a, b){ return a - b; });
+        for (var i = 0; i < all.length - MAX_SHOTS; i++) st.delete(all[i]);
+      };
+    } catch(e){}
+  });
+}
+function wipeShots(done){
+  db(function(d){
+    if (!d){ done(); return; }
+    try { var t = d.transaction('drawings', 'readwrite'); t.objectStore('drawings').clear(); t.oncomplete = done; } catch(e){ done(); }
+  });
+}
+
+/* ================= Helpers ================= */
+function $(id){ return document.getElementById(id); }
+function tok(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function starsSvg(n, cls){
+  var s = '';
+  for (var i = 0; i < 3; i++) s += '<svg viewBox="0 0 24 24"'+(cls && i < n ? ' class="'+cls+'"' : '')+'><path class="'+(i < n ? 'st-on' : 'st-off')+'" d="'+STAR_D+'"/></svg>';
+  return s;
+}
+function picSvg(w, h, paths){
+  var pad = Math.max(w, h) * 0.08;
+  return '<svg class="pic" viewBox="'+(-pad)+' '+(-pad)+' '+(w + pad*2)+' '+(h + pad*2)+'" preserveAspectRatio="xMidYMid meet" aria-hidden="true">'+
+    paths.map(function(d){ return '<path vector-effect="non-scaling-stroke" d="'+d+'"/>'; }).join('')+'</svg>';
+}
+function itemPic(item){ return picSvg(item.w, item.h, item.p); }
+var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---- sound ---- */
+var actx = null;
+function audio(){
+  if (!store.sound) return null;
+  if (!actx){
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try { actx = new AC(); } catch(e){ return null; }
+  }
+  if (actx.state === 'suspended' && actx.resume) actx.resume();
+  return actx;
+}
+function chime(){
+  var a = audio(); if (!a) return;
+  [523.25, 659.25, 783.99, 1046.5].forEach(function(f, i){
+    var o = a.createOscillator(), g = a.createGain(), t = a.currentTime + i*0.12;
+    o.type = 'triangle'; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + 0.55);
+  });
+}
+// Kids can't read yet, so pages and praise are spoken.
+function speak(text, delay){
+  if (!store.sound || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+  setTimeout(function(){
+    try {
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = 'pt-BR'; u.rate = 0.9; u.pitch = 1.1;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    } catch(e){}
+  }, delay || 0);
+}
+
+/* ================= Picker ================= */
+function renderTabs(){
+  var html = SETS.map(function(s, i){
+    return '<button class="tab island" id="tab-'+s.id+'" data-i="'+i+'" aria-label="'+s.name+'" aria-pressed="'+(i === store.set)+'">'+itemPic(s.items[TAB_ICONS[i]])+'</button>';
+  }).join('');
+  html += '<button class="tab island" id="tab-meus" data-i="'+GALLERY+'" aria-label="Meus desenhos" aria-pressed="'+(store.set === GALLERY)+'">'+picSvg(100, 100, FRAME_D)+'</button>';
+  $('tabs').innerHTML = html;
+}
+function renderGrid(){
+  if (store.set === GALLERY){ renderGallery(); return; }
+  $('grid').innerHTML = SETS[store.set].items.map(function(item, i){
+    return '<button class="tile island" data-i="'+i+'" aria-label="'+item.say+'">'+itemPic(item)+
+      '<span class="stars" aria-hidden="true">'+starsSvg(store.stars[item.id] || 0)+'</span></button>';
+  }).join('');
+}
+var shown = [];
+function renderGallery(){
+  $('grid').innerHTML = '';
+  shots(function(list){
+    if (store.set !== GALLERY) return;
+    shown = list;
+    if (!list.length){
+      $('grid').innerHTML = '<div class="empty">'+picSvg(100, 100, FRAME_D)+'<p>Termine um desenho para ele aparecer aqui</p></div>';
+      return;
+    }
+    $('grid').innerHTML = list.map(function(s, i){
+      return '<button class="tile shot island" data-shot="'+i+'" aria-label="Desenho guardado"><img src="'+s.png+'" alt=""></button>';
+    }).join('');
+  });
+}
+function renderSettings(){
+  Array.prototype.forEach.call($('diff').querySelectorAll('button'), function(b){
+    b.setAttribute('aria-pressed', String(b.getAttribute('data-d') === store.diff));
+  });
+  $('snd').setAttribute('aria-pressed', String(store.sound));
+  $('snd').textContent = store.sound ? 'Som ligado' : 'Som desligado';
+}
+function closest(el, sel){ return el && el.closest ? el.closest(sel) : null; }
+$('tabs').addEventListener('click', function(e){
+  var b = closest(e.target, '.tab'); if (!b) return;
+  store.set = +b.getAttribute('data-i'); save(); renderTabs(); renderGrid();
+  speak(b.getAttribute('aria-label'));
+});
+$('grid').addEventListener('click', function(e){
+  var s = closest(e.target, '.shot');
+  if (s){ $('view-img').src = shown[+s.getAttribute('data-shot')].png; $('view').hidden = false; return; }
+  var b = closest(e.target, '.tile'); if (!b) return;
+  audio(); openItem(store.set, +b.getAttribute('data-i'), true);
+});
+$('view-close').addEventListener('click', function(){ $('view').hidden = true; $('view-img').src = ''; });
+
+/* Grown-up options open only after holding the gear for 1.5 s, so a tap from the child does nothing.
+   Keyboard activation (no pointer) opens it directly. */
+var holdT = null, gear = $('gear');
+function holdStop(){ clearTimeout(holdT); holdT = null; gear.className = 'gear island'; }
+gear.addEventListener('pointerdown', function(e){
+  e.preventDefault();
+  gear.className = 'gear island holding';
+  holdT = setTimeout(function(){ holdStop(); openGrown(); }, 1500);
+});
+['pointerup','pointerleave','pointercancel'].forEach(function(t){ gear.addEventListener(t, holdStop); });
+gear.addEventListener('click', function(e){ if (e.detail === 0) openGrown(); });
+function openGrown(){ renderSettings(); $('grown').hidden = false; $('grown-close').focus(); }
+$('grown-close').addEventListener('click', function(){ $('grown').hidden = true; renderGrid(); });
+$('diff').addEventListener('click', function(e){
+  var d = e.target.getAttribute('data-d'); if (!d) return;
+  store.diff = d; save(); renderSettings();
+});
+$('snd').addEventListener('click', function(){ store.sound = !store.sound; save(); renderSettings(); if (store.sound) chime(); });
+// Two taps to confirm: the viewer's confirm() dialog is unavailable on some setups.
+function twoTaps(btn, label, armed, action){
+  var t = null;
+  btn.addEventListener('click', function(){
+    if (!t){ btn.textContent = armed; t = setTimeout(function(){ t = null; btn.textContent = label; }, 3000); return; }
+    clearTimeout(t); t = null; action(function(done){ btn.textContent = done; });
+  });
+}
+twoTaps($('reset'), 'Zerar estrelas', 'Toque de novo para zerar', function(say){ store.stars = {}; save(); say('Estrelas zeradas'); });
+twoTaps($('wipe'), 'Apagar desenhos guardados', 'Toque de novo para apagar', function(say){ wipeShots(function(){ say('Desenhos apagados'); }); });
+$('fs').addEventListener('click', function(){
+  var el = document.documentElement;
+  var fn = el.requestFullscreen || el.webkitRequestFullscreen;
+  var btn = this;
+  if (!fn){ btn.textContent = 'Tela cheia indisponível'; return; }
+  try {
+    var r = fn.call(el);
+    if (r && r.catch) r.catch(function(){ btn.textContent = 'Tela cheia indisponível aqui'; });
+  } catch(err){ btn.textContent = 'Tela cheia indisponível aqui'; }
+});
+
+/* ================= Tracing sheet ================= */
+var stage = $('stage'), cvG = $('guide'), cvI = $('ink'), cvH = $('hint');
+var gx = cvG.getContext('2d'), ix = cvI.getContext('2d'), hx = cvH.getContext('2d');
+var probe = $('probe');
+var cache = {};
+var cur = null;     // {set, idx, item, strokes, ink, inkTotal, inkGood, done}
+var view = {W:0, H:0, s:1, ox:0, oy:0, ratio:1, band:60};
+var colors = {};
+var penSeen = false, activeId = null, last = null, curStroke = null, idleAt = 0;
+
+function readColors(){
+  ['--track','--dash','--filled','--go','--accent','--paper','--margin'].concat(CRAYONS).forEach(function(n){ colors[n] = tok(n); });
+}
+
+function sample(item){
+  if (cache[item.id]) return cache[item.id];
+  var out = item.p.map(function(d){
+    probe.setAttribute('d', d);
+    var L = probe.getTotalLength(), n = Math.max(2, Math.ceil(L / 1.2)), pts = new Float32Array((n + 1) * 2);
+    var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (var i = 0; i <= n; i++){
+      var p = probe.getPointAtLength(L * i / n);
+      pts[i*2] = p.x; pts[i*2+1] = p.y;
+      if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x; if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y;
+    }
+    return {d:d, path:(window.Path2D ? new Path2D(d) : null), pts:pts, n:n + 1, box:[x0, y0, x1, y1], len:L};
+  });
+  cache[item.id] = out;
+  return out;
+}
+
+function openItem(setIdx, idx, announce){
+  var item = SETS[setIdx].items[idx];
+  var base = sample(item);
+  cur = {set:setIdx, idx:idx, item:item, ink:[], inkTotal:0, inkGood:0, done:false,
+    strokes: base.map(function(b){ return {b:b, cov:new Uint8Array(b.n), count:0}; })};
+  $('now').innerHTML = itemPic(item);
+  $('menu').hidden = true; $('sheet').hidden = false; $('win').hidden = true;
+  layout();
+  idleAt = 0;
+  if (announce) speak(item.say);
+}
+function backToMenu(){
+  $('sheet').hidden = true; $('menu').hidden = false; cur = null;
+  renderGrid();
+}
+
+function layout(){
+  if (!cur) return;
+  readColors();
+  var W = stage.clientWidth, H = stage.clientHeight;
+  var ratio = Math.min(window.devicePixelRatio || 1, 2);
+  [cvG, cvI, cvH].forEach(function(c){
+    c.width = Math.round(W * ratio); c.height = Math.round(H * ratio);
+    c.style.width = W + 'px'; c.style.height = H + 'px';
+  });
+  [gx, ix, hx].forEach(function(c){ c.setTransform(ratio, 0, 0, ratio, 0, 0); });
+  var band = DIFF[store.diff].band * Math.max(0.55, Math.min(1, Math.min(W, H) / 650));
+  var pad = Math.max(24, band * 0.9);
+  var s = Math.min((W - pad*2) / cur.item.w, (H - pad*2) / cur.item.h);
+  view = {W:W, H:H, s:s, ox:(W - cur.item.w*s)/2, oy:(H - cur.item.h*s)/2, ratio:ratio, band:band};
+  drawGuide(); drawInk();
+}
+
+function drawGuide(){
+  var c = gx, v = view;
+  c.clearRect(0, 0, v.W, v.H);
+  var pauta = SETS[cur.set].pauta;
+  if (pauta) pauta.forEach(function(y, i){   // notebook ruling: the baseline is the red one
+    var base = i === 2, py = Math.round(v.oy + y*v.s);
+    c.globalAlpha = base ? 0.9 : 0.6;
+    c.fillStyle = base ? colors['--margin'] : colors['--dash'];
+    c.fillRect(0, py - (base ? 1.5 : 1), v.W, base ? 3 : 2);
+  });
+  c.globalAlpha = 1;
+  c.save();
+  c.translate(v.ox, v.oy); c.scale(v.s, v.s);
+  c.lineCap = 'round'; c.lineJoin = 'round';
+  cur.strokes.forEach(function(st){
+    c.strokeStyle = colors['--track']; c.lineWidth = v.band / v.s;
+    strokePath(c, st.b);
+  });
+  if (c.setLineDash) c.setLineDash([2 / v.s, 14 / v.s]);
+  c.strokeStyle = colors['--dash']; c.lineWidth = 6 / v.s;
+  cur.strokes.forEach(function(st){ strokePath(c, st.b); });
+  if (c.setLineDash) c.setLineDash([]);
+  c.restore();
+  cur.strokes.forEach(function(st){
+    for (var i = 0; i < st.b.n; i++) if (st.cov[i]) paintCov(st.b.pts[i*2], st.b.pts[i*2+1]);
+  });
+}
+function strokePath(c, b){
+  if (b.path){ c.stroke(b.path); return; }
+  c.beginPath(); c.moveTo(b.pts[0], b.pts[1]);
+  for (var i = 1; i < b.n; i++) c.lineTo(b.pts[i*2], b.pts[i*2+1]);
+  c.stroke();
+}
+function paintCov(ux, uy){
+  gx.fillStyle = colors['--filled'];
+  gx.beginPath(); gx.arc(view.ox + ux*view.s, view.oy + uy*view.s, view.band * 0.5, 0, Math.PI*2); gx.fill();
+}
+
+function drawInk(){
+  ix.clearRect(0, 0, view.W, view.H);
+  ix.lineCap = 'round'; ix.lineJoin = 'round';
+  cur.ink.forEach(function(st){
+    ix.strokeStyle = colors[st.c];
+    var p = st.pts;
+    if (p.length === 3){ dot(p[0], p[1], p[2], st.c); return; }
+    for (var i = 3; i < p.length; i += 3) seg(p[i-3], p[i-2], p[i], p[i+1], p[i+2]);
+  });
+}
+function seg(ax, ay, bx, by, w){
+  var v = view;
+  ix.lineWidth = w;
+  ix.beginPath(); ix.moveTo(v.ox + ax*v.s, v.oy + ay*v.s); ix.lineTo(v.ox + bx*v.s, v.oy + by*v.s); ix.stroke();
+}
+function dot(ux, uy, w, c){
+  ix.fillStyle = colors[c];
+  ix.beginPath(); ix.arc(view.ox + ux*view.s, view.oy + uy*view.s, w/2, 0, Math.PI*2); ix.fill();
+}
+
+/* Checks one ink point (in units): marks the guide it covers and tracks neatness. */
+function hit(ux, uy){
+  var tol = (view.band * 0.62) / view.s, tol2 = tol*tol, ta = Math.max(tol, (view.band * 0.5 + 6) / view.s), ta2 = ta*ta, near = false;
+  for (var k = 0; k < cur.strokes.length; k++){
+    var st = cur.strokes[k], b = st.b, box = b.box;
+    if (ux < box[0] - ta || ux > box[2] + ta || uy < box[1] - ta || uy > box[3] + ta) continue;
+    var pts = b.pts, cov = st.cov;
+    for (var i = 0; i < b.n; i++){
+      var dx = pts[i*2] - ux, dy = pts[i*2+1] - uy, d2 = dx*dx + dy*dy;
+      if (d2 < ta2){
+        near = true;
+        if (d2 < tol2 && !cov[i]){ cov[i] = 1; st.count++; paintCov(pts[i*2], pts[i*2+1]); }
+      }
+    }
+  }
+  cur.inkTotal++; if (near) cur.inkGood++;
+}
+
+function toUnits(e){
+  var r = cvI.getBoundingClientRect();
+  return {x:(e.clientX - r.left - view.ox) / view.s, y:(e.clientY - r.top - view.oy) / view.s};
+}
+function widthFor(e){
+  if (e.pointerType === 'pen'){
+    var p = e.pressure > 0 ? e.pressure : 0.5;
+    return 9 + p * 12;
+  }
+  return 14;
+}
+function addPoint(e){
+  var u = toUnits(e), w = widthFor(e);
+  if (last){
+    ix.strokeStyle = colors[curStroke.c];
+    seg(last.x, last.y, u.x, u.y, w);
+    // check every ~3px of travel so fast strokes don't skip parts of the guide
+    var dx = u.x - last.x, dy = u.y - last.y, dist = Math.sqrt(dx*dx + dy*dy) * view.s, steps = Math.max(1, Math.ceil(dist / 3));
+    for (var i = 1; i <= steps; i++) hit(last.x + dx*i/steps, last.y + dy*i/steps);
+  } else {
+    dot(u.x, u.y, w, curStroke.c); hit(u.x, u.y);
+  }
+  curStroke.pts.push(u.x, u.y, w);
+  last = u;
+}
+
+cvH.style.pointerEvents = 'none';
+cvI.addEventListener('pointerdown', function(e){
+  if (!cur || cur.done) return;
+  if (e.pointerType === 'pen') penSeen = true;
+  if (penSeen && e.pointerType === 'touch') return;   // palm resting on the screen
+  if (activeId !== null) return;
+  e.preventDefault();
+  audio();
+  activeId = e.pointerId;
+  try { cvI.setPointerCapture(e.pointerId); } catch(err){}
+  last = null;
+  curStroke = {c:CRAYONS[store.color], pts:[]};
+  cur.ink.push(curStroke);
+  addPoint(e);
+  hx.clearRect(0, 0, view.W, view.H);
+});
+cvI.addEventListener('pointermove', function(e){
+  if (e.pointerId !== activeId || !cur) return;
+  var list = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
+  if (!list || !list.length) list = [e];
+  for (var i = 0; i < list.length; i++) addPoint(list[i]);
+});
+function endStroke(e){
+  if (e.pointerId !== activeId) return;
+  activeId = null; last = null; curStroke = null;
+  idleAt = Date.now();
+  check();
+}
+cvI.addEventListener('pointerup', endStroke);
+cvI.addEventListener('pointercancel', endStroke);
+document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+
+function ratioOf(st){ return st.count / st.b.n; }
+function check(){
+  if (!cur || cur.done) return;
+  var thr = DIFF[store.diff].thr, all = 0, tot = 0, ok = true;
+  cur.strokes.forEach(function(st){ all += st.count; tot += st.b.n; if (ratioOf(st) < thr - 0.12) ok = false; });
+  if (!ok || all / tot < thr) return;
+  cur.done = true;
+  var acc = cur.inkTotal ? cur.inkGood / cur.inkTotal : 1;
+  var n = acc >= 0.85 ? 3 : acc >= 0.6 ? 2 : 1;
+  if ((store.stars[cur.item.id] || 0) < n){ store.stars[cur.item.id] = n; save(); }
+  snapshot();
+  setTimeout(function(){ celebrate(n); }, 250);
+}
+// Keeps the finished page (paper, guide and ink) as a JPEG, at most 900 px wide.
+function snapshot(){
+  try {
+    var k = Math.min(1, 900 / view.W), c = document.createElement('canvas');
+    c.width = Math.round(view.W * k); c.height = Math.round(view.H * k);
+    var x = c.getContext('2d');
+    x.fillStyle = colors['--paper']; x.fillRect(0, 0, c.width, c.height);
+    x.drawImage(cvG, 0, 0, c.width, c.height);
+    x.drawImage(cvI, 0, 0, c.width, c.height);
+    keepShot(cur.item.id, c.toDataURL('image/jpeg', 0.85));
+  } catch(e){}
+}
+var PRAISE = ['Você conseguiu!', 'Muito bem!', 'Que capricho!'];
+function celebrate(n){
+  $('bigstars').innerHTML = starsSvg(n, 'on');
+  $('win-t').textContent = PRAISE[n-1];
+  $('win').hidden = false;
+  chime();
+  speak(PRAISE[n-1], 600);
+  $('w-next').focus();
+}
+function go(delta){
+  var items = SETS[cur.set].items, i = (cur.idx + delta + items.length) % items.length;
+  openItem(cur.set, i, true);
+}
+$('b-menu').addEventListener('click', backToMenu);
+$('b-prev').addEventListener('click', function(){ go(-1); });
+$('b-next').addEventListener('click', function(){ go(1); });
+$('b-clear').addEventListener('click', function(){ openItem(cur.set, cur.idx, false); });
+$('w-again').addEventListener('click', function(){ openItem(cur.set, cur.idx, false); });
+$('w-next').addEventListener('click', function(){ go(1); });
+
+function renderCrayons(){
+  $('crayons').innerHTML = CRAYONS.map(function(c, i){
+    return '<button class="cr" data-i="'+i+'" style="background:var('+c+')" aria-label="Lápis '+(i+1)+'" aria-pressed="'+(i === store.color)+'"></button>';
+  }).join('');
+}
+$('crayons').addEventListener('click', function(e){
+  var i = e.target.getAttribute('data-i'); if (i === null) return;
+  store.color = +i; save(); renderCrayons();
+});
+
+/* ---- animated hint: a dot showing where to start and which way to go ---- */
+var hintT0 = 0;
+function nextStroke(){
+  var thr = DIFF[store.diff].thr;
+  for (var k = 0; k < cur.strokes.length; k++) if (ratioOf(cur.strokes[k]) < thr) return cur.strokes[k];
+  return null;
+}
+function hintLoop(now){
+  requestAnimationFrame(hintLoop);
+  if (!cur || cur.done || activeId !== null || $('sheet').hidden) return;
+  if (idleAt && Date.now() - idleAt < 900) return;
+  var v = view;
+  hx.clearRect(0, 0, v.W, v.H);
+  var st = nextStroke(); if (!st) return;
+  var b = st.b, i0 = 0;
+  while (i0 < b.n - 1 && st.cov[i0]) i0++;
+  var sx = v.ox + b.pts[i0*2]*v.s, sy = v.oy + b.pts[i0*2+1]*v.s;
+  var r = Math.max(14, v.band * 0.36);
+  var pulse = reduceMotion ? 0 : (Math.sin(now / 260) + 1) / 2;
+  hx.fillStyle = colors['--go'];
+  hx.globalAlpha = 0.25; hx.beginPath(); hx.arc(sx, sy, r * (1.25 + pulse*0.35), 0, Math.PI*2); hx.fill();
+  hx.globalAlpha = 1; hx.beginPath(); hx.arc(sx, sy, r, 0, Math.PI*2); hx.fill();
+  hx.fillStyle = colors['--paper']; hx.beginPath(); hx.arc(sx, sy, r*0.38, 0, Math.PI*2); hx.fill();
+  if (reduceMotion) return;
+  var remain = (b.n - 1 - i0) * (b.len / (b.n - 1)) * v.s;
+  var dur = Math.max(900, remain / 260 * 1000), cycle = dur + 1100;
+  if (!hintT0) hintT0 = now;
+  var t = ((now - hintT0) % cycle) / dur;
+  if (t > 1) return;
+  var j = Math.round(i0 + (b.n - 1 - i0) * t);
+  for (var q = 0; q < 14; q++){
+    var jj = j - q * 2; if (jj < i0) break;
+    hx.globalAlpha = 0.9 * (1 - q / 14);
+    hx.fillStyle = colors['--accent'];
+    hx.beginPath(); hx.arc(v.ox + b.pts[jj*2]*v.s, v.oy + b.pts[jj*2+1]*v.s, r * 0.55 * (1 - q/20), 0, Math.PI*2); hx.fill();
+  }
+  hx.globalAlpha = 1;
+}
+requestAnimationFrame(hintLoop);
+
+/* ---- size and theme ---- */
+var rT = null;
+window.addEventListener('resize', function(){ clearTimeout(rT); rT = setTimeout(layout, 120); });
+function onTheme(){ if (cur){ readColors(); drawGuide(); drawInk(); } }
+if (window.matchMedia){
+  var mq = matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', onTheme); else if (mq.addListener) mq.addListener(onTheme);
+}
+if (window.MutationObserver) new MutationObserver(onTheme).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+
+renderTabs(); renderGrid(); renderCrayons();
+
+// Offline after the first visit; the tablet is often without Wi-Fi.
+if ('serviceWorker' in navigator && location.protocol === 'https:'){
+  navigator.serviceWorker.register('/kids/sw.js', {scope:'/kids/'}).catch(function(){});
+}
+})();
+</script>
+</body>
+</html>
