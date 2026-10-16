@@ -1,6 +1,15 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
-import { BASE_URL, LANGUAGES, renderLanding, seoFor, softwareApplicationJsonLd } from '../.prerender/prerender.js'
+import {
+  BASE_URL,
+  LANGUAGES,
+  renderLanding,
+  renderSupport,
+  renderWhatsNew,
+  seoFor,
+  secondaryPageSeo,
+  softwareApplicationJsonLd,
+} from '../.prerender/prerender.js'
 
 const DIST = resolve('dist')
 
@@ -31,18 +40,8 @@ const INLINE_LANG_SCRIPT = `(function () {
         document.documentElement.lang = lang
       })()`
 
-function hreflangLinks() {
-  return [
-    `<link rel="alternate" hreflang="pt-BR" href="${BASE_URL}/" />`,
-    `<link rel="alternate" hreflang="en" href="${BASE_URL}/en/" />`,
-    `<link rel="alternate" hreflang="x-default" href="${BASE_URL}/" />`,
-  ].join('\n    ')
-}
-
-function headFor(lang) {
-  const seo = seoFor(lang)
-  const jsonLd = softwareApplicationJsonLd(lang)
-  return [
+function headFor(meta) {
+  const parts = [
     '<meta charset="UTF-8" />',
     '<link rel="icon" type="image/svg+xml" href="/favicon.svg" />',
     '<link rel="apple-touch-icon" href="/icons/icon-256.png" />',
@@ -51,50 +50,75 @@ function headFor(lang) {
     '<meta name="color-scheme" content="light dark" />',
     '<link rel="manifest" href="/manifest.webmanifest" />',
     '',
-    `<title>${escapeHtml(seo.title)}</title>`,
-    `<meta name="description" content="${escapeHtml(seo.description)}" />`,
+    `<title>${escapeHtml(meta.title)}</title>`,
+    `<meta name="description" content="${escapeHtml(meta.description)}" />`,
     '<meta name="google-adsense-account" content="ca-pub-6019782051330616" />',
-    `<link rel="canonical" href="${seo.url}" />`,
+    `<link rel="canonical" href="${meta.url}" />`,
     '<meta name="robots" content="index, follow" />',
     '',
     '<meta property="og:type" content="website" />',
     '<meta property="og:site_name" content="Rabisco" />',
-    `<meta property="og:title" content="${escapeHtml(seo.title)}" />`,
-    `<meta property="og:description" content="${escapeHtml(seo.description)}" />`,
-    `<meta property="og:url" content="${seo.url}" />`,
-    `<meta property="og:locale" content="${seo.ogLocale}" />`,
-    `<meta property="og:image" content="${seo.ogImageUrl}" />`,
+    `<meta property="og:title" content="${escapeHtml(meta.title)}" />`,
+    `<meta property="og:description" content="${escapeHtml(meta.description)}" />`,
+    `<meta property="og:url" content="${meta.url}" />`,
+    `<meta property="og:locale" content="${meta.ogLocale}" />`,
+    `<meta property="og:image" content="${meta.ogImageUrl}" />`,
     '<meta property="og:image:width" content="1280" />',
     '<meta property="og:image:height" content="800" />',
     '<meta name="twitter:card" content="summary_large_image" />',
-    `<meta name="twitter:title" content="${escapeHtml(seo.title)}" />`,
-    `<meta name="twitter:description" content="${escapeHtml(seo.description)}" />`,
-    `<meta name="twitter:image" content="${seo.ogImageUrl}" />`,
-    '',
-    hreflangLinks(),
-    '',
-    `<script type="application/ld+json">${jsonLd}</script>`,
-    '',
-    `<script>${INLINE_LANG_SCRIPT}</script>`,
-    assetTags,
-  ].join('\n    ')
+    `<meta name="twitter:title" content="${escapeHtml(meta.title)}" />`,
+    `<meta name="twitter:description" content="${escapeHtml(meta.description)}" />`,
+    `<meta name="twitter:image" content="${meta.ogImageUrl}" />`,
+  ]
+  if (meta.hreflang) {
+    parts.push(
+      '',
+      `<link rel="alternate" hreflang="pt-BR" href="${BASE_URL}/" />`,
+      `<link rel="alternate" hreflang="en" href="${BASE_URL}/en/" />`,
+      `<link rel="alternate" hreflang="x-default" href="${BASE_URL}/" />`,
+    )
+  }
+  if (meta.jsonLd) {
+    parts.push('', `<script type="application/ld+json">${meta.jsonLd}</script>`)
+  }
+  parts.push('', `<script>${INLINE_LANG_SCRIPT}</script>`, assetTags)
+  return parts.join('\n    ')
 }
 
-for (const lang of LANGUAGES) {
-  const body = renderLanding(lang)
-  const html = `<!doctype html>
+function pageHtml(lang, body, meta) {
+  return `<!doctype html>
 <html lang="${lang}">
   <head>
-    ${headFor(lang)}
+    ${headFor(meta)}
   </head>
   <body>
     <div id="root">${body}</div>
   </body>
 </html>
 `
-  const outPath = resolve(DIST, lang === 'en' ? 'en/index.html' : 'index.html')
-  mkdirSync(dirname(outPath), { recursive: true })
-  writeFileSync(outPath, html)
 }
 
-console.log(`prerendered landing for: ${LANGUAGES.join(', ')}`)
+function writeHtml(filePath, html) {
+  mkdirSync(dirname(filePath), { recursive: true })
+  writeFileSync(filePath, html)
+}
+
+// Landing: one file per language (hreflang + JSON-LD).
+for (const lang of LANGUAGES) {
+  const seo = seoFor(lang)
+  writeHtml(
+    resolve(DIST, lang === 'en' ? 'en/index.html' : 'index.html'),
+    pageHtml(lang, renderLanding(lang), { ...seo, hreflang: true, jsonLd: softwareApplicationJsonLd(lang) }),
+  )
+}
+
+// Secondary public pages: pt-BR only (no language-paired URL).
+const secondary = [
+  { path: 'whats-new', render: renderWhatsNew, seo: secondaryPageSeo('whats-new') },
+  { path: 'apoie', render: renderSupport, seo: secondaryPageSeo('apoie') },
+]
+for (const page of secondary) {
+  writeHtml(resolve(DIST, `${page.path}/index.html`), pageHtml('pt-BR', page.render('pt-BR'), page.seo))
+}
+
+console.log(`prerendered landing for: ${LANGUAGES.join(', ')} and pages: ${secondary.map((p) => p.path).join(', ')}`)

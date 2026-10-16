@@ -28,7 +28,7 @@ export default function SupportPage() {
   }, [payload])
 
   // React Router keeps the history index in history.state; 0 means the page was opened directly.
-  const canGoBack = ((window.history.state as { idx?: number } | null)?.idx ?? 0) > 0
+  const canGoBack = typeof window !== 'undefined' && ((window.history.state as { idx?: number } | null)?.idx ?? 0) > 0
 
   async function copy() {
     try {

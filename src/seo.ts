@@ -59,3 +59,35 @@ export function softwareApplicationJsonLd(lang: Language): string {
     sameAs: ['https://github.com/euconectei/rabisco'],
   })
 }
+
+export type SecondaryPage = 'whats-new' | 'apoie'
+
+const SECONDARY_SEO: Record<SecondaryPage, { path: string; title: string; description: string }> = {
+  'whats-new': {
+    path: 'whats-new',
+    title: 'Novidades do Rabisco',
+    description: 'O que mudou no Rabisco recentemente, em linguagem simples.',
+  },
+  apoie: {
+    path: 'apoie',
+    title: 'Apoie o Rabisco',
+    description: 'O Rabisco é grátis e de código aberto. Ajude a manter o projeto no ar com um Pix de qualquer valor.',
+  },
+}
+
+export function secondaryPageSeo(page: SecondaryPage): {
+  url: string
+  title: string
+  description: string
+  ogLocale: string
+  ogImageUrl: string
+} {
+  const seo = SECONDARY_SEO[page]
+  return {
+    url: `${BASE_URL}/${seo.path}`,
+    title: seo.title,
+    description: seo.description,
+    ogLocale: 'pt_BR',
+    ogImageUrl: `${BASE_URL}/landing/pt-BR-canvas-light.webp`,
+  }
+}
