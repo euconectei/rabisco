@@ -44,6 +44,35 @@ export const en: Messages = {
       text: 'Export as PNG or SVG with "Include editable data" and the drawing travels inside the image. When you want to change it again, just import the file into Rabisco.',
       alt: 'A PNG image turning back into an editable drawing',
     },
+    faq: {
+      title: 'Frequently asked questions',
+      items: [
+        {
+          q: 'What is Rabisco?',
+          a: 'A free online editor for mind maps and hand-drawn flowcharts. You create maps and sketches on the same borderless canvas, right in the browser.',
+        },
+        {
+          q: 'Is it really free?',
+          a: 'Yes. Rabisco is free and open source, under the MIT license. There is no paid plan and no drawing limit.',
+        },
+        {
+          q: 'Where do my drawings live?',
+          a: 'In your Google Drive, if you sign in, or in this browser, in local mode. Rabisco has no server of its own: none of your content is stored with us.',
+        },
+        {
+          q: 'Does it work offline?',
+          a: 'If your connection drops mid-drawing, keep going. Your changes stay on this device and are saved when you are back online.',
+        },
+        {
+          q: 'Do I need an account?',
+          a: 'No. You can draw without signing in, in local mode. To save to Google Drive and open your drawings anywhere, sign in with a Google account.',
+        },
+        {
+          q: 'Do my files open in other tools?',
+          a: 'Yes. Each drawing is a standard .excalidraw file, which also opens on excalidraw.com and in other compatible tools.',
+        },
+      ],
+    },
   },
   files: {
     title: 'My scribbles',

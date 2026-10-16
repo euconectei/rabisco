@@ -3,19 +3,65 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-256.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rabisco</title>
+    <meta name="theme-color" content="#6965db" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <title>Rabisco — mapa mental e fluxograma à mão, grátis e online</title>
+    <meta name="description" content="Crie mapas mentais e fluxos desenhados à mão no mesmo canvas, salvos no seu Google Drive. Grátis, de código aberto e sem servidor." />
     <meta name="google-adsense-account" content="ca-pub-6019782051330616" />
-    <meta name="description" content="Mapas mentais e fluxos à mão no mesmo canvas, salvos no seu Google Drive. Grátis e de código aberto." />
+    <link rel="canonical" href="https://rabisco.dev/" />
+    <meta name="robots" content="index, follow" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Rabisco" />
+    <meta property="og:title" content="Rabisco — mapa mental e fluxograma à mão, grátis e online" />
+    <meta property="og:description" content="Crie mapas mentais e fluxos desenhados à mão no mesmo canvas, salvos no seu Google Drive. Grátis, de código aberto e sem servidor." />
+    <meta property="og:url" content="https://rabisco.dev/" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:image" content="https://rabisco.dev/landing/pt-BR-canvas-light.webp" />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="800" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Rabisco — mapa mental e fluxograma à mão, grátis e online" />
+    <meta name="twitter:description" content="Crie mapas mentais e fluxos desenhados à mão no mesmo canvas, salvos no seu Google Drive. Grátis, de código aberto e sem servidor." />
+    <meta name="twitter:image" content="https://rabisco.dev/landing/pt-BR-canvas-light.webp" />
+
+    <link rel="alternate" hreflang="pt-BR" href="https://rabisco.dev/" />
+    <link rel="alternate" hreflang="en" href="https://rabisco.dev/en/" />
+    <link rel="alternate" hreflang="x-default" href="https://rabisco.dev/" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Rabisco",
+      "url": "https://rabisco.dev/",
+      "description": "Mapas mentais e fluxos desenhados à mão no mesmo canvas, salvos no seu Google Drive. Grátis e de código aberto.",
+      "applicationCategory": "DesignApplication",
+      "operatingSystem": "Web",
+      "inLanguage": ["pt-BR", "en"],
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "license": "https://opensource.org/licenses/MIT",
+      "sameAs": ["https://github.com/euconectei/rabisco"]
+    }
+    </script>
     <script>
       // Sets <html lang> before the bundle loads, mirroring src/i18n/storage.ts and languages.ts.
       (function () {
         var lang = null
-        try {
-          lang = localStorage.getItem('rabisco.lang')
-        } catch (e) {}
-        if (lang !== 'pt-BR' && lang !== 'en') {
-          lang = (navigator.language || '').toLowerCase().indexOf('pt') === 0 ? 'pt-BR' : 'en'
+        var path = window.location.pathname
+        if (path === '/en' || path.indexOf('/en/') === 0) {
+          lang = 'en'
+        } else {
+          try {
+            lang = localStorage.getItem('rabisco.lang')
+          } catch (e) {}
+          if (lang !== 'pt-BR' && lang !== 'en') {
+            lang = (navigator.language || '').toLowerCase().indexOf('pt') === 0 ? 'pt-BR' : 'en'
+          }
         }
         document.documentElement.lang = lang
       })()

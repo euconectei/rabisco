@@ -54,6 +54,12 @@ it('picks screenshots for the language and the color scheme', () => {
   expect(dark).toHaveAttribute('media', '(prefers-color-scheme: dark)')
 })
 
+it('renders the FAQ', () => {
+  renderWithProviders(<LandingPage />)
+  expect(screen.getByRole('heading', { level: 2, name: 'Perguntas frequentes' })).toBeInTheDocument()
+  expect(screen.getByText('O que é o Rabisco?')).toBeInTheDocument()
+})
+
 it('is in English', () => {
   show({ lang: 'en' })
   expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Think on paper. Keep it in your Drive.')

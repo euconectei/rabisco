@@ -112,6 +112,16 @@ export function LandingPage() {
           <p>{t.landing.ctaText}</p>
           {startBlock(false)}
         </section>
+
+        <section className="landing-section" aria-labelledby="landing-faq">
+          <h2 id="landing-faq">{t.landing.faq.title}</h2>
+          {t.landing.faq.items.map((item) => (
+            <article key={item.q}>
+              <h3>{item.q}</h3>
+              <p>{item.a}</p>
+            </article>
+          ))}
+        </section>
       </main>
 
       <AppFooter />

@@ -11,7 +11,7 @@
   "scripts": {
     "assets": "node scripts/copy-excalidraw-assets.mjs",
     "dev": "pnpm run assets && vite",
-    "build": "pnpm run assets && tsc -b && vite build",
+    "build": "pnpm run assets && tsc -b && vite build && vite build --ssr src/prerender.tsx --outDir .prerender --emptyOutDir && node scripts/prerender.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",

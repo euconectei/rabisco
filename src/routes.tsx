@@ -26,6 +26,7 @@ export function AppRoutes() {
     <LocalModeGate>
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/en/*" element={<LandingPage />} />
       <Route
         path="/app"
         element={

@@ -42,6 +42,35 @@ export const ptBR = {
       text: 'Exporte em PNG ou SVG com "Incluir dados editáveis" e o desenho vai dentro da imagem. Quando quiser mexer de novo, é só importar o arquivo no Rabisco.',
       alt: 'Uma imagem PNG que volta a ser um desenho editável',
     },
+    faq: {
+      title: 'Perguntas frequentes',
+      items: [
+        {
+          q: 'O que é o Rabisco?',
+          a: 'É um editor online de mapas mentais e fluxogramas desenhados à mão. Você cria mapas e rabiscos no mesmo canvas, sem limites, direto no navegador.',
+        },
+        {
+          q: 'É grátis mesmo?',
+          a: 'Sim. O Rabisco é grátis e de código aberto, sob licença MIT. Não há plano pago nem limite de desenhos.',
+        },
+        {
+          q: 'Onde ficam os meus desenhos?',
+          a: 'No seu Google Drive, se você entrar com uma conta, ou neste navegador, no modo local. O Rabisco não tem servidor próprio: nada do seu conteúdo fica guardado conosco.',
+        },
+        {
+          q: 'Funciona sem internet?',
+          a: 'Se a conexão cair no meio do desenho, você continua à vontade. As mudanças ficam neste aparelho e são salvas quando a internet voltar.',
+        },
+        {
+          q: 'Preciso de uma conta?',
+          a: 'Não. Você pode desenhar sem entrar, no modo local. Para salvar no Google Drive e acessar seus desenhos de qualquer aparelho, entre com uma conta Google.',
+        },
+        {
+          q: 'Meus arquivos abrem em outros programas?',
+          a: 'Sim. Cada desenho é um arquivo .excalidraw padrão, que também abre no excalidraw.com e em outras ferramentas compatíveis.',
+        },
+      ],
+    },
   },
   files: {
     title: 'Meus rabiscos',

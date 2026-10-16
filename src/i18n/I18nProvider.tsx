@@ -4,6 +4,10 @@ import { detectLanguage, type Language } from './languages'
 import { MESSAGES } from './messages'
 import { readStoredLanguage, writeStoredLanguage } from './storage'
 
+function languageFromPath(path: string): Language | null {
+  return path === '/en' || path.startsWith('/en/') ? 'en' : null
+}
+
 interface Props {
   children: ReactNode
   initialLanguage?: Language
@@ -11,7 +15,11 @@ interface Props {
 
 export function I18nProvider({ children, initialLanguage }: Props) {
   const [lang, setLangState] = useState<Language>(
-    () => initialLanguage ?? readStoredLanguage() ?? detectLanguage(navigator.language),
+    () =>
+      initialLanguage ??
+      languageFromPath(window.location.pathname) ??
+      readStoredLanguage() ??
+      detectLanguage(navigator.language),
   )
 
   useEffect(() => {
