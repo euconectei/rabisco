@@ -34,13 +34,19 @@ async function traceLetterI(page: Page) {
 test('the picker shows every notebook as a picture, with no links out and no third-party requests', async ({ page, baseURL }) => {
   const { errors, elsewhere } = await open(page, baseURL)
   await expect(page.getByRole('heading', { name: 'Caderno de Traçar' })).toBeVisible()
-  for (const tab of ['Traços', 'Letras', 'Números', 'Cursiva', 'Desenhos', 'Meus desenhos']) {
+  for (const tab of ['Traços', 'Letras', 'Números', 'Cursiva', 'Veículos', 'Bichos', 'Coisas e natureza', 'Pessoas', 'Meus desenhos']) {
     await expect(page.getByRole('button', { name: tab, exact: true })).toBeVisible()
   }
-  await page.getByRole('button', { name: 'Desenhos', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Caminhão' })).toBeVisible()
-  for (const drawing of ['Ônibus', 'Trator', 'Avião', 'Foguete', 'Gato', 'Sorvete', 'Moto', 'Moto esportiva', 'Moto de trilha', 'Scooter', 'Moto custom', 'Cachorro', 'Urso', 'Igreja', 'Pássaro']) {
-    await expect(page.getByRole('button', { name: drawing, exact: true })).toBeVisible()
+  const notebooks: Record<string, string[]> = {
+    Veículos: ['Carro', 'Caminhão', 'Ônibus', 'Trator', 'Moto', 'Moto esportiva', 'Moto de trilha', 'Scooter', 'Moto custom', 'Avião', 'Foguete', 'Barco'],
+    Bichos: ['Gato', 'Cachorro', 'Urso', 'Pássaro', 'Peixe'],
+    'Coisas e natureza': ['Casa', 'Igreja', 'Sol', 'Lua', 'Nuvem', 'Árvore', 'Flor', 'Maçã', 'Coração', 'Estrela', 'Balão', 'Guarda-chuva', 'Sorvete'],
+    Pessoas: ['Vovó', 'Vovô', 'Bebê', 'Menino', 'Menina'],
+  }
+  for (const [tab, pages] of Object.entries(notebooks)) {
+    await page.getByRole('button', { name: tab, exact: true }).click()
+    await expect(page.locator('#grid .tile')).toHaveCount(pages.length)
+    for (const name of pages) await expect(page.getByRole('button', { name, exact: true })).toBeVisible()
   }
   // Kids can't wander off into the editor or the parent's files.
   await expect(page.locator('a[href]')).toHaveCount(0)
