@@ -408,6 +408,8 @@ var SETS = [
     it('d-sorvete','Sorvete','Sorvete',110,170,['M20 70 C10 40 30 12 55 12 C80 12 100 40 90 70 Z','M24 70 L55 160 L86 70'])
   ]},
   {id:'pessoas', name:'Pessoas', items:[
+    it('p-mamae','Mamãe','Mamãe',140,140,[circle(70,78,40),'M36 64 Q56 48 70 56 Q86 46 104 64','M32 62 Q14 98 22 134','M108 62 Q126 98 118 134',circle(56,76,4),circle(84,76,4),'M56 94 Q70 104 84 94']),
+    it('p-papai','Papai','Papai',140,140,['M31 80 A40 40 0 1 1 109 80','M34 58 Q44 34 66 36 L60 50 Q92 32 106 58',circle(56,70,4),circle(84,70,4),'M60 88 Q70 94 80 88','M31 80 Q32 128 70 130 Q108 128 109 80 Q98 104 70 104 Q42 104 31 80 Z']),
     it('p-vovo-f','Vovó','Vovó',140,140,[circle(70,82,42),circle(70,24,14),'M32 74 Q26 46 52 40','M108 74 Q114 46 88 40',circle(55,76,10),circle(85,76,10),'M65 76 L75 76','M56 98 Q70 108 84 98']),
     it('p-vovo-m','Vovô','Vovô',140,140,[circle(70,82,42),'M30 70 Q18 58 30 46','M110 70 Q122 58 110 46',circle(55,76,10),circle(85,76,10),'M65 76 L75 76','M52 96 Q61 88 70 95 Q79 88 88 96']),
     it('p-bebe','Bebê menino','Bebê menino',140,140,[circle(70,84,46),'M70 38 Q58 22 72 18 Q86 18 80 30',circle(54,80,5),circle(86,80,5),'M58 104 Q70 112 82 104']),
@@ -418,7 +420,7 @@ var SETS = [
 ];
 
 var GALLERY = SETS.length;   // the "Meus desenhos" tab sits after the notebooks
-var TAB_ICONS = [3, 0, 2, 0, 0, 0, 2, 3];   // which page of each notebook draws its tab button (zigzag, A, 2, a, car, cat, sun, boy)
+var TAB_ICONS = [3, 0, 2, 0, 0, 0, 2, 6];   // which page of each notebook draws its tab button (zigzag, A, 2, a, car, cat, sun, boy)
 
 var DIFF = {
   facil:  {band:66, thr:0.85},

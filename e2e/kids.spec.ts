@@ -41,7 +41,7 @@ test('the picker shows every notebook as a picture, with no links out and no thi
     Veículos: ['Carro', 'Caminhão', 'Ônibus', 'Trator', 'Moto', 'Moto esportiva', 'Moto de trilha', 'Scooter', 'Moto custom', 'Avião', 'Foguete', 'Barco'],
     Bichos: ['Gato', 'Cachorro', 'Urso', 'Pássaro', 'Peixe'],
     'Coisas e natureza': ['Casa', 'Igreja', 'Sol', 'Lua', 'Nuvem', 'Árvore', 'Flor', 'Maçã', 'Coração', 'Estrela', 'Balão', 'Guarda-chuva', 'Sorvete'],
-    Pessoas: ['Vovó', 'Vovô', 'Bebê menino', 'Bebê menina', 'Menino', 'Menina'],
+    Pessoas: ['Mamãe', 'Papai', 'Vovó', 'Vovô', 'Bebê menino', 'Bebê menina', 'Menino', 'Menina'],
   }
   for (const [tab, pages] of Object.entries(notebooks)) {
     await page.getByRole('button', { name: tab, exact: true }).click()
