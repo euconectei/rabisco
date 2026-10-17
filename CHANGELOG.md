@@ -1,5 +1,46 @@
 # Changelog
 
+## [0.10.0](https://github.com/euconectei/rabisco/compare/v0.9.1...v0.10.0) (2026-10-17)
+
+
+### Features
+
+* **ads:** a discreet ad on the landing page ([#29](https://github.com/euconectei/rabisco/issues/29)) ([3b3d96e](https://github.com/euconectei/rabisco/commit/3b3d96eb03b7292ce684ddcd871212ba58fff9bb))
+* **ads:** ads with account exemption, Brazil cookie notice and cookie choice (Phase 4c) ([#28](https://github.com/euconectei/rabisco/issues/28)) ([c1b3870](https://github.com/euconectei/rabisco/commit/c1b387020a924c67fbd202a1ba5d16c504ebe897))
+* **ads:** ads.txt and the AdSense account meta tag for site verification ([a30b502](https://github.com/euconectei/rabisco/commit/a30b5028e8b27186e046d3a345011d9a096aad81))
+* **auth:** redesigned sign-in screens ([#32](https://github.com/euconectei/rabisco/issues/32)) ([ab637fe](https://github.com/euconectei/rabisco/commit/ab637fedb0063e309fbccd3cb1e38d11d6fb33b8))
+* **brand:** new logo, a mind map node with three branches ([#27](https://github.com/euconectei/rabisco/issues/27)) ([4a9e5a1](https://github.com/euconectei/rabisco/commit/4a9e5a13d65bb7dcd9caf4906341b1c2c0a885e3))
+* **editor:** save status as a cloud icon next to the title ([#30](https://github.com/euconectei/rabisco/issues/30)) ([99a3ca3](https://github.com/euconectei/rabisco/commit/99a3ca39bfce9690b91cc4a117c683c275e6cfda))
+* every logo goes straight to the home page ([2cfbff6](https://github.com/euconectei/rabisco/commit/2cfbff660881e6c2fd1b64f9fe2856f58ee0a9f5))
+* **files:** cards with a preview, search, count and a friendlier empty state ([#33](https://github.com/euconectei/rabisco/issues/33)) ([9200296](https://github.com/euconectei/rabisco/commit/92002964eb9ea67decfe24383dcbb603b2b505b9))
+* **kids:** add a tracing notebook for small children at /kids ([17cae30](https://github.com/euconectei/rabisco/commit/17cae30d0934e239025e83eb8e444e46cb742d0e))
+* **kids:** add dog, bear, church and bird ([a1f1a90](https://github.com/euconectei/rabisco/commit/a1f1a90af0700e9cb2b8d5801eac787672b2cd05))
+* **kids:** add five motorcycles ([ba6ed8c](https://github.com/euconectei/rabisco/commit/ba6ed8c1342e7ef916e740a56ae6e9d2082ce5ed))
+* **kids:** baby boy and baby girl ([64afe70](https://github.com/euconectei/rabisco/commit/64afe705bb8d3136e553d6b2d2cfa9bb903697ca))
+* **kids:** mom and dad ([d54bcb5](https://github.com/euconectei/rabisco/commit/d54bcb59ffb975d8fd120e7bd0b77b78c99861c2))
+* **kids:** more drawings, see-through tracing fill, undo and redo ([1704a37](https://github.com/euconectei/rabisco/commit/1704a3735be9fe8ff0ce170669e04195cd43f0fc))
+* **kids:** split drawings into vehicles, animals and things; add people ([379b25e](https://github.com/euconectei/rabisco/commit/379b25ec38ed5da07c6cf27cee128fed302b5ec5))
+* **landing:** move the ad right below the hero, in the first screen ([cfe076e](https://github.com/euconectei/rabisco/commit/cfe076e1b139f70193e7588f4e2e9a24e1fe7c65))
+* **legal:** public privacy policy and terms pages, linked from the footer ([#25](https://github.com/euconectei/rabisco/issues/25)) ([74ce055](https://github.com/euconectei/rabisco/commit/74ce055ea4eb71053a1cdef6516659abd7add27b))
+* **local:** drawings stored in the browser, used without signing in ([cbbdd9b](https://github.com/euconectei/rabisco/commit/cbbdd9bdc2778592aee39b502ef2f6cd0612f07c))
+* **local:** the screens for the local mode, the move offer and the editable PNG hint ([221f975](https://github.com/euconectei/rabisco/commit/221f9757f97783f6a2dca8055f38cb3852b385fb))
+* **mermaid:** import Mermaid diagrams as editable drawings ([146c82e](https://github.com/euconectei/rabisco/commit/146c82e2ee3e3930b20ebae2cc6a82c2f4443caa))
+* **seo:** prerender the news and support pages, add favicon.ico ([8ca308a](https://github.com/euconectei/rabisco/commit/8ca308aa50bb009c1d84f5c599b772e01c9086aa))
+* **seo:** prerendered landing, per-language meta, sitemap and FAQ ([109a92e](https://github.com/euconectei/rabisco/commit/109a92e112def59af9433807bb5c9c0db251a8a6))
+* **support:** a public /apoie page with a Pix QR code ([6891668](https://github.com/euconectei/rabisco/commit/6891668e7e42404d833f26b7aa8bce78b2e92510))
+* the cheap path for the old tablet (Chrome 95) ([b88e1db](https://github.com/euconectei/rabisco/commit/b88e1dbe37f49446463c01f2b5b049560f1117e7))
+
+
+### Bug Fixes
+
+* a stale local link, the landing link and big pasted diagrams ([80ae4cd](https://github.com/euconectei/rabisco/commit/80ae4cdb55a0994823b910cd6be0f44ceea744df))
+* **export:** the editable-data default also reaches saved preferences ([17dd9a7](https://github.com/euconectei/rabisco/commit/17dd9a72035beed0311b682b03878d31ff8344e7))
+* **kids:** wings that sweep back and motorcycles that look like motorcycles ([b2ba461](https://github.com/euconectei/rabisco/commit/b2ba46112dfe76d79807fe9eb9caf9ef9d3c992d))
+* **local:** a dismissible notice, links to the Drive, move results and wording ([c0c52f7](https://github.com/euconectei/rabisco/commit/c0c52f7effb1b038ae3315666d6be5ac61492a0a))
+* **local:** keep the local notice clear of the editor footer, and finish the policy wording ([ff58020](https://github.com/euconectei/rabisco/commit/ff580205941f44e2ab4f2b26ea4ad8cf4359e281))
+* **local:** save offline, a modest storage footprint and a movable tombstone ([7069f39](https://github.com/euconectei/rabisco/commit/7069f39a948a9829a32efd60f7482a14bfce8063))
+* **mermaid:** limits before regexes, HTML rules, br tags, fenced notes and focus ([337076d](https://github.com/euconectei/rabisco/commit/337076d8a1ac92d3147124320b22e51023892b7c))
+
 ## [0.9.1](https://github.com/euconectei/rabisco/compare/v0.9.0...v0.9.1) (2026-10-11)
 
 
