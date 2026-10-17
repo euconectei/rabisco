@@ -39,7 +39,7 @@ test('the picker shows every notebook as a picture, with no links out and no thi
   }
   await page.getByRole('button', { name: 'Desenhos', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Caminhão' })).toBeVisible()
-  for (const drawing of ['Ônibus', 'Trator', 'Avião', 'Foguete', 'Gato', 'Sorvete']) {
+  for (const drawing of ['Ônibus', 'Trator', 'Avião', 'Foguete', 'Gato', 'Sorvete', 'Moto', 'Moto esportiva', 'Moto de trilha', 'Scooter', 'Moto custom']) {
     await expect(page.getByRole('button', { name: drawing, exact: true })).toBeVisible()
   }
   // Kids can't wander off into the editor or the parent's files.
