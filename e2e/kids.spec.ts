@@ -39,6 +39,9 @@ test('the picker shows every notebook as a picture, with no links out and no thi
   }
   await page.getByRole('button', { name: 'Desenhos', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Caminhão' })).toBeVisible()
+  for (const drawing of ['Ônibus', 'Trator', 'Avião', 'Foguete', 'Gato', 'Sorvete']) {
+    await expect(page.getByRole('button', { name: drawing, exact: true })).toBeVisible()
+  }
   // Kids can't wander off into the editor or the parent's files.
   await expect(page.locator('a[href]')).toHaveCount(0)
   expect(errors).toEqual([])
@@ -100,4 +103,49 @@ test('it still works on the old tablet browser (Chrome 95)', async ({ page, base
   await traceLetterI(page)
   await expect(page.getByRole('dialog')).toBeVisible()
   expect(errors).toEqual([])
+})
+
+// Draws the letter I's stroke between two heights of the sheet (fractions of its height).
+async function traceI(page: Page, from: number, to: number) {
+  const box = await page.locator('#stage').boundingBox()
+  if (!box) throw new Error('no stage')
+  const x = box.x + box.width / 2
+  await page.mouse.move(x, box.y + box.height * from)
+  await page.mouse.down()
+  for (let i = 1; i <= 20; i++) await page.mouse.move(x, box.y + box.height * (from + (to - from) * (i / 20)))
+  await page.mouse.up()
+}
+
+test('undo takes a stroke back off the guide', async ({ page, baseURL }) => {
+  const { errors } = await open(page, baseURL)
+  await page.getByRole('button', { name: 'Letras' }).click()
+  await page.getByRole('button', { name: 'Letra I', exact: true }).click()
+  const undo = page.getByRole('button', { name: 'Desfazer' })
+  const redo = page.getByRole('button', { name: 'Refazer' })
+  await expect(undo).toBeDisabled()
+  await expect(redo).toBeDisabled()
+
+  await traceI(page, 0.08, 0.55)
+  await undo.click()
+  await expect(undo).toBeDisabled()
+  await expect(redo).toBeEnabled()
+  // The top half is gone, so the bottom half alone doesn't finish the page…
+  await traceI(page, 0.5, 0.92)
+  await expect(page.getByRole('dialog')).toBeHidden()
+  // …and a new stroke drops what was undone.
+  await expect(redo).toBeDisabled()
+  await traceI(page, 0.08, 0.55)
+  await expect(page.getByRole('dialog')).toBeVisible()
+  expect(errors).toEqual([])
+})
+
+test('redo puts the stroke back on the guide', async ({ page, baseURL }) => {
+  await open(page, baseURL)
+  await page.getByRole('button', { name: 'Letras' }).click()
+  await page.getByRole('button', { name: 'Letra I', exact: true }).click()
+  await traceI(page, 0.08, 0.55)
+  await page.getByRole('button', { name: 'Desfazer' }).click()
+  await page.getByRole('button', { name: 'Refazer' }).click()
+  await traceI(page, 0.5, 0.92)
+  await expect(page.getByRole('dialog')).toBeVisible()
 })
