@@ -175,6 +175,29 @@ export const ptBR = {
     repository: 'Ver o repositório',
   },
   footer: { madeBy: 'Feito pela comunidade com', love: 'amor', privacy: 'Privacidade', terms: 'Termos', cookies: 'Cookies', support: 'Apoie' },
+  kidsApp: {
+    title: 'Rabisco Kids',
+    privacyTitle: 'Política de Privacidade do Rabisco Kids',
+    privacyTitleShort: 'Privacidade',
+    privacyLink: 'Política de privacidade do Rabisco Kids',
+    intro:
+      'Um caderno de traçar para crianças pequenas, no celular ou tablet Android. A criança cobre traços, letras, números, letra cursiva e desenhos com o dedo ou com uma caneta, e o caminho coberto fica pintado.',
+    whatTitle: 'O que tem',
+    what: [
+      'Cinco cadernos: traços, letras, números, cursiva e desenhos.',
+      'A voz do aparelho fala o nome de cada página e comemora quando a criança termina.',
+      'Feito para quem ainda não lê: a criança escolhe pelas figuras.',
+      'Funciona sem internet e não tem propaganda.',
+    ],
+    priceTitle: 'Preço',
+    price:
+      'As 3 primeiras páginas de cada caderno são grátis. Uma compra única pela Google Play libera todas as páginas, sem assinatura. A compra fica atrás de uma pergunta para adultos.',
+    privacySummary: 'O app não coleta nenhum dado, não tem conta e não acessa a internet.',
+    whereTitle: 'Onde baixar',
+    where: 'Em breve na Google Play, para Android.',
+    contactTitle: 'Contato',
+    contact: 'Dúvidas, ideias ou problemas:',
+  },
   legal: {
     privacyTitle: 'Política de Privacidade',
     termsTitle: 'Termos de Uso',

@@ -60,7 +60,7 @@ export function softwareApplicationJsonLd(lang: Language): string {
   })
 }
 
-export type SecondaryPage = 'whats-new' | 'apoie'
+export type SecondaryPage = 'whats-new' | 'apoie' | 'rabisco-kids' | 'rabisco-kids/privacy'
 
 const SECONDARY_SEO: Record<SecondaryPage, { path: string; title: string; description: string }> = {
   'whats-new': {
@@ -72,6 +72,16 @@ const SECONDARY_SEO: Record<SecondaryPage, { path: string; title: string; descri
     path: 'apoie',
     title: 'Apoie o Rabisco',
     description: 'O Rabisco é grátis e de código aberto. Ajude a manter o projeto no ar com um Pix de qualquer valor.',
+  },
+  'rabisco-kids': {
+    path: 'rabisco-kids',
+    title: 'Rabisco Kids — caderno de traçar para crianças',
+    description: 'Caderno de traçar para crianças pequenas no Android: traços, letras, números, cursiva e desenhos. Sem propaganda e sem internet.',
+  },
+  'rabisco-kids/privacy': {
+    path: 'rabisco-kids/privacy',
+    title: 'Política de Privacidade do Rabisco Kids',
+    description: 'O Rabisco Kids não coleta nenhum dado, não tem propaganda e funciona sem internet.',
   },
 }
 

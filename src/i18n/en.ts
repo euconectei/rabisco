@@ -177,6 +177,29 @@ export const en: Messages = {
     repository: 'See the repository',
   },
   footer: { madeBy: 'Made by the community with', love: 'love', privacy: 'Privacy', terms: 'Terms', cookies: 'Cookies', support: 'Support' },
+  kidsApp: {
+    title: 'Rabisco Kids',
+    privacyTitle: 'Rabisco Kids Privacy Policy',
+    privacyTitleShort: 'Privacy',
+    privacyLink: 'Rabisco Kids privacy policy',
+    intro:
+      'A tracing notebook for young children, on Android phones and tablets. The child covers strokes, letters, numbers, cursive, and drawings with a finger or a pen, and the covered path gets painted.',
+    whatTitle: "What's inside",
+    what: [
+      'Five notebooks: strokes, letters, numbers, cursive, and drawings.',
+      "The device's voice says each page's name and cheers when the child finishes.",
+      "Made for kids who can't read yet: they pick by the pictures.",
+      'Works offline and has no ads.',
+    ],
+    priceTitle: 'Price',
+    price:
+      'The first 3 pages of each notebook are free. A one-time purchase through Google Play unlocks every page, with no subscription. The purchase sits behind a question for adults.',
+    privacySummary: 'The app collects no data, has no account, and does not access the internet.',
+    whereTitle: 'Where to get it',
+    where: 'Coming soon to Google Play, for Android. The app is in Portuguese.',
+    contactTitle: 'Contact',
+    contact: 'Questions, ideas, or problems:',
+  },
   legal: {
     privacyTitle: 'Privacy Policy',
     termsTitle: 'Terms of Use',

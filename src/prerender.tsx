@@ -9,6 +9,7 @@ import { ModeProvider } from './mode/ModeProvider'
 import { LandingPage } from './pages/LandingPage'
 import { WhatsNewPage } from './pages/WhatsNewPage'
 import SupportPage from './support/SupportPage'
+import { KidsAppPage, KidsPrivacyPage } from './kidsApp/KidsPages'
 
 export { BASE_URL, seoFor, secondaryPageSeo, softwareApplicationJsonLd } from './seo'
 export { LANGUAGES } from './i18n/languages'
@@ -37,4 +38,12 @@ export function renderWhatsNew(lang: Language): string {
 
 export function renderSupport(lang: Language): string {
   return renderWithProviders(lang, <SupportPage />)
+}
+
+export function renderKidsApp(lang: Language): string {
+  return renderWithProviders(lang, <KidsAppPage />)
+}
+
+export function renderKidsPrivacy(lang: Language): string {
+  return renderWithProviders(lang, <KidsPrivacyPage />)
 }

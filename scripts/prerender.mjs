@@ -3,6 +3,8 @@ import { dirname, resolve } from 'node:path'
 import {
   BASE_URL,
   LANGUAGES,
+  renderKidsApp,
+  renderKidsPrivacy,
   renderLanding,
   renderSupport,
   renderWhatsNew,
@@ -116,6 +118,8 @@ for (const lang of LANGUAGES) {
 const secondary = [
   { path: 'whats-new', render: renderWhatsNew, seo: secondaryPageSeo('whats-new') },
   { path: 'apoie', render: renderSupport, seo: secondaryPageSeo('apoie') },
+  { path: 'rabisco-kids', render: renderKidsApp, seo: secondaryPageSeo('rabisco-kids') },
+  { path: 'rabisco-kids/privacy', render: renderKidsPrivacy, seo: secondaryPageSeo('rabisco-kids/privacy') },
 ]
 for (const page of secondary) {
   writeHtml(resolve(DIST, `${page.path}/index.html`), pageHtml('pt-BR', page.render('pt-BR'), page.seo))

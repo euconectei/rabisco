@@ -15,6 +15,8 @@ const NewFileRedirect = lazy(() => import('./editor/NewFileRedirect'))
 const PrivacyPage = lazy(() => import('./legal/PrivacyPage'))
 const TermsPage = lazy(() => import('./legal/TermsPage'))
 const SupportPage = lazy(() => import('./support/SupportPage'))
+const KidsAppPage = lazy(() => import('./kidsApp/KidsPages').then((m) => ({ default: m.KidsAppPage })))
+const KidsPrivacyPage = lazy(() => import('./kidsApp/KidsPages').then((m) => ({ default: m.KidsPrivacyPage })))
 
 function EditorFallback() {
   const { t } = useI18n()
@@ -93,6 +95,22 @@ export function AppRoutes() {
         element={
           <Suspense fallback={<EditorFallback />}>
             <SupportPage />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/rabisco-kids"
+        element={
+          <Suspense fallback={<EditorFallback />}>
+            <KidsAppPage />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/rabisco-kids/privacy"
+        element={
+          <Suspense fallback={<EditorFallback />}>
+            <KidsPrivacyPage />
           </Suspense>
         }
       />
