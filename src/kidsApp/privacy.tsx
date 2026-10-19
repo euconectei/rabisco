@@ -1,4 +1,5 @@
-import { Contact, External } from '../legal/links'
+import { External } from '../legal/links'
+import { KidsContact } from './contact'
 
 const PLAY_PRIVACY_URL = 'https://policies.google.com/privacy'
 
@@ -14,7 +15,7 @@ export function KidsPrivacyPtBR() {
       <h2>1. Quem é o responsável</h2>
       <p>
         O Rabisco Kids é feito por Rafael França, pessoa física, que publica os apps como França Connect Apps. Contato:{' '}
-        <Contact />
+        <KidsContact />
       </p>
 
       <h2>2. O que o app não faz</h2>
@@ -84,7 +85,7 @@ export function KidsPrivacyPtBR() {
 
       <h2>9. Seus direitos</h2>
       <p>
-        Você pode falar com o responsável pelo e-mail <Contact /> para tirar dúvidas ou exercer os direitos previstos na
+        Você pode falar com o responsável pelo e-mail <KidsContact /> para tirar dúvidas ou exercer os direitos previstos na
         Lei Geral de Proteção de Dados (LGPD).
       </p>
 
@@ -108,7 +109,7 @@ export function KidsPrivacyEn() {
       <h2>1. Who is responsible</h2>
       <p>
         Rabisco Kids is made by Rafael França, an individual who publishes apps as França Connect Apps. Contact:{' '}
-        <Contact />
+        <KidsContact />
       </p>
 
       <h2>2. What the app does not do</h2>
@@ -174,7 +175,7 @@ export function KidsPrivacyEn() {
 
       <h2>9. Your rights</h2>
       <p>
-        You can write to <Contact /> with questions or to exercise your rights under Brazil's data protection law (LGPD)
+        You can write to <KidsContact /> with questions or to exercise your rights under Brazil's data protection law (LGPD)
         or the law of your country.
       </p>
 

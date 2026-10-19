@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useI18n } from '../i18n/useI18n'
 import { LegalPage } from '../legal/LegalPage'
-import { Contact } from '../legal/links'
+import { KidsContact } from './contact'
 import { KidsPrivacyEn, KidsPrivacyPtBR } from './privacy'
 
 // Rabisco Kids is the Android app, not the /kids web page. These pages carry no ads and no
@@ -20,7 +20,7 @@ function KidsFooter() {
       <span aria-hidden="true">·</span>
       <Link to={KIDS_PRIVACY}>{t.kidsApp.privacyLink}</Link>
       <span aria-hidden="true">·</span>
-      <Contact />
+      <KidsContact />
     </footer>
   )
 }
@@ -47,7 +47,7 @@ export function KidsAppPage() {
       <p>{k.where}</p>
       <h2>{k.contactTitle}</h2>
       <p>
-        {k.contact} <Contact />
+        {k.contact} <KidsContact />
       </p>
     </LegalPage>
   )

@@ -20,7 +20,8 @@ it.each([
   expect(document.querySelector('.legal-updated')).toHaveTextContent(`${updated}: `)
   await userEvent.click(screen.getAllByRole('link', { name: lang === 'pt-BR' ? 'Política de privacidade do Rabisco Kids' : 'Rabisco Kids privacy policy' })[0])
   expect(await screen.findByRole('heading', { level: 1, name: privacy }, LOAD)).toBeInTheDocument()
-  expect(screen.getAllByText(/rafaelfms@gmail.com/).length).toBeGreaterThan(0)
+  expect(screen.getAllByText(/francaconnectapps@gmail.com/).length).toBeGreaterThan(0)
+  expect(document.body.textContent).not.toContain('rafaelfms@gmail.com')
 })
 
 it('the policy states the promises the app has to keep', async () => {
