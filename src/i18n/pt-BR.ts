@@ -174,7 +174,7 @@ export const ptBR = {
     otherText: 'Dar uma estrela no repositório, contar para quem pode gostar ou contribuir com o código.',
     repository: 'Ver o repositório',
   },
-  footer: { madeBy: 'Feito pela comunidade com', love: 'amor', privacy: 'Privacidade', terms: 'Termos', cookies: 'Cookies', support: 'Apoie' },
+  footer: { madeBy: 'Feito pela comunidade com', love: 'amor', privacy: 'Privacidade', terms: 'Termos', cookies: 'Cookies', support: 'Apoie', aiDocs: 'Criar com IA' },
   kidsApp: {
     title: 'Rabisco Kids',
     privacyTitle: 'Política de Privacidade do Rabisco Kids',
@@ -219,6 +219,44 @@ export const ptBR = {
   ads: {
     label: 'Anúncio',
     house: { text: 'O Rabisco é feito pela comunidade, com código aberto.', cta: 'Conheça e contribua no GitHub' },
+  },
+  importDocs: {
+    title: 'Criar mapas com IA',
+    back: 'Voltar',
+    intro:
+      'Peça a qualquer IA (Claude, ChatGPT, Gemini…) para transformar a conversa num mapa mental e importe o resultado no Rabisco. Não precisa de plugin nem de conta extra: a IA entrega um texto em markdown e o Rabisco o transforma em mapa.',
+    stepsTitle: 'Como fazer',
+    step1: 'Cole o prompt abaixo no início da conversa com a IA.',
+    step2: 'Converse normalmente. Quando quiser o mapa, peça: "gere o mapa mental da nossa conversa".',
+    step3: 'Copie o conteúdo do bloco de código que a IA devolver (sem as crases) e salve num arquivo com a extensão .md.',
+    step4: 'No Rabisco, em "Meus arquivos", clique em "Importar" e escolha o arquivo. O mapa abre pronto e já organizado.',
+    promptTitle: 'Prompt para colar na IA',
+    copy: 'Copiar prompt',
+    copied: 'Copiado!',
+    copyFailed: 'Não deu para copiar. Selecione o texto e copie à mão.',
+    prompt: `Quero que a nossa conversa gere um mapa mental para importar no Rabisco (rabisco.dev). Quando eu pedir o mapa, responda SÓ com o mapa, dentro de um único bloco de código markdown, seguindo estas regras:
+- Um único item no topo: a ideia central.
+- Um tópico por linha, em lista ("- tópico") com dois espaços de indentação por nível (ou com títulos #, ##, ###).
+- Texto simples e curto em cada tópico: sem links, tabelas, imagens nem negrito.
+- No máximo uns 5 níveis e uns 7 filhos por tópico.
+Depois do bloco, diga que eu devo salvar o conteúdo num arquivo .md e importá-lo em "Meus arquivos" > "Importar" no Rabisco.`,
+    formatTitle: 'O formato',
+    rule1: 'Cada linha é um tópico. Use lista ("- tópico", "* tópico" ou "1. tópico") com dois espaços de indentação por nível, ou títulos (#, ##, ###), que aninham pelo nível.',
+    rule2: 'Um único item no topo vira a raiz do mapa. Se houver vários, eles ficam sob uma raiz com o nome do arquivo.',
+    rule3: 'Só texto: links, tabelas, imagens e negrito não são interpretados e aparecem como texto.',
+    rule4: 'O Rabisco cuida do desenho: posição, cores e ligações. Depois de importar, é só editar como qualquer mapa.',
+    exampleTitle: 'Exemplo',
+    exampleIntro: 'Este arquivo .md:',
+    example: `- Viagem ao Japão
+  - Planejamento
+    - Passagens
+    - Visto
+  - Cidades
+    - Tóquio
+    - Quioto`,
+    exampleResult: 'vira um mapa com "Viagem ao Japão" no centro, dois ramos (Planejamento e Cidades) e os tópicos dentro de cada um.',
+    machineTitle: 'Para IAs e ferramentas',
+    machineText: 'Esta documentação também existe em texto puro, para IAs que leem a web:',
   },
   language: { label: 'Idioma', 'pt-BR': 'Português', en: 'English' },
   exportImage: {
@@ -312,6 +350,13 @@ export const ptBR = {
     linkUnseen: 'Novidades (há novidades)',
     menuItem: 'Novidades ({version})',
     sections: {
+      aiImport: {
+        title: 'Mapas criados por IA',
+        items: [
+          'Peça a qualquer IA (Claude, ChatGPT, Gemini…) para transformar a conversa num mapa mental e importe o resultado em "Meus arquivos", "Importar".',
+          'A nova página "Criar com IA", no rodapé, traz um prompt pronto para copiar e explica o formato.',
+        ],
+      },
       imageExport: {
         title: 'Exportar como imagem',
         items: [

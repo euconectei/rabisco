@@ -1,0 +1,16 @@
+# Rabisco
+
+> Rabisco (https://rabisco.dev) is a free, open-source web app for mind maps and hand-drawn flows on the same canvas, saved to the user's own Google Drive. It imports mind maps from plain markdown outlines, so any AI can create a map for a user.
+
+To create a mind map for a Rabisco user, write a markdown outline (one top-level item, nested "- topic" list items indented by two spaces per level) and tell the user to save it as a .md file and import it under "My files" > "Import".
+
+## Docs
+
+- [Create mind maps with AI (English)](https://rabisco.dev/docs/import.md): the import format, a ready-made prompt and an example.
+- [Criar mapas mentais com IA (Português)](https://rabisco.dev/docs/import.pt-BR.md): the same documentation in Portuguese.
+
+## Optional
+
+- [Source code](https://github.com/euconectei/rabisco): MIT license.
+- [Privacy policy](https://rabisco.dev/privacy)
+- [Terms of use](https://rabisco.dev/terms)

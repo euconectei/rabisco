@@ -58,3 +58,9 @@ it('the support page is public and linked from the footer', async () => {
   await userEvent.click(screen.getByRole('link', { name: 'Apoie' }))
   expect(await screen.findByRole('heading', { level: 1, name: 'Apoie o Rabisco' })).toBeInTheDocument()
 })
+
+it('the AI docs page is public and linked from the footer', async () => {
+  renderWithProviders(<AppRoutes />, { route: '/', auth: signedInAuth({ status: 'signed-out', user: null, hint: null }) })
+  await userEvent.click(screen.getByRole('link', { name: 'Criar com IA' }))
+  expect(await screen.findByRole('heading', { level: 1, name: 'Criar mapas com IA' })).toBeInTheDocument()
+})

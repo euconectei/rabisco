@@ -176,7 +176,7 @@ export const en: Messages = {
     otherText: 'Star the repository, tell someone who might like it, or contribute code.',
     repository: 'See the repository',
   },
-  footer: { madeBy: 'Made by the community with', love: 'love', privacy: 'Privacy', terms: 'Terms', cookies: 'Cookies', support: 'Support' },
+  footer: { madeBy: 'Made by the community with', love: 'love', privacy: 'Privacy', terms: 'Terms', cookies: 'Cookies', support: 'Support', aiDocs: 'Create with AI' },
   kidsApp: {
     title: 'Rabisco Kids',
     privacyTitle: 'Rabisco Kids Privacy Policy',
@@ -221,6 +221,44 @@ export const en: Messages = {
   ads: {
     label: 'Ad',
     house: { text: 'Rabisco is made by its community, as open source.', cta: 'See it and contribute on GitHub' },
+  },
+  importDocs: {
+    title: 'Create maps with AI',
+    back: 'Back',
+    intro:
+      'Ask any AI (Claude, ChatGPT, Gemini…) to turn your conversation into a mind map and import the result into Rabisco. No plugin or extra account needed: the AI hands you a markdown text and Rabisco turns it into a map.',
+    stepsTitle: 'How to',
+    step1: 'Paste the prompt below at the start of the conversation with the AI.',
+    step2: 'Talk as usual. When you want the map, ask: "generate the mind map of our conversation".',
+    step3: "Copy the content of the code block the AI returns (without the backticks) and save it to a file with the .md extension.",
+    step4: 'In Rabisco, under "My files", click "Import" and pick the file. The map opens ready and already laid out.',
+    promptTitle: 'Prompt to paste into the AI',
+    copy: 'Copy prompt',
+    copied: 'Copied!',
+    copyFailed: "Couldn't copy. Select the text and copy it by hand.",
+    prompt: `I want our conversation to produce a mind map to import into Rabisco (rabisco.dev). When I ask for the map, reply with ONLY the map, inside a single markdown code block, following these rules:
+- A single top-level item: the central idea.
+- One topic per line, as a list ("- topic") indented by two spaces per level (or with #, ##, ### headings).
+- Short plain text in every topic: no links, tables, images or bold.
+- At most about 5 levels and about 7 children per topic.
+After the block, tell me to save its content to a .md file and import it in Rabisco under "My files" > "Import".`,
+    formatTitle: 'The format',
+    rule1: 'Each line is a topic. Use a list ("- topic", "* topic" or "1. topic") indented by two spaces per level, or headings (#, ##, ###), which nest by level.',
+    rule2: 'A single top-level item becomes the root of the map. With several, they go under a root named after the file.',
+    rule3: 'Text only: links, tables, images and bold are not interpreted and show up as text.',
+    rule4: 'Rabisco handles the drawing: position, colors and links. After importing, edit it like any other map.',
+    exampleTitle: 'Example',
+    exampleIntro: 'This .md file:',
+    example: `- Trip to Japan
+  - Planning
+    - Flights
+    - Visa
+  - Cities
+    - Tokyo
+    - Kyoto`,
+    exampleResult: 'becomes a map with "Trip to Japan" at the center, two branches (Planning and Cities) and the topics inside each.',
+    machineTitle: 'For AIs and tools',
+    machineText: 'This documentation also exists as plain text, for AIs that read the web:',
   },
   language: { label: 'Language', 'pt-BR': 'Português', en: 'English' },
   exportImage: {
@@ -314,6 +352,13 @@ export const en: Messages = {
     linkUnseen: 'News (something new)',
     menuItem: 'News ({version})',
     sections: {
+      aiImport: {
+        title: 'Maps made by AI',
+        items: [
+          'Ask any AI (Claude, ChatGPT, Gemini…) to turn your conversation into a mind map and import the result under "My files", "Import".',
+          'The new "Create with AI" page, in the footer, has a ready-made prompt to copy and explains the format.',
+        ],
+      },
       imageExport: {
         title: 'Export as an image',
         items: [

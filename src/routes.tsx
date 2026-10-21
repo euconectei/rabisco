@@ -12,6 +12,7 @@ import { WhatsNewPage } from './pages/WhatsNewPage'
 
 const EditorPage = lazy(() => import('./editor/EditorPage'))
 const NewFileRedirect = lazy(() => import('./editor/NewFileRedirect'))
+const ImportDocsPage = lazy(() => import('./docs/ImportDocsPage'))
 const PrivacyPage = lazy(() => import('./legal/PrivacyPage'))
 const TermsPage = lazy(() => import('./legal/TermsPage'))
 const SupportPage = lazy(() => import('./support/SupportPage'))
@@ -72,6 +73,14 @@ export function AppRoutes() {
               <EditorPage />
             </Suspense>
           </RequireAuth>
+        }
+      />
+      <Route
+        path="/docs/import"
+        element={
+          <Suspense fallback={<EditorFallback />}>
+            <ImportDocsPage />
+          </Suspense>
         }
       />
       <Route
