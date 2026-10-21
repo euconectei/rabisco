@@ -327,8 +327,9 @@ export function relayout(elements: readonly ExcalidrawElement[], mapId: string):
     if (!childId || childId === map.root.id) return e
     const child = moved.get(childId)!.rect
     const parent = moved.get(map.byId.get(childId)!.parentId!)!.rect
-    // In 'right' (and 'free') the stored side is not the visual side, so use the actual position.
-    const right = layout === 'both' ? sideOf(map, childId) !== 'left' : child.x >= parent.x + parent.width
+    // The actual position is the visual side: in 'right' (and 'free') the stored side is not it, and
+    // in 'both' `map` was read before this pass, so a map without sides yet (an import) would read as all right.
+    const right = child.x >= parent.x + parent.width
     const start = { x: right ? parent.x + parent.width : parent.x, y: parent.y + parent.height / 2 }
     const end = { x: right ? child.x : child.x + child.width, y: child.y + child.height / 2 }
     const dx = end.x - start.x

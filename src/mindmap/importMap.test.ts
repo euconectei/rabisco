@@ -107,3 +107,23 @@ it('imports a 1500-node outline in under 1.5 s', () => {
   expect(map.byId.size).toBe(1501)
   expect(elapsed).toBeLessThan(1500)
 })
+
+it('anchors every link on the sides of the nodes that face each other, on both sides of the root', () => {
+  const outline = n('Root', n('A', n('a1'), n('a2')), n('B', n('b1'), n('b2')))
+  const { elements } = importOutline([], outline, { x: 0, y: 0 })
+  const nodes = new Map(elements.filter((e) => !e.isDeleted && metaOf(e)?.kind === 'node').map((e) => [e.id, e]))
+  const edges = elements.filter((e) => !e.isDeleted && metaOf(e)?.kind === 'edge')
+  expect(edges).toHaveLength(6)
+  const sides = new Set<string>()
+  for (const edge of edges) {
+    const childId = (metaOf(edge) as { childId: string }).childId
+    const child = nodes.get(childId)!
+    const parent = nodes.get((metaOf(child) as NodeMeta).parentId!)!
+    const right = child.x >= parent.x + parent.width
+    sides.add(right ? 'right' : 'left')
+    const end = edge.x + (edge as unknown as { points: [number, number][] }).points[1][0]
+    expect(edge.x, `start of the link to ${childId}`).toBeCloseTo(right ? parent.x + parent.width : parent.x)
+    expect(end, `end of the link to ${childId}`).toBeCloseTo(right ? child.x : child.x + child.width)
+  }
+  expect([...sides].sort()).toEqual(['left', 'right'])
+})
