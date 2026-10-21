@@ -91,7 +91,7 @@ test.describe('English browser', () => {
   test('landing screenshots load', async ({ page }) => {
     await page.goto('/')
     const images = page.locator('main img')
-    await expect(images).toHaveCount(4)
+    await expect(images).toHaveCount(5)
     for (const image of await images.all()) {
       await image.scrollIntoViewIfNeeded()
       await expect.poll(() => image.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBeGreaterThan(0)
