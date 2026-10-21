@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.11.0](https://github.com/euconectei/rabisco/compare/v0.10.0...v0.11.0) (2026-10-21)
+
+
+### Features
+
+* **landing:** "Ask any AI for a map" section with the suggested prompt and the imported map ([22360c2](https://github.com/euconectei/rabisco/commit/22360c20e746b783625a2aaad9381961e28f36ef))
+
+
+### Bug Fixes
+
+* **mindmap:** anchor the links of an imported map on the side each branch landed on ([a35638f](https://github.com/euconectei/rabisco/commit/a35638f75eb2f996f00b15f8359fd3b3c0c7cef3))
+
 ## [0.10.0](https://github.com/euconectei/rabisco/compare/v0.9.1...v0.10.0) (2026-10-21)
 
 
