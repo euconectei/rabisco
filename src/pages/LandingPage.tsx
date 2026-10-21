@@ -84,6 +84,21 @@ export function LandingPage() {
           </div>
         </section>
 
+        <section className="landing-section landing-ai" aria-labelledby="landing-ai">
+          <div className="landing-ai-text">
+            <h2 id="landing-ai">{t.landing.ai.title}</h2>
+            <p>{t.landing.ai.text}</p>
+            <p className="landing-ai-label">{t.landing.ai.promptLabel}</p>
+            <pre className="landing-ai-prompt">
+              <code>{t.importDocs.prompt}</code>
+            </pre>
+            <Link className="landing-ai-link" to="/docs/import">
+              {t.landing.ai.link}
+            </Link>
+          </div>
+          <Screenshot shot="ai" alt={t.landing.ai.alt} />
+        </section>
+
         <section className="landing-section landing-editable" aria-labelledby="landing-editable">
           <div className="landing-editable-text">
             <h2 id="landing-editable">{t.landing.editablePng.title}</h2>

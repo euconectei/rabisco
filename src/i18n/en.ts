@@ -39,6 +39,13 @@ export const en: Messages = {
     ctaTitle: 'Start a sketch now',
     ctaText: 'Sign in with your Google account and create your first drawing in seconds.',
     tryWithoutSignIn: 'Try without signing in',
+    ai: {
+      title: 'Ask any AI for a map',
+      text: 'Paste this prompt into a conversation with Claude, ChatGPT or Gemini. The AI hands back the map in markdown and you import it into Rabisco, under "My files" > "Import". No plugin and no extra account.',
+      promptLabel: 'Suggested prompt',
+      link: 'See how it works',
+      alt: 'The "Trip to Japan" mind map open in Rabisco, created from text written by an AI',
+    },
     editablePng: {
       title: 'A PNG that turns back into a drawing',
       text: 'Export as PNG or SVG with "Include editable data" and the drawing travels inside the image. When you want to change it again, just import the file into Rabisco.',

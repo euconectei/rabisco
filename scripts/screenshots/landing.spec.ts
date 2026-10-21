@@ -24,6 +24,10 @@ const CONTENT = {
     flow: ['Ideia', 'Rascunho', 'Publicar'],
     title: 'Planos para julho',
     files: ['Plano de estudos', 'Fluxo de cadastro', 'Ideias para o blog', 'Reunião de segunda'],
+    // A map as an AI would hand it over after the prompt of /docs/import.
+    aiName: 'Viagem ao Japão',
+    aiMarkdown:
+      '- Viagem ao Japão\n  - Planejamento\n    - Passagens\n    - Visto\n    - Orçamento\n  - Cidades\n    - Tóquio\n    - Quioto\n    - Osaka\n  - Comida\n    - Sushi\n    - Lámen\n  - Cultura\n    - Templos\n    - Onsen\n',
   },
   en: {
     signIn: 'Sign in with Google',
@@ -37,6 +41,9 @@ const CONTENT = {
     flow: ['Idea', 'Draft', 'Publish'],
     title: 'Plans for July',
     files: ['Study plan', 'Sign-up flow', 'Blog ideas', 'Monday meeting'],
+    aiName: 'Trip to Japan',
+    aiMarkdown:
+      '- Trip to Japan\n  - Planning\n    - Flights\n    - Visa\n    - Budget\n  - Cities\n    - Tokyo\n    - Kyoto\n    - Osaka\n  - Food\n    - Sushi\n    - Ramen\n  - Culture\n    - Temples\n    - Onsen\n',
   },
 } as const
 
@@ -191,6 +198,33 @@ for (const lang of ['pt-BR', 'en'] as const) {
         await page.getByText(c.myFiles).click()
         await expect(page.getByRole('list', { name: c.filesList })).toBeVisible()
         await saveWebp(page, await page.screenshot({ clip: { x: 290, y: 0, width: 700, height: 415 } }), `${prefix}files-${theme}`)
+      })
+
+      // The map an AI handed over as markdown, imported the way a visitor would (see /docs/import).
+      test('ai import screenshot', async ({ page }) => {
+        const c = CONTENT[lang]
+        await installFakeGoogle(page, new FakeDrive())
+        await page.clock.setFixedTime(new Date('2026-10-09T14:00:00Z'))
+
+        await page.goto('/app')
+        await page.getByRole('button', { name: c.signIn }).click()
+        await page.locator('input[type="file"][accept*=".md"]').setInputFiles({
+          name: `${c.aiName}.md`,
+          mimeType: 'text/markdown',
+          buffer: Buffer.from(c.aiMarkdown),
+        })
+        await expect(page.locator('.excalidraw')).toBeVisible({ timeout: 15_000 })
+        if (theme === 'dark') {
+          await page.getByTestId('main-menu-trigger').click()
+          await page.getByText(c.darkMode).click()
+          // The menu stays open after the toggle; close it so it is not in the shot.
+          await page.keyboard.press('Escape')
+          await expect(page.getByText(c.darkMode)).toHaveCount(0)
+        }
+        await page.addStyleTag({ content: '.HintViewer, .save-status { display: none !important; }' })
+        await page.keyboard.press('Shift+1')
+        await page.waitForTimeout(800)
+        await saveWebp(page, await page.screenshot({ clip: { x: 70, y: 130, width: 1140, height: 540 } }), `${lang}-ai-${theme}`)
       })
     })
   }

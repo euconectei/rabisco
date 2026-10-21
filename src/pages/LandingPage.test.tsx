@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
+import { MESSAGES } from '../i18n/messages'
 import { LandingPage } from './LandingPage'
 import { renderWithProviders } from '../test/renderWithProviders'
 import { ModeContext, type LocalSupport, type ModeValue } from '../mode/context'
@@ -104,15 +105,31 @@ it('says it in English, and hides the invitation when the browser cannot keep dr
   expect(screen.queryByRole('link', { name: 'Experimente sem entrar' })).not.toBeInTheDocument()
 })
 
-it('explains that an exported PNG becomes a drawing again, in its own section between the features and the trust list', () => {
+it('explains that an exported PNG becomes a drawing again, in its own section before the trust list', () => {
   show()
   const section = screen.getByRole('region', { name: 'PNG que volta a ser desenho' })
   expect(within(section).getByText(/Incluir dados editáveis/)).toBeInTheDocument()
   expect(within(section).getByRole('img', { name: 'Uma imagem PNG que volta a ser um desenho editável' }).tagName.toLowerCase()).toBe('svg')
   const features = screen.getByRole('region', { name: 'O que dá para fazer' })
   const trust = screen.getByRole('region', { name: 'Seus desenhos são seus' })
-  expect(features.nextElementSibling).toBe(section)
+  const ai = screen.getByRole('region', { name: 'Peça um mapa a qualquer IA' })
+  expect(features.nextElementSibling).toBe(ai)
+  expect(ai.nextElementSibling).toBe(section)
   expect(section.nextElementSibling).toBe(trust)
+})
+
+it('shows the suggested prompt, the map it produces and the way to the docs', () => {
+  show()
+  const section = screen.getByRole('region', { name: 'Peça um mapa a qualquer IA' })
+  expect(within(section).getByText(MESSAGES['pt-BR'].importDocs.prompt, { normalizer: (text) => text })).toBeInTheDocument()
+  expect(within(section).getByRole('img', { name: /Viagem ao Japão/ })).toHaveAttribute('src', '/landing/pt-BR-ai-light.webp')
+  expect(within(section).getByRole('link', { name: 'Ver como funciona' })).toHaveAttribute('href', '/docs/import')
+})
+
+it('has the AI section in English', () => {
+  show({ lang: 'en' })
+  const section = screen.getByRole('region', { name: 'Ask any AI for a map' })
+  expect(within(section).getByRole('img', { name: /Trip to Japan/ })).toHaveAttribute('src', '/landing/en-ai-light.webp')
 })
 
 it('has the editable PNG section in English', () => {

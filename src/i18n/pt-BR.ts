@@ -37,6 +37,13 @@ export const ptBR = {
     ctaTitle: 'Comece um rabisco agora',
     ctaText: 'Entre com a sua conta Google e crie o primeiro desenho em segundos.',
     tryWithoutSignIn: 'Experimente sem entrar',
+    ai: {
+      title: 'Peça um mapa a qualquer IA',
+      text: 'Cole este prompt numa conversa com Claude, ChatGPT ou Gemini. A IA devolve o mapa em markdown e você importa no Rabisco, em "Meus arquivos" > "Importar". Sem plugin e sem conta extra.',
+      promptLabel: 'Prompt sugerido',
+      link: 'Ver como funciona',
+      alt: 'Mapa mental "Viagem ao Japão" aberto no Rabisco, criado a partir de um texto gerado por IA',
+    },
     editablePng: {
       title: 'PNG que volta a ser desenho',
       text: 'Exporte em PNG ou SVG com "Incluir dados editáveis" e o desenho vai dentro da imagem. Quando quiser mexer de novo, é só importar o arquivo no Rabisco.',

@@ -256,3 +256,13 @@ a.sign-in-brand:focus-visible, a.files-brand:focus-visible, a.landing-logo:focus
 .docs h2 { margin-top: 2rem; font-size: 1.15rem; }
 .docs-code { margin: 0.75rem 0; padding: 0.75rem 1rem; overflow-x: auto; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 0.5rem; font-size: 0.85rem; white-space: pre-wrap; }
 .docs-copy-status { min-height: 1.5em; font-size: 0.85rem; }
+
+.landing-ai { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 2rem 3rem; align-items: center; }
+.landing-ai h2 { margin-bottom: 1rem; }
+.landing-ai p { margin: 0 0 1rem; color: var(--muted); }
+.landing-ai .landing-ai-label { margin: 1.25rem 0 0.4rem; font-size: 0.85rem; font-weight: 600; }
+.landing-ai-prompt { margin: 0 0 1rem; padding: 0.75rem 1rem; overflow-x: auto; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 0.5rem; font-size: 0.8rem; line-height: 1.5; white-space: pre-wrap; }
+.landing .landing-ai-link { color: var(--accent-text); font-weight: 600; }
+@media (max-width: 52rem) {
+  .landing-ai { grid-template-columns: 1fr; }
+}
