@@ -16,6 +16,7 @@ export interface WhatsNewEntry {
 }
 
 export const whatsNewEntries: WhatsNewEntry[] = [
+  { date: '2026-10-23', sections: ['whatsNewModal'] },
   { date: '2026-10-21', sections: ['aiImport'] },
   { date: '2026-10-14', sections: ['localMode', 'importMermaid', 'editablePng'] },
   { date: '2026-10-13', sections: ['adsAndPrivacy', 'saveStatus', 'newLogo'] },

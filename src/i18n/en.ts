@@ -358,6 +358,7 @@ After the block, tell me to save its content to a .md file and import it in Rabi
     link: 'News',
     linkUnseen: 'News (something new)',
     menuItem: 'News ({version})',
+    close: 'Close',
     sections: {
       aiImport: {
         title: 'Maps made by AI',
@@ -365,6 +366,10 @@ After the block, tell me to save its content to a .md file and import it in Rabi
           'Ask any AI (Claude, ChatGPT, Gemini…) to turn your conversation into a mind map and import the result under "My files", "Import".',
           'The new "Create with AI" page, in the footer, has a ready-made prompt to copy and explains the format.',
         ],
+      },
+      whatsNewModal: {
+        title: 'News now opens in a window',
+        items: ['News opens over the screen you are on, without leaving it.'],
       },
       imageExport: {
         title: 'Export as an image',
