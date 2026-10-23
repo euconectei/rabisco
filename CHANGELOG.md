@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/euconectei/rabisco/compare/v0.11.0...v0.12.0) (2026-10-23)
+
+
+### Features
+
+* **whats-new:** open What's new as a modal over the current screen ([#37](https://github.com/euconectei/rabisco/issues/37)) ([632fad3](https://github.com/euconectei/rabisco/commit/632fad3bee8adfcc2e32541cc53928dc6cc5580c))
+
 ## [0.11.0](https://github.com/euconectei/rabisco/compare/v0.10.0...v0.11.0) (2026-10-21)
 
 
