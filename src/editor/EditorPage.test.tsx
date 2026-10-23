@@ -165,11 +165,11 @@ describe('opening', () => {
     expect(drive.client.save).not.toHaveBeenCalled()
   })
 
-  it('goes back to the files page and opens the news from the menu', async () => {
+  it('opens the news from the menu without leaving the editor', async () => {
     open()
     await canvas()
     await userEvent.click(screen.getByRole('button', { name: `Novidades (v${__APP_VERSION__})` }))
-    expect(screen.getByRole('heading', { level: 1, name: 'Novidades' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Novidades' })).toBeInTheDocument()
   })
 })
 

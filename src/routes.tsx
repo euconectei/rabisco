@@ -9,6 +9,7 @@ import { LocalDrawingsPage } from './pages/LocalDrawingsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { OpenFromDrivePage } from './pages/OpenFromDrivePage'
 import { WhatsNewPage } from './pages/WhatsNewPage'
+import { WhatsNewProvider } from './whatsNew/WhatsNewProvider'
 
 const EditorPage = lazy(() => import('./editor/EditorPage'))
 const NewFileRedirect = lazy(() => import('./editor/NewFileRedirect'))
@@ -27,6 +28,7 @@ function EditorFallback() {
 export function AppRoutes() {
   return (
     <LocalModeGate>
+    <WhatsNewProvider>
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/en/*" element={<LandingPage />} />
@@ -125,6 +127,7 @@ export function AppRoutes() {
       />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    </WhatsNewProvider>
     </LocalModeGate>
   )
 }

@@ -74,13 +74,21 @@ test.describe('English browser', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'en')
   })
 
-  test('footer shows the version and opens the news page', async ({ page }) => {
+  test('footer shows the version and opens the news over the current screen', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByText(/^v\d+\.\d+\.\d+$/)).toBeVisible()
     await page.getByRole('link', { name: 'News (something new)' }).click()
-    await expect(page.getByRole('heading', { level: 2, name: 'Rabisco is here' })).toBeVisible()
-    await page.getByRole('button', { name: 'Back' }).click()
+    const dialog = page.getByRole('dialog', { name: 'News' })
+    await expect(dialog.getByRole('heading', { level: 3, name: 'Rabisco is here' })).toBeVisible()
+    await expect(page).toHaveURL('/')
+    await dialog.getByRole('button', { name: 'Close' }).click()
+    await expect(dialog).not.toBeVisible()
     await expect(page.getByRole('link', { name: 'News', exact: true })).toBeVisible()
+  })
+
+  test('news page still opens on its own at /whats-new', async ({ page }) => {
+    await page.goto('/whats-new')
+    await expect(page.getByRole('heading', { level: 2, name: 'Rabisco is here' })).toBeVisible()
   })
 
   test('landing is in English', async ({ page }) => {

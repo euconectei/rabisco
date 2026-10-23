@@ -39,6 +39,7 @@ html, body, #root { height: 100%; margin: 0; }
 .whats-new-list > li { border-left: 2px solid #6965db55; padding-left: 1.25rem; }
 .whats-new-date { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: #6965db; margin: 0; }
 .whats-new h2 { font-size: 1.15rem; margin: 0.75rem 0 0.5rem; }
+.whats-new h3 { font-size: 1.05rem; margin: 0.75rem 0 0.5rem; }
 .whats-new ul { padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.4rem; line-height: 1.5; }
 .sign-in { display: flex; flex-wrap: wrap; min-height: 100vh; min-height: 100dvh; }
 .sign-in-panel { flex: 1 1 30rem; display: flex; flex-direction: column; justify-content: space-between; gap: 2rem; padding: 2.5rem 3.5rem; background: rgba(105,101,219, 0.12); background: color-mix(in srgb, var(--accent) 12%, Canvas); }
@@ -71,8 +72,16 @@ html, body, #root { height: 100%; margin: 0; }
 .button-link { border: 0; background: none; padding: 0; color: inherit; text-decoration: underline; font: inherit; cursor: pointer; }
 .reconnect-banner { position: fixed; z-index: 10; top: 0; left: 0; right: 0; display: flex; gap: 1rem; align-items: center; justify-content: center; padding: 0.5rem 1rem; background: #fff3cd; color: #5c4400; }
 .dialog-backdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: #0006; padding: 1rem; }
-.dialog { max-width: 28rem; padding: 1.5rem; border-radius: 0.75rem; background: Canvas; color: CanvasText; box-shadow: 0 10px 40px #0004; }
+.dialog { position: relative; max-width: 28rem; padding: 1.5rem; border-radius: 0.75rem; background: Canvas; color: CanvasText; box-shadow: 0 10px 40px #0004; }
 .dialog h2 { margin-top: 0; font-size: 1.2rem; }
+.dialog-close { position: absolute; top: 0.5rem; right: 0.5rem; width: 2rem; height: 2rem; border: 0; border-radius: 0.4rem; background: transparent; color: inherit; font-size: 1.3rem; line-height: 1; cursor: pointer; }
+.dialog-close:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.dialog-close:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 2px; }
+/* The news modal scrolls inside itself and takes almost the whole screen on a phone. */
+.dialog.whats-new { width: 100%; max-width: 36rem; max-height: 80vh; overflow-y: auto; }
+@media (max-width: 40rem) {
+  .dialog.whats-new { max-height: 92vh; }
+}
 .dialog-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; }
 .export-options { display: flex; flex-direction: column; gap: 0.6rem; }
 .export-options fieldset { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin: 0; padding: 0; border: 0; }

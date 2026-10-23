@@ -23,6 +23,7 @@ import { OrganizePanel } from '../mindmap/OrganizePanel'
 import { setLayout, setStyle } from '../mindmap/switchStyle'
 import { toolbarPosition, touchTarget, TouchToolbar, useSettled, type TouchTarget } from '../mindmap/TouchToolbar'
 import { useMindmap, type MindmapApi } from '../mindmap/useMindmap'
+import { useWhatsNew } from '../whatsNew/context'
 import { Dialog } from './Dialog'
 import { AdSlot } from '../ads/AdSlot'
 import { CookieNotice } from '../ads/CookieNotice'
@@ -42,6 +43,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
   const { lang, t } = useI18n()
   const navigate = useNavigate()
   const drive = useDrive()
+  const { openNews } = useWhatsNew()
   const file = useDriveFile(fileId)
   const [actionFailed, setActionFailed] = useState(false)
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null)
@@ -318,7 +320,7 @@ function EditorScreen({ fileId }: { fileId: string }) {
       >
         <MainMenu>
           <MainMenu.Item onSelect={() => navigate('/app')}>{t.editor.backToFiles}</MainMenu.Item>
-          <MainMenu.Item onSelect={() => navigate('/whats-new')}>
+          <MainMenu.Item onSelect={openNews}>
             {format(t.whatsNew.menuItem, { version: `v${__APP_VERSION__}` })}
           </MainMenu.Item>
           <MainMenu.Item onSelect={() => navigate('/privacy#cookies')}>{t.editor.privacyMenuItem}</MainMenu.Item>

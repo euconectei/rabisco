@@ -356,6 +356,7 @@ Depois do bloco, diga que eu devo salvar o conteúdo num arquivo .md e importá-
     link: 'Novidades',
     linkUnseen: 'Novidades (há novidades)',
     menuItem: 'Novidades ({version})',
+    close: 'Fechar',
     sections: {
       aiImport: {
         title: 'Mapas criados por IA',
@@ -363,6 +364,10 @@ Depois do bloco, diga que eu devo salvar o conteúdo num arquivo .md e importá-
           'Peça a qualquer IA (Claude, ChatGPT, Gemini…) para transformar a conversa num mapa mental e importe o resultado em "Meus arquivos", "Importar".',
           'A nova página "Criar com IA", no rodapé, traz um prompt pronto para copiar e explica o formato.',
         ],
+      },
+      whatsNewModal: {
+        title: 'Novidades agora abrem numa janela',
+        items: ['As novidades abrem por cima da tela em que você está, sem sair dela.'],
       },
       imageExport: {
         title: 'Exportar como imagem',
