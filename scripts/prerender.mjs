@@ -3,6 +3,7 @@ import { dirname, resolve } from 'node:path'
 import {
   BASE_URL,
   LANGUAGES,
+  PT_BR_PAGE_PATHS,
   renderKidsApp,
   renderKidsPrivacy,
   renderImportDocs,
@@ -37,7 +38,8 @@ const INLINE_LANG_SCRIPT = `(function () {
         } else {
           try { lang = localStorage.getItem('rabisco.lang') } catch (e) {}
           if (lang !== 'pt-BR' && lang !== 'en') {
-            lang = (navigator.language || '').toLowerCase().indexOf('pt') === 0 ? 'pt-BR' : 'en'
+            var ptPage = ${JSON.stringify(PT_BR_PAGE_PATHS)}.indexOf(path.length > 1 ? path.replace(/\\/+$/, '') : path) !== -1
+            lang = ptPage || (navigator.language || '').toLowerCase().indexOf('pt') === 0 ? 'pt-BR' : 'en'
           }
         }
         document.documentElement.lang = lang
@@ -128,5 +130,16 @@ const secondary = [
 for (const page of secondary) {
   writeHtml(resolve(DIST, `${page.path}.html`), pageHtml('pt-BR', page.render('pt-BR'), page.seo))
 }
+
+// Sitemap from the same page list, so a public page can't be listed without being prerendered.
+const sitemapPaths = ['/', '/en/', ...secondary.map((page) => `/${page.path}`)]
+writeFileSync(
+  resolve(DIST, 'sitemap.xml'),
+  `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${sitemapPaths.map((path) => `  <url>\n    <loc>${BASE_URL}${path}</loc>\n  </url>`).join('\n')}
+</urlset>
+`,
+)
 
 console.log(`prerendered landing for: ${LANGUAGES.join(', ')} and pages: ${secondary.map((p) => p.path).join(', ')}`)

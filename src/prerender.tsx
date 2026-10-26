@@ -12,7 +12,7 @@ import SupportPage from './support/SupportPage'
 import ImportDocsPage from './docs/ImportDocsPage'
 import { KidsAppPage, KidsPrivacyPage } from './kidsApp/KidsPages'
 
-export { BASE_URL, seoFor, secondaryPageSeo, softwareApplicationJsonLd } from './seo'
+export { BASE_URL, PT_BR_PAGE_PATHS, seoFor, secondaryPageSeo, softwareApplicationJsonLd } from './seo'
 export { LANGUAGES } from './i18n/languages'
 
 function renderWithProviders(lang: Language, element: ReactElement): string {

@@ -21,6 +21,7 @@ function setup(initialLanguage?: 'pt-BR' | 'en') {
 afterEach(() => {
   vi.restoreAllMocks()
   localStorage.clear()
+  window.history.replaceState(null, '', '/')
 })
 
 it('uses the stored language over the browser language', () => {
@@ -45,6 +46,8 @@ it('switches language, persists it and updates <html lang>', async () => {
 })
 
 it('still switches language when storage is unavailable', async () => {
+  // An app page: pt-BR pages ignore the browser language (see LanguageSuggestion.test.tsx).
+  window.history.replaceState(null, '', '/app')
   vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
     throw new Error('SecurityError')
   })

@@ -265,7 +265,14 @@ Depois do bloco, diga que eu devo salvar o conteúdo num arquivo .md e importá-
     machineTitle: 'Para IAs e ferramentas',
     machineText: 'Esta documentação também existe em texto puro, para IAs que leem a web:',
   },
-  language: { label: 'Idioma', 'pt-BR': 'Português', en: 'English' },
+  language: {
+    label: 'Idioma',
+    'pt-BR': 'Português',
+    en: 'English',
+    suggestion: 'Esta página também está disponível em inglês.',
+    suggestionAccept: 'Ver em inglês',
+    suggestionDismiss: 'Continuar em português',
+  },
   exportImage: {
     menuItem: 'Exportar imagem…',
     title: 'Exportar imagem',

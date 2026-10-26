@@ -267,7 +267,14 @@ After the block, tell me to save its content to a .md file and import it in Rabi
     machineTitle: 'For AIs and tools',
     machineText: 'This documentation also exists as plain text, for AIs that read the web:',
   },
-  language: { label: 'Language', 'pt-BR': 'Português', en: 'English' },
+  language: {
+    label: 'Language',
+    'pt-BR': 'Português',
+    en: 'English',
+    suggestion: 'This page is also available in English.',
+    suggestionAccept: 'View in English',
+    suggestionDismiss: 'Stay in Portuguese',
+  },
   exportImage: {
     menuItem: 'Export image…',
     title: 'Export image',

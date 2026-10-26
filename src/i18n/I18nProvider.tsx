@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { isPtBrPagePath } from '../seo'
 import { I18nContext } from './context'
 import { detectLanguage, type Language } from './languages'
 import { MESSAGES } from './messages'
@@ -19,7 +20,7 @@ export function I18nProvider({ children, initialLanguage }: Props) {
       initialLanguage ??
       languageFromPath(window.location.pathname) ??
       readStoredLanguage() ??
-      detectLanguage(navigator.language),
+      (isPtBrPagePath(window.location.pathname) ? 'pt-BR' : detectLanguage(navigator.language)),
   )
 
   useEffect(() => {

@@ -90,6 +90,17 @@ const SECONDARY_SEO: Record<SecondaryPage, { path: string; title: string; descri
   },
 }
 
+/**
+ * Paths served as prerendered pt-BR pages. Without a stored choice they start in pt-BR instead of
+ * the browser language: crawlers browse in English, and rendering English here would make the page
+ * look like a copy of `/en/` instead of the pt-BR content its canonical HTML declares.
+ */
+export const PT_BR_PAGE_PATHS: readonly string[] = ['/', ...Object.values(SECONDARY_SEO).map((seo) => `/${seo.path}`)]
+
+export function isPtBrPagePath(path: string): boolean {
+  return PT_BR_PAGE_PATHS.includes(path.length > 1 ? path.replace(/\/+$/, '') : path)
+}
+
 export function secondaryPageSeo(page: SecondaryPage): {
   url: string
   title: string
