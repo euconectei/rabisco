@@ -5,6 +5,7 @@ import {
   LANGUAGES,
   renderKidsApp,
   renderKidsPrivacy,
+  renderImportDocs,
   renderLanding,
   renderSupport,
   renderWhatsNew,
@@ -114,15 +115,18 @@ for (const lang of LANGUAGES) {
   )
 }
 
-// Secondary public pages: pt-BR only (no language-paired URL).
+// Secondary public pages: pt-BR only (no language-paired URL). Written as `<path>.html` (not
+// `<path>/index.html`) so Cloudflare Pages serves the slash-less canonical URL directly instead of
+// 308-redirecting it to `<path>/`, which Google reports as "Page with redirect".
 const secondary = [
   { path: 'whats-new', render: renderWhatsNew, seo: secondaryPageSeo('whats-new') },
   { path: 'apoie', render: renderSupport, seo: secondaryPageSeo('apoie') },
   { path: 'rabisco-kids', render: renderKidsApp, seo: secondaryPageSeo('rabisco-kids') },
   { path: 'rabisco-kids/privacy', render: renderKidsPrivacy, seo: secondaryPageSeo('rabisco-kids/privacy') },
+  { path: 'docs/import', render: renderImportDocs, seo: secondaryPageSeo('docs/import') },
 ]
 for (const page of secondary) {
-  writeHtml(resolve(DIST, `${page.path}/index.html`), pageHtml('pt-BR', page.render('pt-BR'), page.seo))
+  writeHtml(resolve(DIST, `${page.path}.html`), pageHtml('pt-BR', page.render('pt-BR'), page.seo))
 }
 
 console.log(`prerendered landing for: ${LANGUAGES.join(', ')} and pages: ${secondary.map((p) => p.path).join(', ')}`)

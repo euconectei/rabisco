@@ -60,7 +60,7 @@ export function softwareApplicationJsonLd(lang: Language): string {
   })
 }
 
-export type SecondaryPage = 'whats-new' | 'apoie' | 'rabisco-kids' | 'rabisco-kids/privacy'
+export type SecondaryPage = 'whats-new' | 'apoie' | 'rabisco-kids' | 'rabisco-kids/privacy' | 'docs/import'
 
 const SECONDARY_SEO: Record<SecondaryPage, { path: string; title: string; description: string }> = {
   'whats-new': {
@@ -82,6 +82,11 @@ const SECONDARY_SEO: Record<SecondaryPage, { path: string; title: string; descri
     path: 'rabisco-kids/privacy',
     title: 'Política de Privacidade do Rabisco Kids',
     description: 'O Rabisco Kids não coleta nenhum dado, não tem propaganda e funciona sem internet.',
+  },
+  'docs/import': {
+    path: 'docs/import',
+    title: 'Criar mapas mentais com IA — Rabisco',
+    description: 'Peça a qualquer IA (Claude, ChatGPT, Gemini…) um mapa mental em markdown e importe o resultado no Rabisco, sem plugin nem conta extra.',
   },
 }
 
