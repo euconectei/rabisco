@@ -9,9 +9,10 @@ import { ModeProvider } from './mode/ModeProvider'
 import { LandingPage } from './pages/LandingPage'
 import { WhatsNewPage } from './pages/WhatsNewPage'
 import SupportPage from './support/SupportPage'
+import ImportDocsPage from './docs/ImportDocsPage'
 import { KidsAppPage, KidsPrivacyPage } from './kidsApp/KidsPages'
 
-export { BASE_URL, seoFor, secondaryPageSeo, softwareApplicationJsonLd } from './seo'
+export { BASE_URL, PT_BR_PAGE_PATHS, seoFor, secondaryPageSeo, softwareApplicationJsonLd } from './seo'
 export { LANGUAGES } from './i18n/languages'
 
 function renderWithProviders(lang: Language, element: ReactElement): string {
@@ -46,4 +47,8 @@ export function renderKidsApp(lang: Language): string {
 
 export function renderKidsPrivacy(lang: Language): string {
   return renderWithProviders(lang, <KidsPrivacyPage />)
+}
+
+export function renderImportDocs(lang: Language): string {
+  return renderWithProviders(lang, <ImportDocsPage />)
 }

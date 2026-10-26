@@ -70,17 +70,26 @@ test.describe('English browser', () => {
 
   test('sets <html lang> before the app bundle runs', async ({ page }) => {
     await page.route(/\/assets\/index-.*\.js$/, (route) => route.abort())
-    await page.goto('/')
+    await page.goto('/app')
     await expect(page.locator('html')).toHaveAttribute('lang', 'en')
   })
 
-  test('footer shows the version and opens the news over the current screen', async ({ page }) => {
+  test('pt-BR landing stays in pt-BR and offers English', async ({ page }) => {
     await page.goto('/')
+    await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR')
+    await expect(page.getByRole('link', { name: 'Começar, é grátis' }).first()).toBeVisible()
+    await page.getByRole('button', { name: 'View in English' }).click()
+    await expect(page.getByRole('link', { name: "Get started, it's free" }).first()).toBeVisible()
+    await expect(page.getByRole('button', { name: 'View in English' })).not.toBeVisible()
+  })
+
+  test('footer shows the version and opens the news over the current screen', async ({ page }) => {
+    await page.goto('/en/')
     await expect(page.getByText(/^v\d+\.\d+\.\d+$/)).toBeVisible()
     await page.getByRole('link', { name: 'News (something new)' }).click()
     const dialog = page.getByRole('dialog', { name: 'News' })
     await expect(dialog.getByRole('heading', { level: 3, name: 'Rabisco is here' })).toBeVisible()
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL('/en/')
     await dialog.getByRole('button', { name: 'Close' }).click()
     await expect(dialog).not.toBeVisible()
     await expect(page.getByRole('link', { name: 'News', exact: true })).toBeVisible()
@@ -88,16 +97,17 @@ test.describe('English browser', () => {
 
   test('news page still opens on its own at /whats-new', async ({ page }) => {
     await page.goto('/whats-new')
+    await page.getByRole('button', { name: 'View in English' }).click()
     await expect(page.getByRole('heading', { level: 2, name: 'Rabisco is here' })).toBeVisible()
   })
 
   test('landing is in English', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/en/')
     await expect(page.getByRole('link', { name: "Get started, it's free" }).first()).toBeVisible()
   })
 
   test('landing screenshots load', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/en/')
     const images = page.locator('main img')
     await expect(images).toHaveCount(5)
     for (const image of await images.all()) {

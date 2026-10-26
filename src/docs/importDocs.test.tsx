@@ -9,7 +9,7 @@ import docEn from '../../public/docs/import.md?raw'
 import docPtBR from '../../public/docs/import.pt-BR.md?raw'
 import llms from '../../public/llms.txt?raw'
 import robots from '../../public/robots.txt?raw'
-import sitemap from '../../public/sitemap.xml?raw'
+import { PT_BR_PAGE_PATHS } from '../seo'
 import ImportDocsPage from './ImportDocsPage'
 
 const signedOut = signedInAuth({ status: 'signed-out', user: null, hint: null })
@@ -42,12 +42,12 @@ it.each(LANGS)('the static %s document carries the same prompt and example as th
   expect(doc).toContain(example)
 })
 
-it('llms.txt points to the static docs and the sitemap lists the page', () => {
+it('llms.txt points to the static docs and the page is prerendered (and so in the sitemap)', () => {
   expect(llms).toMatch(/^# Rabisco/)
   for (const [, file] of LANGS) expect(llms).toContain(`/${file})`)
   expect(robots).toContain('Sitemap: https://rabisco.dev/sitemap.xml')
   expect(robots).not.toMatch(/^Disallow: \/$/m)
-  expect(sitemap).toContain('<loc>https://rabisco.dev/docs/import</loc>')
+  expect(PT_BR_PAGE_PATHS).toContain('/docs/import')
 })
 
 it('copies the prompt', async () => {

@@ -60,7 +60,7 @@ export function softwareApplicationJsonLd(lang: Language): string {
   })
 }
 
-export type SecondaryPage = 'whats-new' | 'apoie' | 'rabisco-kids' | 'rabisco-kids/privacy'
+export type SecondaryPage = 'whats-new' | 'apoie' | 'rabisco-kids' | 'rabisco-kids/privacy' | 'docs/import'
 
 const SECONDARY_SEO: Record<SecondaryPage, { path: string; title: string; description: string }> = {
   'whats-new': {
@@ -83,6 +83,22 @@ const SECONDARY_SEO: Record<SecondaryPage, { path: string; title: string; descri
     title: 'Política de Privacidade do Rabisco Kids',
     description: 'O Rabisco Kids não coleta nenhum dado, não tem propaganda e funciona sem internet.',
   },
+  'docs/import': {
+    path: 'docs/import',
+    title: 'Criar mapas mentais com IA — Rabisco',
+    description: 'Peça a qualquer IA (Claude, ChatGPT, Gemini…) um mapa mental em markdown e importe o resultado no Rabisco, sem plugin nem conta extra.',
+  },
+}
+
+/**
+ * Paths served as prerendered pt-BR pages. Without a stored choice they start in pt-BR instead of
+ * the browser language: crawlers browse in English, and rendering English here would make the page
+ * look like a copy of `/en/` instead of the pt-BR content its canonical HTML declares.
+ */
+export const PT_BR_PAGE_PATHS: readonly string[] = ['/', ...Object.values(SECONDARY_SEO).map((seo) => `/${seo.path}`)]
+
+export function isPtBrPagePath(path: string): boolean {
+  return PT_BR_PAGE_PATHS.includes(path.length > 1 ? path.replace(/\/+$/, '') : path)
 }
 
 export function secondaryPageSeo(page: SecondaryPage): {
