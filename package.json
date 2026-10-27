@@ -19,6 +19,7 @@
     "test:e2e": "playwright test",
     "screenshots": "playwright test -c playwright.screenshots.config.ts",
     "hash-email": "node scripts/hash-email.mjs",
+    "usage-report": "node scripts/usage-report.mjs",
     "ci": "pnpm run lint && pnpm run test:coverage && pnpm run build"
   },
   "dependencies": {
