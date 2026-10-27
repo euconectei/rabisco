@@ -3,7 +3,7 @@
 .template-tags { margin: 0; font-size: 0.85rem; opacity: 0.75; }
 .template-header h1 { margin-top: 0.25rem; }
 .template-figure { margin: 1rem 0; }
-.template-figure img { display: block; width: 100%; height: auto; border: 1px solid color-mix(in srgb, currentColor 15%, transparent); border-radius: 0.75rem; background: #fff; }
+.template-figure img { display: block; width: auto; max-width: 100%; height: auto; max-height: min(70vh, 40rem); margin: 0 auto; border: 1px solid color-mix(in srgb, currentColor 15%, transparent); border-radius: 0.75rem; background: #fff; }
 .template-start { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin: 1rem 0 1.5rem; }
 .template-start-hint { margin: 0; font-size: 0.85rem; opacity: 0.75; }
 .template-intro { font-size: 1.05rem; }
@@ -13,6 +13,11 @@
 .template-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 1rem; padding: 0; list-style: none; }
 .template-card a { display: flex; flex-direction: column; gap: 0.35rem; height: 100%; padding: 0.5rem; border: 1px solid color-mix(in srgb, currentColor 15%, transparent); border-radius: 0.75rem; color: inherit; text-decoration: none; }
 .template-card a:hover, .template-card a:focus-visible { border-color: currentColor; }
-.template-card img { width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 0.5rem; background: #fff; }
+.template-card img { width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: contain; border-radius: 0.5rem; background: #fff; }
 .template-card-title { font-weight: 600; }
 .template-card-kind { font-size: 0.8rem; opacity: 0.75; }
+/* PT | EN as links (TemplateLanguageLinks), styled like the button switcher in index.css. */
+.language-switcher a { display: inline-flex; align-items: center; justify-content: center; min-width: 2.6rem; min-height: 2rem; padding: 0 0.7rem; border-radius: 999px; color: inherit; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.04em; text-decoration: none; opacity: 0.7; }
+.language-switcher a:hover { opacity: 1; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.language-switcher a[aria-current='page'] { background: var(--accent); color: #fff; opacity: 1; }
+.language-switcher a:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 2px; }

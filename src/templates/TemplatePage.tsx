@@ -44,7 +44,7 @@ export function TemplatePage({ lang, slug: slugProp }: { lang: Language; slug?: 
         <h1>{locale.title}</h1>
       </header>
       <figure className="template-figure">
-        <img src={templateImagePath(template, lang)} alt={locale.imageAlt} width={1200} height={750} loading="eager" />
+        <img src={templateImagePath(template, lang)} alt={locale.imageAlt} loading="eager" />
       </figure>
       <div className="template-start">
         <button type="button" className="button button-large" onClick={() => navigate(templateStartPath(template))}>
