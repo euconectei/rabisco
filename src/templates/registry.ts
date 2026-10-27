@@ -2,15 +2,12 @@ import type { Language } from '../i18n/languages'
 import { decisaoSimNao } from './content/decisao-sim-nao'
 import { resumo } from './content/resumo'
 import { revolucaoFrancesa } from './content/revolucao-francesa'
+import { templatesIndexPath } from './paths'
 import type { Template, TemplateLocale } from './types'
 
 export const TEMPLATES: readonly Template[] = [revolucaoFrancesa, resumo, decisaoSimNao]
 
-const BASE_PATH: Record<Language, string> = { 'pt-BR': '/modelos', en: '/en/templates' }
-
-export function templatesIndexPath(lang: Language): string {
-  return BASE_PATH[lang]
-}
+export { templatesIndexPath } from './paths'
 
 export function templateById(id: string): Template | undefined {
   return TEMPLATES.find((template) => template.id === id)
@@ -23,7 +20,7 @@ export function templateBySlug(lang: Language, slug: string): Template | undefin
 /** The page of a template in a language, or null when it has no version in that language. */
 export function templatePath(lang: Language, template: Template): string | null {
   const locale = template.locales[lang]
-  return locale ? `${BASE_PATH[lang]}/${locale.slug}` : null
+  return locale ? `${templatesIndexPath(lang)}/${locale.slug}` : null
 }
 
 export function templatesIn(lang: Language): Template[] {
