@@ -4,15 +4,24 @@ import {
   BASE_URL,
   LANGUAGES,
   PT_BR_PAGE_PATHS,
+  PT_BR_PAGE_PREFIXES,
+  TEMPLATES,
   renderKidsApp,
   renderKidsPrivacy,
   renderImportDocs,
   renderLanding,
   renderSupport,
+  renderTemplate,
+  renderTemplatesIndex,
   renderWhatsNew,
   seoFor,
   secondaryPageSeo,
   softwareApplicationJsonLd,
+  templatePath,
+  templateSeo,
+  templatesIn,
+  templatesIndexPath,
+  templatesIndexSeo,
 } from '../.prerender/prerender.js'
 
 const DIST = resolve('dist')
@@ -38,7 +47,9 @@ const INLINE_LANG_SCRIPT = `(function () {
         } else {
           try { lang = localStorage.getItem('rabisco.lang') } catch (e) {}
           if (lang !== 'pt-BR' && lang !== 'en') {
-            var ptPage = ${JSON.stringify(PT_BR_PAGE_PATHS)}.indexOf(path.length > 1 ? path.replace(/\\/+$/, '') : path) !== -1
+            var page = path.length > 1 ? path.replace(/\\/+$/, '') : path
+            var ptPage = ${JSON.stringify(PT_BR_PAGE_PATHS)}.indexOf(page) !== -1 ||
+              ${JSON.stringify(PT_BR_PAGE_PREFIXES)}.some(function (prefix) { return page === prefix || page.indexOf(prefix + '/') === 0 })
             lang = ptPage || (navigator.language || '').toLowerCase().indexOf('pt') === 0 ? 'pt-BR' : 'en'
           }
         }
@@ -75,13 +86,8 @@ function headFor(meta) {
     `<meta name="twitter:description" content="${escapeHtml(meta.description)}" />`,
     `<meta name="twitter:image" content="${meta.ogImageUrl}" />`,
   ]
-  if (meta.hreflang) {
-    parts.push(
-      '',
-      `<link rel="alternate" hreflang="pt-BR" href="${BASE_URL}/" />`,
-      `<link rel="alternate" hreflang="en" href="${BASE_URL}/en/" />`,
-      `<link rel="alternate" hreflang="x-default" href="${BASE_URL}/" />`,
-    )
+  if (meta.alternates?.length) {
+    parts.push('', ...meta.alternates.map((alternate) => `<link rel="alternate" hreflang="${alternate.hreflang}" href="${alternate.url}" />`))
   }
   if (meta.jsonLd) {
     parts.push('', `<script type="application/ld+json">${meta.jsonLd}</script>`)
@@ -108,12 +114,18 @@ function writeHtml(filePath, html) {
   writeFileSync(filePath, html)
 }
 
+const LANDING_ALTERNATES = [
+  { hreflang: 'pt-BR', url: `${BASE_URL}/` },
+  { hreflang: 'en', url: `${BASE_URL}/en/` },
+  { hreflang: 'x-default', url: `${BASE_URL}/` },
+]
+
 // Landing: one file per language (hreflang + JSON-LD).
 for (const lang of LANGUAGES) {
   const seo = seoFor(lang)
   writeHtml(
     resolve(DIST, lang === 'en' ? 'en/index.html' : 'index.html'),
-    pageHtml(lang, renderLanding(lang), { ...seo, hreflang: true, jsonLd: softwareApplicationJsonLd(lang) }),
+    pageHtml(lang, renderLanding(lang), { ...seo, alternates: LANDING_ALTERNATES, jsonLd: softwareApplicationJsonLd(lang) }),
   )
 }
 
@@ -131,8 +143,21 @@ for (const page of secondary) {
   writeHtml(resolve(DIST, `${page.path}.html`), pageHtml('pt-BR', page.render('pt-BR'), page.seo))
 }
 
+// Template pages: a list per language plus one page per template, each in the language it was written in.
+const templatePages = []
+for (const lang of LANGUAGES) {
+  templatePages.push({ lang, path: templatesIndexPath(lang), html: renderTemplatesIndex(lang), seo: templatesIndexSeo(lang) })
+  for (const template of templatesIn(lang)) {
+    const slug = template.locales[lang].slug
+    templatePages.push({ lang, path: templatePath(lang, template), html: renderTemplate(lang, slug), seo: templateSeo(lang, template) })
+  }
+}
+for (const page of templatePages) {
+  writeHtml(resolve(DIST, `${page.path.slice(1)}.html`), pageHtml(page.lang, page.html, page.seo))
+}
+
 // Sitemap from the same page list, so a public page can't be listed without being prerendered.
-const sitemapPaths = ['/', '/en/', ...secondary.map((page) => `/${page.path}`)]
+const sitemapPaths = ['/', '/en/', ...secondary.map((page) => `/${page.path}`), ...templatePages.map((page) => page.path)]
 writeFileSync(
   resolve(DIST, 'sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>
@@ -142,4 +167,4 @@ ${sitemapPaths.map((path) => `  <url>\n    <loc>${BASE_URL}${path}</loc>\n  </ur
 `,
 )
 
-console.log(`prerendered landing for: ${LANGUAGES.join(', ')} and pages: ${secondary.map((p) => p.path).join(', ')}`)
+console.log(`prerendered landing for: ${LANGUAGES.join(', ')} and pages: ${secondary.map((p) => p.path).join(', ')}, plus ${templatePages.length} template pages`)
