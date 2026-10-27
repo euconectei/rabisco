@@ -40,7 +40,7 @@ export const segundaGuerra: Template = {
         {
           heading: 'Holocausto',
           paragraphs: [
-            'O regime nazista perseguiu e assassinou cerca de seis milhões de judeus, além de ciganos, pessoas com deficiência, homossexuais, prisioneiros políticos e outros grupos. O genocídio foi organizado em guetos e campos de concentração e extermínio, como Auschwitz-Birkenau. Esses crimes contra a humanidade foram julgados em Nuremberg e levaram à Convenção da ONU sobre o Genocídio, de 1948.',
+            'O regime nazista perseguiu e assassinou cerca de seis milhões de judeus, além de ciganos, pessoas com deficiência, homossexuais, prisioneiros políticos e outros grupos. O genocídio foi organizado em guetos e campos de concentração e extermínio, como Auschwitz-Birkenau. Depois da guerra, líderes nazistas foram julgados por esses crimes no Tribunal de Nuremberg.',
           ],
         },
         {
@@ -116,7 +116,7 @@ export const segundaGuerra: Template = {
         {
           heading: 'Holocaust',
           paragraphs: [
-            'The Nazi regime persecuted and murdered about six million Jews, as well as Roma people, disabled people, gay men, political prisoners and other groups. The genocide was organized through ghettos and concentration and death camps such as Auschwitz-Birkenau. These crimes against humanity were tried at Nuremberg and led to the UN Genocide Convention of 1948.',
+            'The Nazi regime persecuted and murdered about six million Jews, as well as Roma people, disabled people, gay men, political prisoners and other groups. The genocide was organized through ghettos and concentration and death camps such as Auschwitz-Birkenau. After the war, Nazi leaders were tried for these crimes at Nuremberg.',
           ],
         },
         {
