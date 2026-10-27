@@ -5,7 +5,7 @@ import { useI18n } from '../i18n/useI18n'
 import { importOutline } from '../mindmap/importMap'
 import { parseMarkdownOutline } from '../mindmap/outline'
 import { templatesIndexPath } from '../templates/paths'
-import { templateFromSearch, templateLocale, templateSceneJson } from '../templates/startScene'
+import type { Template } from '../templates/types'
 import { trackCreated } from '../usage/track'
 import { emptySceneJson, serializeScene } from './scene'
 
@@ -30,8 +30,10 @@ export default function NewFileRedirect() {
   const navigate = useNavigate()
   const location = useLocation()
   const state = location.state as ImportState | null
-  const hasTemplateParam = new URLSearchParams(location.search).has('template')
-  const template = templateFromSearch(location.search)
+  const templateId = new URLSearchParams(location.search).get('template')
+  // The templates' code and text load only when a template is asked for: undefined while loading, null if unknown.
+  const [template, setTemplate] = useState<Template | null | undefined>(undefined)
+  const missingTemplate = templateId !== null && template === null
   const imported = state?.importMarkdown
   const importedScene = state?.importScene
   const [failed, setFailed] = useState(false)
@@ -39,14 +41,27 @@ export default function NewFileRedirect() {
   const untitled = t.files.untitled
 
   useEffect(() => {
+    if (templateId === null) return
+    let live = true
+    void import('../templates/registry').then(({ templateById }) => {
+      if (live) setTemplate(templateById(templateId) ?? null)
+    })
+    return () => {
+      live = false
+    }
+  }, [templateId])
+
+  useEffect(() => {
     // StrictMode runs effects twice; the ref keeps us from creating two files.
-    if (started.current || (hasTemplateParam && !template)) return
+    if (started.current || (templateId !== null && !template)) return
     started.current = true
     void (async () => {
       try {
         const folderId = await drive.ensureFolder()
         const created = template
-          ? await drive.createFile(templateLocale(template, lang).title, await templateSceneJson(template, lang), folderId)
+          ? await import('../templates/startScene').then(async ({ templateLocale, templateSceneJson }) =>
+              drive.createFile(templateLocale(template, lang).title, await templateSceneJson(template, lang), folderId),
+            )
           : importedScene
           ? await drive.createFile(importedScene.name, importedScene.json, folderId)
           : imported
@@ -58,9 +73,9 @@ export default function NewFileRedirect() {
         setFailed(true)
       }
     })()
-  }, [drive, navigate, untitled, imported, importedScene, template, hasTemplateParam, lang])
+  }, [drive, navigate, untitled, imported, importedScene, template, templateId, lang])
 
-  if (hasTemplateParam && !template) {
+  if (missingTemplate) {
     return (
       <main className="page">
         <p>{t.templates.notFound}</p>

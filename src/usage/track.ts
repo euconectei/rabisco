@@ -9,9 +9,14 @@ const MAX_ORIGINS = 200
 /** Fire and forget: counting must never slow down or break the editor. */
 export function sendUsageEvent(event: UsageEvent): void {
   try {
-    const body = JSON.stringify(event)
-    if (typeof navigator.sendBeacon === 'function' && navigator.sendBeacon(ENDPOINT, new Blob([body], { type: 'application/json' }))) return
-    void fetch(ENDPOINT, { method: 'POST', body, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(() => {})
+    // fetch rather than sendBeacon: a beacon always carries the site's cookies, and this count must not.
+    void fetch(ENDPOINT, {
+      method: 'POST',
+      body: JSON.stringify(event),
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'omit',
+      keepalive: true,
+    }).catch(() => {})
   } catch {
     // Nothing to do: an event that cannot be sent is not counted.
   }

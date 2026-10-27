@@ -27,9 +27,9 @@ export function I18nProvider({ children, initialLanguage }: Props) {
     document.documentElement.lang = lang
   }, [lang])
 
-  const setLang = useCallback((next: Language) => {
+  const setLang = useCallback((next: Language, { persist = true }: { persist?: boolean } = {}) => {
     setLangState(next)
-    writeStoredLanguage(next)
+    if (persist) writeStoredLanguage(next)
   }, [])
 
   const value = useMemo(() => ({ lang, t: MESSAGES[lang], setLang }), [lang, setLang])

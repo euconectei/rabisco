@@ -9,10 +9,6 @@ interface Env {
 
 const TEMPLATE_IDS = TEMPLATES.map((template) => template.id)
 
-export function onRequestPost({ request, env }: { request: Request; env: Env }): Promise<Response> {
+export function onRequest({ request, env }: { request: Request; env: Env }): Promise<Response> {
   return handleUsageRequest(request, env.USAGE, TEMPLATE_IDS)
-}
-
-export function onRequest(): Response {
-  return new Response(null, { status: 405, headers: { Allow: 'POST' } })
 }

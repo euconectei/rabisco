@@ -62,3 +62,17 @@ it('lists the templates of the language by category', () => {
   const work = screen.getByRole('region', { name: 'Work' })
   expect(within(work).getByRole('link', { name: /Yes\/no decision flowchart template/ })).toBeInTheDocument()
 })
+
+it('shows a Portuguese page in Portuguese without changing the language the visitor chose', async () => {
+  localStorage.setItem('rabisco.lang', 'en')
+  renderWithProviders(
+    <Routes>
+      <Route path="/modelos/:slug" element={<TemplatePage lang="pt-BR" />} />
+    </Routes>,
+    { route: '/modelos/revolucao-francesa', lang: 'en' },
+  )
+  expect(await screen.findAllByRole('button', { name: 'Usar este modelo' })).not.toHaveLength(0)
+  expect(await screen.findAllByRole('link', { name: 'Modelos' })).toHaveLength(2)
+  expect(localStorage.getItem('rabisco.lang')).toBe('en')
+  localStorage.clear()
+})

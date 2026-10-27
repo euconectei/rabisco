@@ -29,9 +29,12 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   // A saved local mode must not trap a link that points into the Drive: leave it and sign in on the same URL.
   const driveOnly = mode === 'local' && needsDrive(pathname)
   const local = mode === 'local' && !driveOnly
-  // "Use this template" must not stop at a sign-in screen: without a Google session it opens in this browser.
+  // "Use this template" must not stop at a sign-in screen: a new visitor opens it in this browser. Someone
+  // who already used a Google account here (a hint) gets the usual screen, so the template is not
+  // silently kept away from their Drive and the local mode is not saved over their choice.
   const templateWithoutAccount =
     mode !== 'local' &&
+    !hint &&
     pathname === '/edit/new' &&
     new URLSearchParams(search).has('template') &&
     (status === 'signed-out' || status === 'unavailable') &&

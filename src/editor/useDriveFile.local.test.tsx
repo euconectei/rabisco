@@ -32,8 +32,8 @@ it('saves a local drawing into the browser even when the network is down', async
 
 it('counts a return to edit when a drawing last changed on another day is saved', async () => {
   resetReturnedForTests()
-  const beacon = vi.fn<(url: string, data: Blob) => boolean>(() => true)
-  Object.defineProperty(navigator, 'sendBeacon', { value: beacon, configurable: true })
+  const post = vi.fn<(url: string, init: RequestInit) => Promise<Response>>(async () => new Response(null, { status: 204 }))
+  vi.stubGlobal('fetch', post)
   const local = createLocalDriveClient()
   const file = await local.createFile('Ontem', emptySceneJson(), 'local')
   rememberOrigin(file.id, 'resumo')
@@ -48,6 +48,7 @@ it('counts a return to edit when a drawing last changed on another day is saved'
   const { result } = renderHook(() => useDriveFile(file.id), { wrapper })
   await waitFor(() => expect(result.current.load.kind).toBe('ready'))
   act(() => result.current.onSceneChange([], { viewBackgroundColor: '#00ff00' } as never, {}))
-  await waitFor(() => expect(beacon).toHaveBeenCalledTimes(1), { timeout: 8000 })
-  expect(JSON.parse(await beacon.mock.calls[0][1].text())).toEqual({ type: 'drawing_returned', template: 'resumo', mode: 'local', lang: 'pt-BR' })
+  await waitFor(() => expect(post).toHaveBeenCalledTimes(1), { timeout: 8000 })
+  vi.unstubAllGlobals()
+  expect(JSON.parse(post.mock.calls[0][1].body as string)).toEqual({ type: 'drawing_returned', template: 'resumo', mode: 'local', lang: 'pt-BR' })
 }, 12000)

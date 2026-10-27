@@ -23,3 +23,10 @@ it.each([
 it('answers 204 without a dataset (local previews)', async () => {
   expect((await handleUsageRequest(post(JSON.stringify(event)), undefined, [])).status).toBe(204)
 })
+
+it('refuses other methods with 405', async () => {
+  const sink = { writeDataPoint: vi.fn() }
+  const response = await handleUsageRequest(new Request('https://rabisco.dev/api/event'), sink, [])
+  expect(response.status).toBe(405)
+  expect(response.headers.get('Allow')).toBe('POST')
+})

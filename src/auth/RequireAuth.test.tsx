@@ -222,9 +222,9 @@ describe('a saved local mode and links into the Drive', () => {
 describe('starting from a template', () => {
   const route = '/edit/new?template=revolucao-francesa'
 
-  it.each(['signed-out', 'unavailable'] as const)('opens it in this browser when %s, without the sign-in screen', (status) => {
+  it.each(['signed-out', 'unavailable'] as const)('opens it in this browser for a new visitor (%s), without the sign-in screen', (status) => {
     const mode = modeValue('google')
-    const auth = value({ status, hint: { email: 'a@b.c', name: 'Ana' } })
+    const auth = value({ status, hint: null })
     setup(auth, 'pt-BR', mode, route)
     expect(mode.enterLocal).toHaveBeenCalledTimes(1)
     expect(auth.prepare).not.toHaveBeenCalled()
@@ -236,6 +236,14 @@ describe('starting from a template', () => {
     setup(value({}), 'pt-BR', mode, route)
     expect(mode.enterLocal).not.toHaveBeenCalled()
     expect(screen.getByRole('button', { name: 'Entrar com Google' })).toBeInTheDocument()
+  })
+
+  it('offers someone who already used a Google account here the usual choice, without switching modes', () => {
+    const mode = modeValue('google')
+    setup(value({ status: 'signed-out', hint: { email: 'a@b.c', name: 'Ana' } }), 'pt-BR', mode, route)
+    expect(mode.enterLocal).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Continuar como Ana' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Usar sem entrar' })).toBeInTheDocument()
   })
 
   it('keeps a signed-in person in the Drive', () => {

@@ -668,12 +668,13 @@ describe('new drawings', () => {
   })
 
   it('counts a drawing created from a template, without any id', async () => {
-    const beacon = vi.fn<(url: string, data: Blob) => boolean>(() => true)
-    Object.defineProperty(navigator, 'sendBeacon', { value: beacon, configurable: true })
+    const post = vi.fn<(url: string, init: RequestInit) => Promise<Response>>(async () => new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', post)
     open(memoryDrive(), { route: '/edit/new?template=revolucao-francesa' })
-    await waitFor(() => expect(beacon).toHaveBeenCalledTimes(1))
-    expect(beacon.mock.calls[0][0]).toBe('/api/event')
-    expect(JSON.parse(await beacon.mock.calls[0][1].text())).toEqual({
+    await waitFor(() => expect(post).toHaveBeenCalledTimes(1))
+    expect(post.mock.calls[0][0]).toBe('/api/event')
+    vi.unstubAllGlobals()
+    expect(JSON.parse(post.mock.calls[0][1].body as string)).toEqual({
       type: 'drawing_created',
       source: 'template',
       template: 'revolucao-francesa',
