@@ -28,3 +28,4 @@ public/excalidraw-assets/
 coverage/
 playwright-report/
 test-results/
+.wrangler/
