@@ -668,7 +668,7 @@ describe('new drawings', () => {
   })
 
   it('counts a drawing created from a template, without any id', async () => {
-    const beacon = vi.fn((_url: string, _data: Blob) => true)
+    const beacon = vi.fn<(url: string, data: Blob) => boolean>(() => true)
     Object.defineProperty(navigator, 'sendBeacon', { value: beacon, configurable: true })
     open(memoryDrive(), { route: '/edit/new?template=revolucao-francesa' })
     await waitFor(() => expect(beacon).toHaveBeenCalledTimes(1))

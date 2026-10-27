@@ -32,7 +32,7 @@ it('saves a local drawing into the browser even when the network is down', async
 
 it('counts a return to edit when a drawing last changed on another day is saved', async () => {
   resetReturnedForTests()
-  const beacon = vi.fn((_url: string, _data: Blob) => true)
+  const beacon = vi.fn<(url: string, data: Blob) => boolean>(() => true)
   Object.defineProperty(navigator, 'sendBeacon', { value: beacon, configurable: true })
   const local = createLocalDriveClient()
   const file = await local.createFile('Ontem', emptySceneJson(), 'local')
