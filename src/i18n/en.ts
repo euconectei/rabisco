@@ -169,6 +169,30 @@ export const en: Messages = {
     },
     localNotFound: 'We could not find this drawing in this browser.',
   },
+  templates: {
+    indexTitle: 'Mind map and flowchart templates',
+    indexDescription:
+      'Free, ready-made mind map and flowchart templates: school subjects, study summaries and work processes. Open in your browser, edit and use without an account.',
+    indexIntro:
+      'Pick a template, open a copy in Rabisco and make it yours. No account needed: the drawing stays in your browser, and you can move it to Google Drive whenever you like.',
+    breadcrumb: 'Templates',
+    useTemplate: 'Use this template',
+    useHint: 'Opens an editable copy. Free, no sign-up.',
+    filled: 'Ready-made example',
+    structure: 'Structure to fill in',
+    study: 'Study',
+    work: 'Work',
+    mindmap: 'Mind map',
+    flowchart: 'Flowchart',
+    outlineTitle: "What's in the map",
+    stepsTitle: 'The steps of the flowchart',
+    related: 'See also',
+    allTemplates: 'All templates',
+    notFound: 'We could not find this template.',
+    backToIndex: 'Browse templates',
+    landingTitle: 'Start from a template',
+    landingText: 'Mind maps of school subjects, summary structures and process flowcharts, ready to edit.',
+  },
   notFound: { title: 'Page not found', backHome: 'Back to home' },
   support: {
     title: 'Support Rabisco',
@@ -183,7 +207,7 @@ export const en: Messages = {
     otherText: 'Star the repository, tell someone who might like it, or contribute code.',
     repository: 'See the repository',
   },
-  footer: { madeBy: 'Made by the community with', love: 'love', privacy: 'Privacy', terms: 'Terms', cookies: 'Cookies', support: 'Support', aiDocs: 'Create with AI' },
+  footer: { madeBy: 'Made by the community with', love: 'love', privacy: 'Privacy', terms: 'Terms', cookies: 'Cookies', support: 'Support', aiDocs: 'Create with AI', templates: 'Templates' },
   kidsApp: {
     title: 'Rabisco Kids',
     privacyTitle: 'Rabisco Kids Privacy Policy',
@@ -372,6 +396,13 @@ After the block, tell me to save its content to a .md file and import it in Rabi
         items: [
           'Ask any AI (Claude, ChatGPT, Gemini…) to turn your conversation into a mind map and import the result under "My files", "Import".',
           'The new "Create with AI" page, in the footer, has a ready-made prompt to copy and explains the format.',
+        ],
+      },
+      templates: {
+        title: 'Ready-made templates',
+        items: [
+          'Mind maps of school subjects, summary structures and process flowcharts, at rabisco.dev/en/templates.',
+          'Each template opens an editable copy right away, no account needed.',
         ],
       },
       whatsNewModal: {

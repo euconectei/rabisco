@@ -97,8 +97,12 @@ const SECONDARY_SEO: Record<SecondaryPage, { path: string; title: string; descri
  */
 export const PT_BR_PAGE_PATHS: readonly string[] = ['/', ...Object.values(SECONDARY_SEO).map((seo) => `/${seo.path}`)]
 
+/** Sections whose every page is pt-BR (the template pages), matched by prefix so this file needs no list of them. */
+export const PT_BR_PAGE_PREFIXES: readonly string[] = ['/modelos']
+
 export function isPtBrPagePath(path: string): boolean {
-  return PT_BR_PAGE_PATHS.includes(path.length > 1 ? path.replace(/\/+$/, '') : path)
+  const normalized = path.length > 1 ? path.replace(/\/+$/, '') : path
+  return PT_BR_PAGE_PATHS.includes(normalized) || PT_BR_PAGE_PREFIXES.some((prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`))
 }
 
 export function secondaryPageSeo(page: SecondaryPage): {

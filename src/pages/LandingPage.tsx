@@ -5,6 +5,7 @@ import { AdSlot } from '../ads/AdSlot'
 import { CookieNotice } from '../ads/CookieNotice'
 import { BrandLink } from '../components/BrandLink'
 import { AppFooter } from '../components/AppFooter'
+import { templatesIndexPath } from '../templates/paths'
 import { Screenshot } from '../components/Screenshot'
 import { REPOSITORY_URL } from '../components/links'
 import { useI18n } from '../i18n/useI18n'
@@ -14,7 +15,7 @@ import '../local/local.css'
 const FEATURES = ['mindmap', 'draw', 'files'] as const
 
 export function LandingPage() {
-  const { t } = useI18n()
+  const { lang, t } = useI18n()
   const { mode, localSupport, enterLocal } = useMode()
   const navigate = useNavigate()
   const [entering, setEntering] = useState(false)
@@ -120,6 +121,14 @@ export function LandingPage() {
             </li>
             <li>{t.landing.trust.offline}</li>
           </ul>
+        </section>
+
+        <section className="landing-section landing-templates" aria-labelledby="landing-templates">
+          <h2 id="landing-templates">{t.templates.landingTitle}</h2>
+          <p>{t.templates.landingText}</p>
+          <Link className="landing-ai-link" to={templatesIndexPath(lang)}>
+            {t.templates.backToIndex}
+          </Link>
         </section>
 
         <section className="landing-section landing-cta">

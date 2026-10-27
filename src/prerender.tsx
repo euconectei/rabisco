@@ -11,9 +11,13 @@ import { WhatsNewPage } from './pages/WhatsNewPage'
 import SupportPage from './support/SupportPage'
 import ImportDocsPage from './docs/ImportDocsPage'
 import { KidsAppPage, KidsPrivacyPage } from './kidsApp/KidsPages'
+import { TemplatePage } from './templates/TemplatePage'
+import { TemplatesIndexPage } from './templates/TemplatesIndexPage'
 
-export { BASE_URL, PT_BR_PAGE_PATHS, seoFor, secondaryPageSeo, softwareApplicationJsonLd } from './seo'
+export { BASE_URL, PT_BR_PAGE_PATHS, PT_BR_PAGE_PREFIXES, seoFor, secondaryPageSeo, softwareApplicationJsonLd } from './seo'
 export { LANGUAGES } from './i18n/languages'
+export { TEMPLATES, templatePath, templatesIndexPath, templatesIn } from './templates/registry'
+export { templateSeo, templatesIndexSeo } from './templates/seo'
 
 function renderWithProviders(lang: Language, element: ReactElement): string {
   return renderToString(
@@ -51,4 +55,12 @@ export function renderKidsPrivacy(lang: Language): string {
 
 export function renderImportDocs(lang: Language): string {
   return renderWithProviders(lang, <ImportDocsPage />)
+}
+
+export function renderTemplate(lang: Language, slug: string): string {
+  return renderWithProviders(lang, <TemplatePage lang={lang} slug={slug} />)
+}
+
+export function renderTemplatesIndex(lang: Language): string {
+  return renderWithProviders(lang, <TemplatesIndexPage lang={lang} />)
 }

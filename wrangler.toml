@@ -1,0 +1,10 @@
+# Cloudflare Pages settings, deployed by `wrangler pages deploy dist` (see .github/workflows). This file is
+# the source of truth for runtime bindings: the dashboard had none when it was created (2026-10-26).
+name = "rabisco"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-10-09"
+
+# Anonymous usage counts written by functions/api/event.ts (see src/usage/schema.ts).
+[[analytics_engine_datasets]]
+binding = "USAGE"
+dataset = "rabisco_usage"

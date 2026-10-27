@@ -3,7 +3,7 @@ import { ROOT_COLOR } from './colors'
 import { createMap, relayout, type CommandResult } from './commands'
 import { createEdgeElement, createNodeElements, withBoundEdge } from './elements'
 import type { Point } from './layout'
-import type { OutlineNode } from './markdown'
+import type { OutlineNode } from './outline'
 import { metaOf, type NodeMeta } from './model'
 
 /**

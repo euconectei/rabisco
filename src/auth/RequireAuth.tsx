@@ -24,11 +24,25 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   const { t } = useI18n()
   const auth = useAuth()
   const { mode, localSupport, enterLocal, leaveLocal } = useMode()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const { status, hint, error, prepare } = auth
   // A saved local mode must not trap a link that points into the Drive: leave it and sign in on the same URL.
   const driveOnly = mode === 'local' && needsDrive(pathname)
   const local = mode === 'local' && !driveOnly
+  // "Use this template" must not stop at a sign-in screen: a new visitor opens it in this browser. Someone
+  // who already used a Google account here (a hint) gets the usual screen, so the template is not
+  // silently kept away from their Drive and the local mode is not saved over their choice.
+  const templateWithoutAccount =
+    mode !== 'local' &&
+    !hint &&
+    pathname === '/edit/new' &&
+    new URLSearchParams(search).has('template') &&
+    (status === 'signed-out' || status === 'unavailable') &&
+    localSupport === 'available'
+
+  useEffect(() => {
+    if (templateWithoutAccount) enterLocal()
+  }, [templateWithoutAccount, enterLocal])
 
   useEffect(() => {
     if (driveOnly) leaveLocal()
@@ -36,11 +50,12 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Using it without an account must not load anything from Google until the person asks to sign in.
-    if (status === 'signed-out' && !local) prepare()
-  }, [status, prepare, local])
+    if (status === 'signed-out' && !local && !templateWithoutAccount) prepare()
+  }, [status, prepare, local, templateWithoutAccount])
 
   // Drawings kept in this browser need no sign-in.
   if (local) return <>{children}</>
+  if (templateWithoutAccount) return <p className="page">{t.editor.creating}</p>
 
   if (status === 'signed-in' || status === 'needs-reconnect') {
     // Same element structure in both states: toggling the banner must never remount the page

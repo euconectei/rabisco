@@ -219,6 +219,47 @@ describe('a saved local mode and links into the Drive', () => {
   })
 })
 
+describe('starting from a template', () => {
+  const route = '/edit/new?template=revolucao-francesa'
+
+  it.each(['signed-out', 'unavailable'] as const)('opens it in this browser for a new visitor (%s), without the sign-in screen', (status) => {
+    const mode = modeValue('google')
+    const auth = value({ status, hint: null })
+    setup(auth, 'pt-BR', mode, route)
+    expect(mode.enterLocal).toHaveBeenCalledTimes(1)
+    expect(auth.prepare).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: /Entrar com Google|Continuar/ })).not.toBeInTheDocument()
+  })
+
+  it('shows the usual sign-in screen when this browser cannot keep drawings', () => {
+    const mode = modeValue('google', 'unavailable')
+    setup(value({}), 'pt-BR', mode, route)
+    expect(mode.enterLocal).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Entrar com Google' })).toBeInTheDocument()
+  })
+
+  it('offers someone who already used a Google account here the usual choice, without switching modes', () => {
+    const mode = modeValue('google')
+    setup(value({ status: 'signed-out', hint: { email: 'a@b.c', name: 'Ana' } }), 'pt-BR', mode, route)
+    expect(mode.enterLocal).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Continuar como Ana' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Usar sem entrar' })).toBeInTheDocument()
+  })
+
+  it('keeps a signed-in person in the Drive', () => {
+    const mode = modeValue('google')
+    setup(value({ status: 'signed-in' }), 'pt-BR', mode, route)
+    expect(mode.enterLocal).not.toHaveBeenCalled()
+    expect(screen.getByText('private stuff')).toBeInTheDocument()
+  })
+
+  it('does not switch modes for a new blank drawing', () => {
+    const mode = modeValue('google')
+    setup(value({}), 'pt-BR', mode, '/edit/new')
+    expect(mode.enterLocal).not.toHaveBeenCalled()
+  })
+})
+
 it('the logo on the sign-in screen goes straight to the home page', () => {
   setup(value({}))
   expect(screen.getByRole('link', { name: 'Rabisco' })).toHaveAttribute('href', '/')

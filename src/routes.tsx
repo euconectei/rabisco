@@ -14,6 +14,8 @@ import { WhatsNewProvider } from './whatsNew/WhatsNewProvider'
 const EditorPage = lazy(() => import('./editor/EditorPage'))
 const NewFileRedirect = lazy(() => import('./editor/NewFileRedirect'))
 const ImportDocsPage = lazy(() => import('./docs/ImportDocsPage'))
+const TemplatePage = lazy(() => import('./templates/TemplatePage'))
+const TemplatesIndexPage = lazy(() => import('./templates/TemplatesIndexPage'))
 const PrivacyPage = lazy(() => import('./legal/PrivacyPage'))
 const TermsPage = lazy(() => import('./legal/TermsPage'))
 const SupportPage = lazy(() => import('./support/SupportPage'))
@@ -31,6 +33,39 @@ export function AppRoutes() {
     <WhatsNewProvider>
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      {/* Before the /en/* catch-all, which serves the English landing page. */}
+      <Route
+        path="/modelos"
+        element={
+          <Suspense fallback={<EditorFallback />}>
+            <TemplatesIndexPage lang="pt-BR" />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/modelos/:slug"
+        element={
+          <Suspense fallback={<EditorFallback />}>
+            <TemplatePage lang="pt-BR" />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/en/templates"
+        element={
+          <Suspense fallback={<EditorFallback />}>
+            <TemplatesIndexPage lang="en" />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/en/templates/:slug"
+        element={
+          <Suspense fallback={<EditorFallback />}>
+            <TemplatePage lang="en" />
+          </Suspense>
+        }
+      />
       <Route path="/en/*" element={<LandingPage />} />
       <Route
         path="/app"

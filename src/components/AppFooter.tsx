@@ -3,10 +3,11 @@ import { useI18n } from '../i18n/useI18n'
 import { useWhatsNew } from '../whatsNew/context'
 import { latestWhatsNewDate } from '../whatsNew/entries'
 import { hasUnseenWhatsNew } from '../whatsNew/seen'
+import { templatesIndexPath } from '../templates/paths'
 import { REPOSITORY_URL } from './links'
 
 export function AppFooter() {
-  const { t } = useI18n()
+  const { lang, t } = useI18n()
   const { openNews } = useWhatsNew()
   const unseen = hasUnseenWhatsNew(latestWhatsNewDate)
   return (
@@ -25,6 +26,8 @@ export function AppFooter() {
         {t.whatsNew.link}
         {unseen && <span className="unseen-dot" aria-hidden="true" />}
       </Link>
+      <span aria-hidden="true">·</span>
+      <Link to={templatesIndexPath(lang)}>{t.footer.templates}</Link>
       <span aria-hidden="true">·</span>
       <Link to="/docs/import">{t.footer.aiDocs}</Link>
       <span aria-hidden="true">·</span>

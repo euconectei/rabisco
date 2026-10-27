@@ -118,6 +118,13 @@ it('explains that an exported PNG becomes a drawing again, in its own section be
   expect(section.nextElementSibling).toBe(trust)
 })
 
+it('leads to the templates before the final call to action', () => {
+  show()
+  const templates = screen.getByRole('region', { name: 'Comece de um modelo' })
+  expect(within(templates).getByRole('link', { name: 'Ver os modelos' })).toHaveAttribute('href', '/modelos')
+  expect(screen.getByRole('region', { name: 'Seus desenhos são seus' }).nextElementSibling).toBe(templates)
+})
+
 it('shows the suggested prompt, the map it produces and the way to the docs', () => {
   show()
   const section = screen.getByRole('region', { name: 'Peça um mapa a qualquer IA' })
