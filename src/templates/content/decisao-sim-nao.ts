@@ -5,7 +5,7 @@ export const decisaoSimNao: Template = {
   kind: 'structure',
   diagram: 'flowchart',
   category: 'work',
-  related: [],
+  related: ['fluxograma-de-processo', 'processo-de-compras'],
   locales: {
     'pt-BR': {
       slug: 'fluxograma-sim-nao',

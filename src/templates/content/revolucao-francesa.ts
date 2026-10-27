@@ -5,7 +5,7 @@ export const revolucaoFrancesa: Template = {
   kind: 'filled',
   diagram: 'mindmap',
   category: 'study',
-  related: ['resumo'],
+  related: ['revolucao-industrial', 'segunda-guerra', 'resumo'],
   locales: {
     'pt-BR': {
       slug: 'revolucao-francesa',

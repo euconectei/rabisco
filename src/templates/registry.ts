@@ -1,11 +1,37 @@
 import type { Language } from '../i18n/languages'
+import { celula } from './content/celula'
 import { decisaoSimNao } from './content/decisao-sim-nao'
+import { eraVargas } from './content/era-vargas'
+import { figurasDeLinguagem } from './content/figuras-de-linguagem'
+import { fluxogramaDeProcesso } from './content/fluxograma-de-processo'
+import { fotossintese } from './content/fotossintese'
+import { guerraFria } from './content/guerra-fria'
+import { mapaEmBranco } from './content/mapa-em-branco'
+import { processoDeCompras } from './content/processo-de-compras'
 import { resumo } from './content/resumo'
 import { revolucaoFrancesa } from './content/revolucao-francesa'
+import { revolucaoIndustrial } from './content/revolucao-industrial'
+import { segundaGuerra } from './content/segunda-guerra'
+import { sistemaNervoso } from './content/sistema-nervoso'
 import { templatesIndexPath } from './paths'
 import type { Template, TemplateLocale } from './types'
 
-export const TEMPLATES: readonly Template[] = [revolucaoFrancesa, resumo, decisaoSimNao]
+export const TEMPLATES: readonly Template[] = [
+  revolucaoFrancesa,
+  segundaGuerra,
+  guerraFria,
+  revolucaoIndustrial,
+  eraVargas,
+  figurasDeLinguagem,
+  celula,
+  sistemaNervoso,
+  fotossintese,
+  resumo,
+  mapaEmBranco,
+  decisaoSimNao,
+  fluxogramaDeProcesso,
+  processoDeCompras,
+]
 
 export { templatesIndexPath } from './paths'
 

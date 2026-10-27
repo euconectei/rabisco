@@ -5,7 +5,7 @@ export const resumo: Template = {
   kind: 'structure',
   diagram: 'mindmap',
   category: 'study',
-  related: ['revolucao-francesa'],
+  related: ['mapa-em-branco', 'revolucao-francesa', 'fotossintese'],
   locales: {
     'pt-BR': {
       slug: 'mapa-mental-para-resumo',
