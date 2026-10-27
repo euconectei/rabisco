@@ -396,6 +396,13 @@ Depois do bloco, diga que eu devo salvar o conteúdo num arquivo .md e importá-
           'A nova página "Criar com IA", no rodapé, traz um prompt pronto para copiar e explica o formato.',
         ],
       },
+      templates: {
+        title: 'Modelos prontos',
+        items: [
+          'Mapas mentais de matérias da escola, estruturas para resumo e fluxogramas de processo, em rabisco.dev/modelos.',
+          'Cada modelo abre uma cópia editável na hora, sem precisar de conta.',
+        ],
+      },
       whatsNewModal: {
         title: 'Novidades agora abrem numa janela',
         items: ['As novidades abrem por cima da tela em que você está, sem sair dela.'],

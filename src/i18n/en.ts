@@ -398,6 +398,13 @@ After the block, tell me to save its content to a .md file and import it in Rabi
           'The new "Create with AI" page, in the footer, has a ready-made prompt to copy and explains the format.',
         ],
       },
+      templates: {
+        title: 'Ready-made templates',
+        items: [
+          'Mind maps of school subjects, summary structures and process flowcharts, at rabisco.dev/en/templates.',
+          'Each template opens an editable copy right away, no account needed.',
+        ],
+      },
       whatsNewModal: {
         title: 'News now opens in a window',
         items: ['News opens over the screen you are on, without leaving it.'],

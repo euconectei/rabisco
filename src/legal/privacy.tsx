@@ -131,6 +131,14 @@ export function PrivacyPtBR() {
           visitas de forma agregada e <strong>sem cookies</strong>.
         </li>
         <li>
+          <strong>Contagem de uso:</strong> quando você cria um desenho, ou volta a editar em outro dia um desenho que já
+          existia, o Rabisco envia ao Cloudflare um registro anônimo com o tipo do evento, a origem do desenho (em branco,
+          importado ou de um modelo), o modelo usado, o modo (Google Drive ou só neste navegador) e o idioma. O registro{' '}
+          <strong>não tem identificador seu nem do desenho, não leva o conteúdo e não usa cookies</strong>. Serve só para
+          saber quantos desenhos são criados e quais modelos ajudam. Para lembrar de qual modelo veio cada desenho, o
+          Rabisco guarda essa associação apenas no seu navegador.
+        </li>
+        <li>
           <strong>Anúncios:</strong> pequenos espaços na página inicial, no fim da lista de arquivos e no rodapé do editor
           podem mostrar anúncios do Google AdSense (veja a seção 6). <strong>Nenhum dado dos seus desenhos, nem o seu e-mail, é
           enviado a quem mostra os anúncios.</strong>
@@ -345,6 +353,14 @@ export function PrivacyEn() {
         <li>
           <strong>Cloudflare:</strong> the site is served by Cloudflare Pages and uses Cloudflare Web Analytics, which
           counts visits in aggregate and <strong>without cookies</strong>.
+        </li>
+        <li>
+          <strong>Usage counts:</strong> when you create a drawing, or come back on another day to edit one you already
+          had, Rabisco sends Cloudflare an anonymous record with the kind of event, where the drawing came from (blank,
+          imported or a template), which template, the mode (Google Drive or this browser only) and the language. The
+          record <strong>carries no identifier of you or of the drawing, none of its content, and uses no cookies</strong>.
+          It only tells us how many drawings are made and which templates help. To remember which template a drawing came
+          from, Rabisco keeps that link in your browser only.
         </li>
         <li>
           <strong>Ads:</strong> small slots on the home page, at the end of the file list, and in the editor footer may

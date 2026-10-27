@@ -9,6 +9,11 @@ To create a mind map for a Rabisco user, write a markdown outline (one top-level
 - [Create mind maps with AI (English)](https://rabisco.dev/docs/import.md): the import format, a ready-made prompt and an example.
 - [Criar mapas mentais com IA (Português)](https://rabisco.dev/docs/import.pt-BR.md): the same documentation in Portuguese.
 
+## Templates
+
+- [Mind map and flowchart templates (English)](https://rabisco.dev/en/templates): ready-made maps of school subjects, summary structures and process flowcharts; each opens an editable copy without an account.
+- [Modelos de mapa mental e fluxograma (Português)](https://rabisco.dev/modelos): the same templates written for Portuguese readers, plus Brazil-only topics.
+
 ## Optional
 
 - [Source code](https://github.com/euconectei/rabisco): MIT license.
