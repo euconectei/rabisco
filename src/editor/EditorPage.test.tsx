@@ -657,6 +657,28 @@ describe('new drawings', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/app')
   })
 
+  it('starts a drawing from a template, named after it, only once', async () => {
+    const drive = open(memoryDrive(), { route: '/edit/new?template=revolucao-francesa' })
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/edit/file-1'))
+    expect(drive.client.createFile).toHaveBeenCalledTimes(1)
+    expect(drive.client.createFile).toHaveBeenCalledWith('Mapa mental da Revolução Francesa', expect.any(String), 'folder-1')
+    const saved = JSON.parse(drive.client.createFile.mock.calls[0][1]) as { elements: Array<{ text?: string; customData?: { rabisco?: { kind: string } } }> }
+    expect(saved.elements.some((e) => e.text === 'Execução de Luís XVI')).toBe(true)
+    expect(saved.elements.filter((e) => e.customData?.rabisco?.kind === 'node').length).toBeGreaterThan(20)
+  })
+
+  it('opens the version of the template in the current language', async () => {
+    const drive = open(memoryDrive(), { route: '/edit/new?template=revolucao-francesa', lang: 'en' })
+    await waitFor(() => expect(drive.client.createFile).toHaveBeenCalledWith('French Revolution mind map', expect.any(String), 'folder-1'))
+  })
+
+  it('explains an unknown template and creates nothing', async () => {
+    const drive = open(memoryDrive(), { route: '/edit/new?template=nao-existe' })
+    expect(await screen.findByText('Não encontramos este modelo.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ver os modelos' })).toHaveAttribute('href', '/modelos')
+    expect(drive.client.createFile).not.toHaveBeenCalled()
+  })
+
   it('explains when the file cannot be created', async () => {
     const drive = memoryDrive()
     drive.client.ensureFolder.mockRejectedValueOnce(new DriveError('network', 'offline'))
