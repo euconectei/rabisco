@@ -667,6 +667,21 @@ describe('new drawings', () => {
     expect(saved.elements.filter((e) => e.customData?.rabisco?.kind === 'node').length).toBeGreaterThan(20)
   })
 
+  it('counts a drawing created from a template, without any id', async () => {
+    const beacon = vi.fn((_url: string, _data: Blob) => true)
+    Object.defineProperty(navigator, 'sendBeacon', { value: beacon, configurable: true })
+    open(memoryDrive(), { route: '/edit/new?template=revolucao-francesa' })
+    await waitFor(() => expect(beacon).toHaveBeenCalledTimes(1))
+    expect(beacon.mock.calls[0][0]).toBe('/api/event')
+    expect(JSON.parse(await beacon.mock.calls[0][1].text())).toEqual({
+      type: 'drawing_created',
+      source: 'template',
+      template: 'revolucao-francesa',
+      mode: 'google',
+      lang: 'pt-BR',
+    })
+  })
+
   it('opens the version of the template in the current language', async () => {
     const drive = open(memoryDrive(), { route: '/edit/new?template=revolucao-francesa', lang: 'en' })
     await waitFor(() => expect(drive.client.createFile).toHaveBeenCalledWith('French Revolution mind map', expect.any(String), 'folder-1'))

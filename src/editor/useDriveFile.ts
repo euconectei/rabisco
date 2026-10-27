@@ -1,12 +1,14 @@
 import { hashElementsVersion } from '@excalidraw/excalidraw'
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import type { AppState, BinaryFiles } from '@excalidraw/excalidraw/types'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/useAuth'
 import { contentRevision, type DriveFileMeta } from '../drive/client'
 import { DriveError } from '../drive/errors'
 import { useDrive } from '../drive/useDrive'
+import { I18nContext } from '../i18n/context'
 import { isLocalId } from '../local/ids'
+import { trackReturnedOnce } from '../usage/track'
 import { deleteDraft, getDraft, putDraft } from './drafts'
 import { createSaveQueue, type SaveQueue, type SaveStatus } from './saveQueue'
 import { parseScene, sceneSignature, serializeScene, type SceneData } from './scene'
@@ -74,6 +76,13 @@ export function useDriveFile(fileId: string) {
   const latest = useRef<{ json: string; scene: SceneData } | null>(null)
   const pendingDraft = useRef<PendingDraft | null>(null)
   const lastChangeKey = useRef<string | null>(null)
+  // When the drawing was last changed before this visit, to count a return to edit on the first save.
+  const openedModifiedTime = useRef<string | undefined>(undefined)
+  const lang = useContext(I18nContext)?.lang ?? 'pt-BR'
+  const langRef = useRef(lang)
+  useEffect(() => {
+    langRef.current = lang
+  }, [lang])
 
   const startQueue = useCallback(
     (json: string, version: string) => {
@@ -98,6 +107,7 @@ export function useDriveFile(fileId: string) {
               const thumbnail = (await renderThumbnail(current).catch(() => null)) ?? undefined
               const saved = await drive.save(fileId, uploadJson, thumbnail)
               setMeta(saved)
+              trackReturnedOnce(fileId, openedModifiedTime.current, langRef.current)
               return { version: contentRevision(saved) }
             }),
           putDraft: (draftJson, baseVersion) => putDraft({ fileId, json: draftJson, baseVersion, updatedAt: Date.now() }),
@@ -148,6 +158,7 @@ export function useDriveFile(fileId: string) {
         const remoteJson = serializeScene(remoteScene)
         const draft = await getDraft(fileId)
         if (isCancelled()) return
+        openedModifiedTime.current = fileMeta.modifiedTime
         setMeta(fileMeta)
         const draftScene = draft ? parseOrNull(draft.json) : null
         if (draft && draftScene && sceneSignature(draftScene) !== sceneSignature(remoteScene)) {

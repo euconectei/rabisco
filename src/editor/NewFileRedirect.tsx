@@ -6,6 +6,7 @@ import { importOutline } from '../mindmap/importMap'
 import { parseMarkdownOutline } from '../mindmap/outline'
 import { templatesIndexPath } from '../templates/paths'
 import { templateFromSearch, templateLocale, templateSceneJson } from '../templates/startScene'
+import { trackCreated } from '../usage/track'
 import { emptySceneJson, serializeScene } from './scene'
 
 interface ImportState {
@@ -51,6 +52,7 @@ export default function NewFileRedirect() {
           : imported
             ? await drive.createFile(imported.name, importedSceneJson(imported.name, imported.text), folderId)
             : await drive.createFile(untitled, emptySceneJson(), folderId)
+        trackCreated(template ? 'template' : imported || importedScene ? 'import' : 'blank', template?.id ?? null, created.id, lang)
         navigate(`/edit/${created.id}`, { replace: true })
       } catch {
         setFailed(true)

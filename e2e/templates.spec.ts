@@ -5,6 +5,10 @@ test.use({ locale: 'pt-BR' })
 
 test('a template opens in the editor without signing in', async ({ page }) => {
   await installFakeGoogle(page)
+  const events: string[] = []
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname === '/api/event') events.push(request.postData() ?? '')
+  })
   await page.goto('/modelos/revolucao-francesa')
   await expect(page.getByRole('heading', { level: 1, name: 'Mapa mental da Revolução Francesa' })).toBeVisible()
   await page.getByRole('button', { name: 'Usar este modelo' }).first().click()
@@ -13,6 +17,10 @@ test('a template opens in the editor without signing in', async ({ page }) => {
   await expect(page.getByRole('complementary', { name: 'Aviso sobre o modo local' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Entrar com Google' })).toHaveCount(0)
   await expect(page.getByRole('status').filter({ hasText: /^Salvo/ })).toBeVisible({ timeout: 10_000 })
+  // Counted once, anonymously: no drawing id, no content.
+  await expect.poll(() => events.length).toBe(1)
+  expect(JSON.parse(events[0])).toEqual({ type: 'drawing_created', source: 'template', template: 'revolucao-francesa', mode: 'local', lang: 'pt-BR' })
+  expect(events[0]).not.toContain('local-')
 })
 
 test('a flowchart template opens as an editable flowchart', async ({ page }) => {
