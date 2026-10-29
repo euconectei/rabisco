@@ -19,7 +19,7 @@ export function TemplatesIndexPage({ lang }: { lang: Language }) {
   return (
     <main className="page docs template-index" lang={lang}>
       <nav className="template-breadcrumb" aria-label="Breadcrumb">
-        <BrandLink className="template-brand" size={20} />
+        <BrandLink className="template-brand" size={28} />
       </nav>
       <h1>{t.indexTitle}</h1>
       <p>{t.indexIntro}</p>

@@ -32,7 +32,7 @@ export function TemplatePage({ lang, slug: slugProp }: { lang: Language; slug?: 
   return (
     <main className="page docs template-page" lang={lang}>
       <nav className="template-breadcrumb" aria-label="Breadcrumb">
-        <BrandLink className="template-brand" size={20} />
+        <BrandLink className="template-brand" size={28} />
         <span aria-hidden="true">›</span>
         <Link to={templatesIndexPath(lang)}>{t.breadcrumb}</Link>
       </nav>
