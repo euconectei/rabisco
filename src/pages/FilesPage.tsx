@@ -18,6 +18,7 @@ import { MermaidDialog } from '../mermaid/MermaidDialog'
 import { useMode } from '../mode/useMode'
 import { AccountMenu } from './AccountMenu'
 import { FileCard } from './FileCard'
+import { FilesSkeleton } from './FilesSkeleton'
 
 const NO_FILES: DriveFileMeta[] = []
 
@@ -223,7 +224,7 @@ export function FilesPage() {
           {importHint}
           {importError === 'read' && <p role="alert">{t.files.importReadFailed}</p>}
           {importError === 'image' && <p role="alert">{t.files.importImageFailed}</p>}
-          {list.kind === 'loading' && <p>{t.files.loading}</p>}
+          {list.kind === 'loading' && <FilesSkeleton />}
           {list.kind === 'error' && (
             <p role="alert">
               {local ? t.files.localLoadFailed : t.files.loadFailed}{' '}

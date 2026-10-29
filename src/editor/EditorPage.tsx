@@ -3,7 +3,8 @@ import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types'
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import '@excalidraw/excalidraw/index.css'
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ErrorScreen, LoadingScreen } from '../components/LoadingScreen'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useDrive } from '../drive/useDrive'
 import { LocalDriveContext } from '../local/context'
 import { isLocalId } from '../local/ids'
@@ -42,6 +43,8 @@ export default function EditorPage() {
 function EditorScreen({ fileId }: { fileId: string }) {
   const { lang, t } = useI18n()
   const navigate = useNavigate()
+  // The files list sends the name along, so the wait can say which drawing is opening.
+  const openingName = (useLocation().state as { name?: unknown } | null)?.name
   const drive = useDrive()
   const { openNews } = useWhatsNew()
   const file = useDriveFile(fileId)
@@ -266,13 +269,14 @@ function EditorScreen({ fileId }: { fileId: string }) {
     setInsertingMermaid(false)
   }
 
-  if (file.load.kind === 'loading') return <p className="page">{t.editor.opening}</p>
+  if (file.load.kind === 'loading') {
+    return <LoadingScreen title={t.editor.opening} detail={typeof openingName === 'string' ? openingName : undefined} />
+  }
   if (file.load.kind === 'error') {
     return (
-      <main className="page">
-        <p>{local && file.load.reason === 'notFound' ? t.editor.localNotFound : t.editor.errors[file.load.reason]}</p>
+      <ErrorScreen title={local && file.load.reason === 'notFound' ? t.editor.localNotFound : t.editor.errors[file.load.reason]}>
         <Link to="/app">{t.editor.backToFiles}</Link>
-      </main>
+      </ErrorScreen>
     )
   }
   if (file.load.kind === 'draft') {

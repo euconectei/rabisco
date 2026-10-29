@@ -353,3 +353,11 @@ it('the logo goes straight to the home page', async () => {
   await screen.findByRole('list', { name: 'Seus desenhos' })
   expect(screen.getByRole('link', { name: 'Rabisco' })).toHaveAttribute('href', '/')
 })
+
+it('shows the places of the cards, not just a line of text, while the list loads', async () => {
+  const drive = memoryDrive()
+  drive.client.listFiles.mockImplementation(() => new Promise(() => {}))
+  setup(drive)
+  expect(await screen.findByRole('status')).toHaveTextContent('Carregando seus arquivos…')
+  expect(screen.queryByRole('list', { name: 'Seus desenhos' })).not.toBeInTheDocument()
+})

@@ -109,10 +109,16 @@ export const ptBR = {
     importHint: 'Importar aceita Markdown e PNG ou SVG exportados do Rabisco com dados editáveis. Para Mermaid, use "Importar Mermaid".',
     importTitle: 'Markdown, ou PNG/SVG exportado do Rabisco com dados editáveis',
   },
+  loading: {
+    page: 'Carregando…',
+    slow: 'Está demorando mais que o normal…',
+    creatingFolder: 'Preparando a pasta…',
+    creatingFile: 'Criando o arquivo…',
+    creatingLocal: 'Preparando o desenho neste navegador…',
+  },
   editor: {
     privacyMenuItem: 'Privacidade e cookies',
     backToFiles: 'Meus arquivos',
-    loading: 'Carregando o editor…',
     opening: 'Abrindo o desenho…',
     creating: 'Criando um desenho novo…',
     createFailed: 'Não foi possível criar o desenho.',

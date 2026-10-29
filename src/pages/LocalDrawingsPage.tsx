@@ -9,6 +9,7 @@ import { useMoveLocal } from '../local/useMoveLocal'
 import { useMode } from '../mode/useMode'
 import { AccountMenu } from './AccountMenu'
 import { FileCard } from './FileCard'
+import { FilesSkeleton } from './FilesSkeleton'
 import '../local/local.css'
 
 /** In the Google mode: the drawings still kept in this browser, to open them or move them all to Drive. */
@@ -63,7 +64,7 @@ export function LocalDrawingsPage() {
           <MoveResult state={state} onRetry={(ids) => void retry(ids)} onClose={reset} />
         </section>
       )}
-      {drawings.kind === 'loading' && <p>{t.files.loading}</p>}
+      {drawings.kind === 'loading' && <FilesSkeleton />}
       {drawings.kind === 'error' && <p role="alert">{t.files.localLoadFailed}</p>}
       {drawings.kind === 'ready' && files.length === 0 && !moving && <p>{t.move.empty}</p>}
       {files.length > 0 && (

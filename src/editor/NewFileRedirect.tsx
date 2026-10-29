@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { ErrorScreen, LoadingScreen } from '../components/LoadingScreen'
 import { useDrive } from '../drive/useDrive'
 import { useI18n } from '../i18n/useI18n'
 import { importOutline } from '../mindmap/importMap'
 import { parseMarkdownOutline } from '../mindmap/outline'
-import { templatesIndexPath } from '../templates/paths'
+import { templateImagePath, templatesIndexPath } from '../templates/paths'
 import type { Template } from '../templates/types'
 import { trackCreated } from '../usage/track'
 import { emptySceneJson, serializeScene } from './scene'
@@ -37,7 +38,10 @@ export default function NewFileRedirect() {
   const imported = state?.importMarkdown
   const importedScene = state?.importScene
   const [failed, setFailed] = useState(false)
-  const started = useRef(false)
+  const [step, setStep] = useState<'folder' | 'file'>('folder')
+  // Bumped by "try again": the effect below runs once per attempt.
+  const [attempt, setAttempt] = useState(0)
+  const startedAttempt = useRef<number | null>(null)
   const untitled = t.files.untitled
 
   useEffect(() => {
@@ -53,11 +57,12 @@ export default function NewFileRedirect() {
 
   useEffect(() => {
     // StrictMode runs effects twice; the ref keeps us from creating two files.
-    if (started.current || (templateId !== null && !template)) return
-    started.current = true
+    if (startedAttempt.current === attempt || (templateId !== null && !template)) return
+    startedAttempt.current = attempt
     void (async () => {
       try {
         const folderId = await drive.ensureFolder()
+        setStep('file')
         const created = template
           ? await import('../templates/startScene').then(async ({ templateLocale, templateSceneJson }) =>
               drive.createFile(templateLocale(template, lang).title, await templateSceneJson(template, lang), folderId),
@@ -73,7 +78,7 @@ export default function NewFileRedirect() {
         setFailed(true)
       }
     })()
-  }, [drive, navigate, untitled, imported, importedScene, template, templateId, lang])
+  }, [drive, navigate, untitled, imported, importedScene, template, templateId, lang, attempt])
 
   if (missingTemplate) {
     return (
@@ -86,11 +91,28 @@ export default function NewFileRedirect() {
 
   if (failed) {
     return (
-      <main className="page">
-        <p>{t.editor.createFailed}</p>
+      <ErrorScreen title={t.editor.createFailed}>
+        <button
+          type="button"
+          className="button"
+          onClick={() => {
+            setStep('folder')
+            setFailed(false)
+            setAttempt((n) => n + 1)
+          }}
+        >
+          {t.editor.retry}
+        </button>
         <Link to="/app">{t.editor.backToFiles}</Link>
-      </main>
+      </ErrorScreen>
     )
   }
-  return <p className="page">{t.editor.creating}</p>
+  const locale = template?.locales[lang]
+  return (
+    <LoadingScreen
+      title={t.editor.creating}
+      detail={step === 'folder' ? t.loading.creatingFolder : t.loading.creatingFile}
+      image={template && locale ? templateImagePath(template, lang) : undefined}
+    />
+  )
 }

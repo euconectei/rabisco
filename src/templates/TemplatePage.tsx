@@ -5,15 +5,14 @@ import type { Language } from '../i18n/languages'
 import { MESSAGES } from '../i18n/messages'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { templateById, templateBySlug, templatePath, templatesIndexPath } from './registry'
+import { templateImagePath } from './paths'
 import { TemplateLanguageLinks } from './TemplateLanguageLinks'
 import { TemplateOutline } from './TemplateOutline'
 import { useRouteLanguage } from './useRouteLanguage'
 import type { Template } from './types'
 import './templates.css'
 
-export function templateImagePath(template: Template, lang: Language): string {
-  return `/templates/${template.id}.${lang}.webp`
-}
+export { templateImagePath }
 
 export function templateStartPath(template: Template): string {
   return `/edit/new?template=${encodeURIComponent(template.id)}`

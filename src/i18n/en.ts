@@ -111,10 +111,16 @@ export const en: Messages = {
     importHint: 'Import accepts Markdown and PNG or SVG files exported from Rabisco with editable data. For Mermaid, use "Import Mermaid".',
     importTitle: 'Markdown, or a PNG/SVG exported from Rabisco with editable data',
   },
+  loading: {
+    page: 'Loading…',
+    slow: 'This is taking longer than usual…',
+    creatingFolder: 'Preparing the folder…',
+    creatingFile: 'Creating the file…',
+    creatingLocal: 'Preparing the drawing in this browser…',
+  },
   editor: {
     privacyMenuItem: 'Privacy and cookies',
     backToFiles: 'My files',
-    loading: 'Loading the editor…',
     opening: 'Opening the drawing…',
     creating: 'Creating a new drawing…',
     createFailed: 'Could not create the drawing.',

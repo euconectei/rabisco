@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { RequireAuth } from './auth/RequireAuth'
+import { LoadingScreen } from './components/LoadingScreen'
 import { useI18n } from './i18n/useI18n'
 import { LocalModeGate } from './local/LocalModeGate'
 import { FilesPage } from './pages/FilesPage'
@@ -22,9 +23,21 @@ const SupportPage = lazy(() => import('./support/SupportPage'))
 const KidsAppPage = lazy(() => import('./kidsApp/KidsPages').then((m) => ({ default: m.KidsAppPage })))
 const KidsPrivacyPage = lazy(() => import('./kidsApp/KidsPages').then((m) => ({ default: m.KidsPrivacyPage })))
 
-function EditorFallback() {
+// Each lazy route waits with the words of what it is about to show; pages that are not part of the app
+// flow (legal, support, docs, templates) do not mention the editor or offer a way back to the files.
+function OpeningFallback() {
   const { t } = useI18n()
-  return <p className="page">{t.editor.loading}</p>
+  return <LoadingScreen title={t.editor.opening} />
+}
+
+function CreatingFallback() {
+  const { t } = useI18n()
+  return <LoadingScreen title={t.editor.creating} />
+}
+
+function PageFallback() {
+  const { t } = useI18n()
+  return <LoadingScreen title={t.loading.page} back={false} />
 }
 
 export function AppRoutes() {
@@ -37,7 +50,7 @@ export function AppRoutes() {
       <Route
         path="/modelos"
         element={
-          <Suspense fallback={<EditorFallback />}>
+          <Suspense fallback={<PageFallback />}>
             <TemplatesIndexPage lang="pt-BR" />
           </Suspense>
         }
@@ -45,7 +58,7 @@ export function AppRoutes() {
       <Route
         path="/modelos/:slug"
         element={
-          <Suspense fallback={<EditorFallback />}>
+          <Suspense fallback={<PageFallback />}>
             <TemplatePage lang="pt-BR" />
           </Suspense>
         }
@@ -53,7 +66,7 @@ export function AppRoutes() {
       <Route
         path="/en/templates"
         element={
-          <Suspense fallback={<EditorFallback />}>
+          <Suspense fallback={<PageFallback />}>
             <TemplatesIndexPage lang="en" />
           </Suspense>
         }
@@ -61,7 +74,7 @@ export function AppRoutes() {
       <Route
         path="/en/templates/:slug"
         element={
-          <Suspense fallback={<EditorFallback />}>
+          <Suspense fallback={<PageFallback />}>
             <TemplatePage lang="en" />
           </Suspense>
         }
@@ -96,7 +109,7 @@ export function AppRoutes() {
         path="/edit/new"
         element={
           <RequireAuth>
-            <Suspense fallback={<EditorFallback />}>
+            <Suspense fallback={<CreatingFallback />}>
               <NewFileRedirect />
             </Suspense>
           </RequireAuth>
@@ -106,7 +119,7 @@ export function AppRoutes() {
         path="/edit/:fileId"
         element={
           <RequireAuth>
-            <Suspense fallback={<EditorFallback />}>
+            <Suspense fallback={<OpeningFallback />}>
               <EditorPage />
             </Suspense>
           </RequireAuth>
@@ -115,7 +128,7 @@ export function AppRoutes() {
       <Route
         path="/docs/import"
         element={
-          <Suspense fallback={<EditorFallback />}>
+          <Suspense fallback={<PageFallback />}>
             <ImportDocsPage />
           </Suspense>
         }
@@ -123,7 +136,7 @@ export function AppRoutes() {
       <Route
         path="/privacy"
         element={
-          <Suspense fallback={<EditorFallback />}>
+          <Suspense fallback={<PageFallback />}>
             <PrivacyPage />
           </Suspense>
         }
@@ -131,7 +144,7 @@ export function AppRoutes() {
       <Route
         path="/terms"
         element={
-          <Suspense fallback={<EditorFallback />}>
+          <Suspense fallback={<PageFallback />}>
             <TermsPage />
           </Suspense>
         }
@@ -139,7 +152,7 @@ export function AppRoutes() {
       <Route
         path="/apoie"
         element={
-          <Suspense fallback={<EditorFallback />}>
+          <Suspense fallback={<PageFallback />}>
             <SupportPage />
           </Suspense>
         }
@@ -147,7 +160,7 @@ export function AppRoutes() {
       <Route
         path="/rabisco-kids"
         element={
-          <Suspense fallback={<EditorFallback />}>
+          <Suspense fallback={<PageFallback />}>
             <KidsAppPage />
           </Suspense>
         }
@@ -155,7 +168,7 @@ export function AppRoutes() {
       <Route
         path="/rabisco-kids/privacy"
         element={
-          <Suspense fallback={<EditorFallback />}>
+          <Suspense fallback={<PageFallback />}>
             <KidsPrivacyPage />
           </Suspense>
         }

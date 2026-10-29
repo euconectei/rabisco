@@ -48,7 +48,7 @@ export function FileCard({ file }: { file: DriveFileMeta }) {
   const name = file.name.replace(/\.excalidraw$/i, '')
   return (
     <li>
-      <Link className="file-card" to={`/edit/${encodeURIComponent(file.id)}`}>
+      <Link className="file-card" to={`/edit/${encodeURIComponent(file.id)}`} state={{ name }}>
         <span className="file-preview" style={{ '--tint': tintOf(file.id) } as React.CSSProperties}>
           {file.thumbnailLink && !broken ? (
             <img src={thumbnailSrc(file.thumbnailLink)} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} />

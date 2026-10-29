@@ -701,4 +701,40 @@ describe('new drawings', () => {
     open(drive, { route: '/edit/new' })
     expect(await screen.findByText('Não foi possível criar o desenho.')).toBeInTheDocument()
   })
+
+  it('lets the person try again after a failure, and creates the file then', async () => {
+    const drive = memoryDrive()
+    drive.client.ensureFolder.mockRejectedValueOnce(new DriveError('network', 'offline'))
+    open(drive, { route: '/edit/new' })
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível criar o desenho.')
+    expect(screen.getByRole('link', { name: 'Meus arquivos' })).toHaveAttribute('href', '/app')
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/edit/file-1'))
+    expect(drive.client.createFile).toHaveBeenCalledTimes(1)
+  })
+
+  it('says which step it is on while the file is being created', async () => {
+    const drive = memoryDrive()
+    drive.client.ensureFolder.mockImplementation(() => new Promise(() => {}))
+    open(drive, { route: '/edit/new' })
+    expect(await screen.findByText('Preparando a pasta…', {}, { timeout: 5000 })).toBeInTheDocument()
+    expect(screen.getByText('Criando um desenho novo…')).toBeInTheDocument()
+  })
+
+  it('shows the preview of the template while its drawing is being created', async () => {
+    const drive = memoryDrive()
+    drive.client.ensureFolder.mockImplementation(() => new Promise(() => {}))
+    open(drive, { route: '/edit/new?template=revolucao-francesa' })
+    await screen.findByText('Criando um desenho novo…', {}, { timeout: 5000 })
+    expect(screen.getByRole('status').querySelector('img')).toHaveAttribute('src', '/templates/revolucao-francesa.pt-BR.webp')
+  })
+
+  it('names the drawing being opened when it was chosen from the list', async () => {
+    const drive = seededDrive()
+    drive.client.getMeta.mockImplementation(() => new Promise(() => {}))
+    open(drive, { route: '/app' })
+    await userEvent.click(await screen.findByRole('link', { name: /Mapa/ }))
+    expect(await screen.findByText('Abrindo o desenho…', {}, { timeout: 5000 })).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Mapa')
+  })
 })

@@ -253,6 +253,34 @@ label.button-secondary:focus-within { outline: 3px solid var(--accent-text); out
 .files-page .app-footer { margin-top: auto; }
 @media (prefers-reduced-motion: reduce) { .file-card { transition: none; } .file-card:hover { transform: none; } }
 
+/* Waiting and failure screens: centered, in the app's own hand-drawn style. */
+.status-screen { min-height: 100vh; min-height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; padding: 2rem 1.25rem; text-align: center; color: var(--accent-text); }
+.status-art { width: min(14rem, 60vw); height: auto; }
+.status-image { width: min(18rem, 70vw); height: auto; border-radius: 0.9rem; border: 1px solid rgba(128, 128, 128, 0.2); border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); animation: status-pulse 1.6s ease-in-out infinite; }
+.status-node { animation: status-pulse 1.6s ease-in-out infinite; }
+.status-node:nth-of-type(2) { animation-delay: 0.25s; }
+.status-node:nth-of-type(3) { animation-delay: 0.5s; }
+.status-title { margin: 0; font-family: 'Excalifont', system-ui, sans-serif; font-size: clamp(1.6rem, 4vw, 2.2rem); line-height: 1.15; color: CanvasText; }
+.status-detail { margin: 0; max-width: 28rem; overflow-wrap: anywhere; opacity: 0.7; color: CanvasText; }
+.status-slow { display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.75rem; font-size: 0.9rem; color: CanvasText; }
+.status-slow p { margin: 0; opacity: 0.75; }
+.status-slow a, .status-actions a { color: var(--accent-text); }
+.status-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.9rem; margin-top: 0.5rem; }
+.status-error { color: #c92a2a; }
+@media (prefers-color-scheme: dark) { .status-error { color: #ff8787; } }
+@keyframes status-pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .status-node, .status-image { animation: none; } }
+
+/* The files list while it loads: cards of the same size, so nothing jumps when they arrive. */
+.file-card-skeleton { overflow: hidden; border: 1px solid rgba(128, 128, 128, 0.14); border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 0.9rem; }
+.file-card-skeleton .file-preview, .file-card-skeleton .skeleton-line { animation: status-pulse 1.6s ease-in-out infinite; }
+.file-card-skeleton .file-preview { background: rgba(128, 128, 128, 0.14); background: color-mix(in srgb, CanvasText 8%, Canvas); }
+.skeleton-line { display: block; height: 0.9rem; border-radius: 0.4rem; background: rgba(128, 128, 128, 0.18); background: color-mix(in srgb, CanvasText 10%, Canvas); }
+.skeleton-line + .skeleton-line { width: 45%; height: 0.7rem; margin-top: 0.4rem; }
+.file-card-skeleton .file-meta { display: block; }
+.file-card-skeleton .skeleton-line:first-child { width: 70%; }
+@media (prefers-reduced-motion: reduce) { .file-card-skeleton .file-preview, .file-card-skeleton .skeleton-line { animation: none; } }
+
 /* The logo is a link to the home page: keep it looking like the brand, not like a link. */
 a.sign-in-brand, a.files-brand, a.landing-logo { color: inherit; text-decoration: none; }
 a.sign-in-brand:focus-visible, a.files-brand:focus-visible, a.landing-logo:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 3px; border-radius: 0.4rem; }

@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { BrandLink } from '../components/BrandLink'
 import { format } from '../i18n/format'
 import { useI18n } from '../i18n/useI18n'
+import { LoadingScreen } from '../components/LoadingScreen'
 import { isLocalId } from '../local/ids'
 import { useMode } from '../mode/useMode'
 import '../local/local.css'
@@ -55,7 +56,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 
   // Drawings kept in this browser need no sign-in.
   if (local) return <>{children}</>
-  if (templateWithoutAccount) return <p className="page">{t.editor.creating}</p>
+  if (templateWithoutAccount) return <LoadingScreen title={t.editor.creating} detail={t.loading.creatingLocal} />
 
   if (status === 'signed-in' || status === 'needs-reconnect') {
     // Same element structure in both states: toggling the banner must never remount the page
