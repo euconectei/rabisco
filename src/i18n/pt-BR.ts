@@ -395,6 +395,14 @@ Depois do bloco, diga que eu devo salvar o conteúdo num arquivo .md e importá-
     menuItem: 'Novidades ({version})',
     close: 'Fechar',
     sections: {
+      waitingScreens: {
+        title: 'Telas de espera mais claras',
+        items: [
+          'Ao criar ou abrir um desenho, a tela de espera ficou mais agradável e diz o que está acontecendo, como o nome do desenho que está abrindo.',
+          'Se algo demorar demais, o Rabisco avisa e deixa você voltar para "Meus arquivos". Se der erro ao criar, há um botão para tentar de novo.',
+          'A lista de arquivos mostra o lugar dos cartões enquanto carrega, em vez de uma linha de texto.',
+        ],
+      },
       aiImport: {
         title: 'Mapas criados por IA',
         items: [

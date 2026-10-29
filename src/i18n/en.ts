@@ -397,6 +397,14 @@ After the block, tell me to save its content to a .md file and import it in Rabi
     menuItem: 'News ({version})',
     close: 'Close',
     sections: {
+      waitingScreens: {
+        title: 'Clearer waiting screens',
+        items: [
+          'When you create or open a drawing, the waiting screen is nicer and says what is going on, like the name of the drawing being opened.',
+          'If something takes too long, Rabisco says so and lets you go back to "My files". If creating fails, there is a button to try again.',
+          'The files list shows where the cards will be while it loads, instead of a line of text.',
+        ],
+      },
       aiImport: {
         title: 'Maps made by AI',
         items: [
