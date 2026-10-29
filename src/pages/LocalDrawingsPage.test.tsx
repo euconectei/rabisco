@@ -89,3 +89,15 @@ it('the logo goes straight to the home page', async () => {
   await screen.findByRole('list', { name: 'Seus desenhos' })
   expect(screen.getByRole('link', { name: 'Rabisco' })).toHaveAttribute('href', '/')
 })
+
+it('deletes a drawing kept in this browser, after asking, through the local client', async () => {
+  const { local, drive } = setup([{ id: 'local-1', name: 'Plano.excalidraw', content: '{}' }])
+  await userEvent.click(await screen.findByRole('button', { name: 'Apagar “Plano”' }))
+  const dialog = screen.getByRole('dialog', { name: 'Apagar este desenho?' })
+  expect(dialog).toHaveTextContent('Não dá para desfazer.')
+  expect(local.client.trash).not.toHaveBeenCalled()
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Apagar' }))
+  await waitFor(() => expect(screen.queryByRole('link', { name: /Plano/ })).not.toBeInTheDocument())
+  expect(local.client.trash).toHaveBeenCalledWith('local-1')
+  expect(drive.client.trash).not.toHaveBeenCalled()
+})

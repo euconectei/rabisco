@@ -120,6 +120,13 @@ export function FilesPage() {
     if (picked) navigate(`/edit/${encodeURIComponent(picked.id)}`)
   }
 
+  async function deleteFile(file: DriveFileMeta) {
+    await drive.trash(file.id)
+    setLoaded((current) =>
+      current?.state.kind === 'ready' ? { ...current, state: { kind: 'ready', files: current.state.files.filter((f) => f.id !== file.id) } } : current,
+    )
+  }
+
   const files = list.kind === 'ready' ? list.files : NO_FILES
   const visible = useMemo(() => {
     const wanted = fold(query.trim())
@@ -237,7 +244,7 @@ export function FilesPage() {
           {visible.length > 0 && (
             <ul className="files-grid" aria-label={t.files.listLabel}>
               {visible.map((file) => (
-                <FileCard key={file.id} file={file} />
+                <FileCard key={file.id} file={file} onDelete={deleteFile} />
               ))}
             </ul>
           )}

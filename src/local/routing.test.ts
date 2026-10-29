@@ -27,6 +27,15 @@ describe('routing client', () => {
     expect(local.download).toHaveBeenCalledTimes(1)
   })
 
+  it('trashes a drawing where it lives', async () => {
+    const { local, remote, router } = setup()
+    await router.trash('local-1')
+    expect(local.trash).toHaveBeenCalledWith('local-1')
+    expect(remote.trash).not.toHaveBeenCalled()
+    await router.trash('drive-1')
+    expect(remote.trash).toHaveBeenCalledWith('drive-1')
+  })
+
   it('lists and looks up the folder in Drive only', async () => {
     const { local, remote, router } = setup()
     expect((await router.listFiles()).map((f) => f.id)).toEqual(['drive-1'])
@@ -54,7 +63,7 @@ describe('routing client', () => {
 
   it('exposes exactly the DriveClient methods', () => {
     const keys = Object.keys(setup().router).sort()
-    const expected: Array<keyof DriveClient> = ['createFile', 'createSibling', 'download', 'ensureFolder', 'getMeta', 'listFiles', 'rename', 'save']
+    const expected: Array<keyof DriveClient> = ['createFile', 'createSibling', 'download', 'ensureFolder', 'getMeta', 'listFiles', 'rename', 'save', 'trash']
     expect(keys).toEqual(expected)
   })
 })

@@ -122,6 +122,20 @@ it('renames, adding the extension only when missing', async () => {
   expect(calls.map((c) => JSON.parse(c.body!).name)).toEqual(['Mapa.excalidraw', 'Mapa.excalidraw', 'Plano.EXCALIDRAW'])
 })
 
+it('moves a file to the Drive trash, where it can be recovered, instead of deleting it for good', async () => {
+  const { driveFetch, calls } = fakeFetch(() => meta())
+  const client = createDriveClient(driveFetch, memoryCache())
+  await client.trash('f1')
+  expect(calls.map((c) => `${c.method} ${c.url}`)).toEqual([`PATCH ${API}/files/f1?fields=id`])
+  expect(JSON.parse(calls[0].body!)).toEqual({ trashed: true })
+})
+
+it('lets the failure of a trashing through', async () => {
+  const { driveFetch } = fakeFetch(() => new Response('{}', { status: 404 }))
+  const client = createDriveClient(driveFetch, memoryCache())
+  await expect(client.trash('gone')).rejects.toMatchObject({ kind: 'notFound' })
+})
+
 // Answers the sibling flow: the near file's metadata, name lookups in its folder, then the upload.
 function siblingFetch(taken: string[] = []) {
   return fakeFetch((call) => {

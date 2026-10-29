@@ -16,6 +16,7 @@ export function createRoutingClient(local: DriveClient, remote: DriveClient): Dr
     download: (id) => byId(id).download(id),
     save: (id, content, thumbnail) => byId(id).save(id, content, thumbnail),
     rename: (id, name) => byId(id).rename(id, name),
+    trash: (id) => byId(id).trash(id),
     createSibling: (name, content, mimeType, nearFileId) => byId(nearFileId).createSibling(name, content, mimeType, nearFileId),
   }
 }

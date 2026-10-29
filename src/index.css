@@ -237,6 +237,16 @@ label.button-secondary:focus-within { outline: 3px solid var(--accent-text); out
 .files-search { width: 14rem; max-width: 100%; padding: 0.5rem 0.8rem; border: 1px solid rgba(128, 128, 128, 0.25); border: 1px solid color-mix(in srgb, CanvasText 25%, transparent); border-radius: 0.5rem; background: transparent; color: inherit; font: inherit; }
 .files-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 1.5rem; }
 .file-card { display: block; overflow: hidden; border: 1px solid rgba(128, 128, 128, 0.14); border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 0.9rem; background: Canvas; color: inherit; text-decoration: none; transition: box-shadow 0.15s, transform 0.15s; }
+/* The delete button sits over the card's corner, outside the link: always reachable by touch, brighter on hover or focus. */
+.file-item { position: relative; }
+.file-delete { position: absolute; top: 0.5rem; right: 0.5rem; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 1px solid rgba(128, 128, 128, 0.3); border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); border-radius: 0.5rem; background: Canvas; color: inherit; cursor: pointer; opacity: 0.75; transition: opacity 0.15s, color 0.15s; }
+.file-item:hover .file-delete, .file-delete:focus-visible { opacity: 1; }
+.file-delete:hover { color: #c92a2a; border-color: currentColor; }
+.file-delete:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 2px; }
+@media (hover: hover) { .file-delete { opacity: 0; } .file-item:hover .file-delete, .file-item:focus-within .file-delete { opacity: 1; } }
+@media (prefers-color-scheme: dark) { .file-delete:hover { color: #ff8787; } }
+.button-danger { background: #c92a2a; }
+.button-danger:disabled, .dialog-actions button:disabled { opacity: 0.6; cursor: default; }
 .file-card:hover { box-shadow: 0 6px 20px rgb(0 0 0 / 0.12); transform: translateY(-2px); }
 .file-card:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 2px; }
 .file-preview { display: flex; align-items: center; justify-content: center; height: 9.5rem; overflow: hidden; background: rgba(128, 128, 128, 0.14); background: color-mix(in srgb, var(--tint) 14%, Canvas); color: var(--tint); }

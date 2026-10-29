@@ -48,6 +48,8 @@ export interface DriveClient {
   download(id: string): Promise<string>
   save(id: string, content: string, thumbnail?: DriveThumbnail): Promise<DriveFileMeta>
   rename(id: string, name: string): Promise<DriveFileMeta>
+  /** Drive: moves the file to the trash, where it can be recovered. Local: deletes the drawing from this browser. */
+  trash(id: string): Promise<void>
   /** Creates `name` next to another file; if the name is taken there, uses "name (2).ext", "(3)"… */
   createSibling(name: string, content: string | Blob, mimeType: string, nearFileId: string): Promise<DriveFileMeta>
 }
@@ -199,6 +201,14 @@ export function createDriveClient(driveFetch: DriveFetch, folderCache: FolderCac
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: withExtension(name) }),
+      })
+    },
+
+    async trash(id) {
+      await json<{ id: string }>(url(API, `/files/${id}`, { fields: 'id' }), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trashed: true }),
       })
     },
 

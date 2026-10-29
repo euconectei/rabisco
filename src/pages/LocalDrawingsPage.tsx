@@ -1,10 +1,12 @@
 import { Link, Navigate } from 'react-router-dom'
 import { BrandLink } from '../components/BrandLink'
 import { AppFooter } from '../components/AppFooter'
+import type { DriveFileMeta } from '../drive/client'
 import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
 import { useI18n } from '../i18n/useI18n'
 import { MoveResult } from '../local/MoveResult'
 import { useLocalDrawings } from '../local/useLocalDrawings'
+import { useLocalDrive } from '../local/useLocalDrive'
 import { useMoveLocal } from '../local/useMoveLocal'
 import { useMode } from '../mode/useMode'
 import { AccountMenu } from './AccountMenu'
@@ -16,6 +18,7 @@ import '../local/local.css'
 export function LocalDrawingsPage() {
   const { t } = useI18n()
   const { mode } = useMode()
+  const localDrive = useLocalDrive()
   const { drawings, reload } = useLocalDrawings()
   const { state, start, reset } = useMoveLocal()
   // Without an account the local drawings are the files page itself.
@@ -23,6 +26,11 @@ export function LocalDrawingsPage() {
 
   const files = drawings.kind === 'ready' ? drawings.files : []
   const moving = state.phase === 'running'
+
+  async function deleteFile(file: DriveFileMeta) {
+    await localDrive.trash(file.id)
+    await reload()
+  }
 
   async function moveAll() {
     await start(undefined, files.length)
@@ -70,7 +78,7 @@ export function LocalDrawingsPage() {
       {files.length > 0 && (
         <ul className="files-grid" aria-label={t.files.listLabel}>
           {files.map((file) => (
-            <FileCard key={file.id} file={file} />
+            <FileCard key={file.id} file={file} onDelete={deleteFile} />
           ))}
         </ul>
       )}

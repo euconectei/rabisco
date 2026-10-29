@@ -361,3 +361,75 @@ it('shows the places of the cards, not just a line of text, while the list loads
   expect(await screen.findByRole('status')).toHaveTextContent('Carregando seus arquivos…')
   expect(screen.queryByRole('list', { name: 'Seus desenhos' })).not.toBeInTheDocument()
 })
+
+describe('deleting a drawing', () => {
+  const twoFiles = () =>
+    memoryDrive([
+      { id: 'a', name: 'Plano.excalidraw', content: '{}' },
+      { id: 'b', name: 'Ideias.excalidraw', content: '{}' },
+    ])
+
+  it('asks first, and trashes the file in Drive only when confirmed', async () => {
+    const drive = twoFiles()
+    setup(drive)
+    await userEvent.click(await screen.findByRole('button', { name: 'Apagar “Plano”' }))
+    const dialog = screen.getByRole('dialog', { name: 'Apagar este desenho?' })
+    expect(dialog).toHaveTextContent('“Plano” vai para a lixeira do seu Google Drive')
+    expect(drive.client.trash).not.toHaveBeenCalled()
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Apagar' }))
+    await waitFor(() => expect(screen.queryByRole('link', { name: /Plano/ })).not.toBeInTheDocument())
+    expect(drive.client.trash).toHaveBeenCalledWith('a')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Ideias/ })).toBeInTheDocument()
+  })
+
+  it('keeps everything when the person cancels', async () => {
+    const drive = twoFiles()
+    setup(drive)
+    await userEvent.click(await screen.findByRole('button', { name: 'Apagar “Plano”' }))
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancelar' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(drive.client.trash).not.toHaveBeenCalled()
+    expect(screen.getByRole('link', { name: /Plano/ })).toBeInTheDocument()
+  })
+
+  it('warns that a drawing kept in this browser cannot be recovered', async () => {
+    const drive = memoryDrive([{ id: 'local-1', name: 'Rascunho.excalidraw', content: '{}' }])
+    setup(drive)
+    await userEvent.click(await screen.findByRole('button', { name: 'Apagar “Rascunho”' }))
+    expect(screen.getByRole('dialog')).toHaveTextContent('será apagado deste navegador. Não dá para desfazer.')
+  })
+
+  it('says so and keeps the drawing when it could not be deleted', async () => {
+    const drive = twoFiles()
+    drive.client.trash.mockRejectedValueOnce(new DriveError('network', 'offline'))
+    setup(drive)
+    await userEvent.click(await screen.findByRole('button', { name: 'Apagar “Plano”' }))
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Apagar' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível apagar. Tente de novo.')
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Plano/ })).toBeInTheDocument()
+  })
+
+  it('shows the empty state after the last drawing is deleted', async () => {
+    setup(oneFile())
+    await userEvent.click(await screen.findByRole('button', { name: 'Apagar “Plano”' }))
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Apagar' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Seu primeiro rabisco começa aqui' })).toBeInTheDocument()
+  })
+
+  it('forgets the unsaved draft of the deleted drawing', async () => {
+    await putDraft({ fileId: 'a', json: '{}', baseVersion: '1', updatedAt: 1 })
+    setup(oneFile())
+    await userEvent.click(await screen.findByRole('button', { name: 'Apagar “Plano”' }))
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Apagar' }))
+    await waitFor(async () => expect(await getDraft('a')).toBeNull())
+  })
+
+  it('says it in English too', async () => {
+    setup(oneFile(), signedInAuth(), 'en')
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete “Plano”' }))
+    expect(screen.getByRole('dialog', { name: 'Delete this drawing?' })).toHaveTextContent('goes to the trash of your Google Drive')
+  })
+})

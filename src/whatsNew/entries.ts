@@ -16,7 +16,7 @@ export interface WhatsNewEntry {
 }
 
 export const whatsNewEntries: WhatsNewEntry[] = [
-  { date: '2026-10-29', sections: ['waitingScreens'] },
+  { date: '2026-10-29', sections: ['waitingScreens', 'deleteFiles'] },
   { date: '2026-10-26', sections: ['templates'] },
   { date: '2026-10-23', sections: ['whatsNewModal'] },
   { date: '2026-10-21', sections: ['aiImport'] },

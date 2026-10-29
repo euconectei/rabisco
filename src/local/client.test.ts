@@ -153,6 +153,28 @@ describe('rename', () => {
   })
 })
 
+describe('trash', () => {
+  it('removes the drawing from this browser: no longer listed, opened or found', async () => {
+    const keep = await client.createFile('Fica', '{}', 'local')
+    const gone = await client.createFile('Vai', '{"x":1}', 'local')
+    await client.trash(gone.id)
+    expect((await client.listFiles()).map((f) => f.id)).toEqual([keep.id])
+    expect((await failure(client.getMeta(gone.id))).kind).toBe('notFound')
+    expect((await failure(client.download(gone.id))).kind).toBe('notFound')
+    await expect(client.download(keep.id)).resolves.toBe('{}')
+  })
+
+  it('leaves no forwarding address behind: it was deleted, not moved to Drive', async () => {
+    const created = await client.createFile('Vai', '{}', 'local')
+    await client.trash(created.id)
+    await expect(client.movedTo(created.id)).resolves.toBeNull()
+  })
+
+  it('throws notFound for an unknown id', async () => {
+    expect((await failure(client.trash('local-nope'))).kind).toBe('notFound')
+  })
+})
+
 describe('listFiles', () => {
   it('lists the most recently changed first, like Drive', async () => {
     const a = await client.createFile('A', '{}', 'local')

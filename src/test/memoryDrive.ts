@@ -66,6 +66,10 @@ export function memoryDrive(initial: Array<{ id: string; name: string; content: 
       bump(file, false)
       return { ...file.meta }
     }),
+    trash: vi.fn(async (id: string) => {
+      find(id)
+      files.delete(id)
+    }),
     createSibling: vi.fn(async (name: string, content: string | Blob, _mime: string, nearFileId: string) => {
       const parents = files.get(nearFileId)?.meta.parents ?? ['folder-1']
       // Same rule as the real client: a taken name becomes "name (2).ext", "(3)"…

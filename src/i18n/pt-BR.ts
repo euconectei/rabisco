@@ -107,6 +107,15 @@ export const ptBR = {
     emptyTextLocal: 'Os desenhos ficam só neste navegador. Crie um do zero ou traga um Markdown que você já tem.',
     localLoadFailed: 'Não foi possível abrir o armazenamento deste navegador. Verifique se ele permite guardar dados do site e tente de novo.',
     importHint: 'Importar aceita Markdown e PNG ou SVG exportados do Rabisco com dados editáveis. Para Mermaid, use "Importar Mermaid".',
+    delete: 'Apagar “{name}”',
+    deleteTitle: 'Apagar este desenho?',
+    deleteInDrive: '“{name}” vai para a lixeira do seu Google Drive. Se mudar de ideia, dá para recuperá-lo por lá.',
+    deleteInBrowser: '“{name}” será apagado deste navegador. Não dá para desfazer.',
+    deleteConfirm: 'Apagar',
+    deleteCancel: 'Cancelar',
+    deleteClose: 'Fechar',
+    deleting: 'Apagando…',
+    deleteFailed: 'Não foi possível apagar. Tente de novo.',
     importTitle: 'Markdown, ou PNG/SVG exportado do Rabisco com dados editáveis',
   },
   loading: {
@@ -395,6 +404,13 @@ Depois do bloco, diga que eu devo salvar o conteúdo num arquivo .md e importá-
     menuItem: 'Novidades ({version})',
     close: 'Fechar',
     sections: {
+      deleteFiles: {
+        title: 'Apagar desenhos',
+        items: [
+          'Agora dá para apagar um desenho pela lista de arquivos, no botão de lixeira no canto do cartão.',
+          'O Rabisco pergunta antes. No Google Drive o arquivo vai para a lixeira e dá para recuperá-lo; os desenhos guardados só neste navegador são apagados de vez.',
+        ],
+      },
       waitingScreens: {
         title: 'Telas de espera mais claras',
         items: [

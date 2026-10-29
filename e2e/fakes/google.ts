@@ -167,7 +167,9 @@ export class FakeDrive {
       return route.fulfill({ json: this.meta(file) })
     }
     if (method === 'PATCH') {
-      file.name = (request.postDataJSON() as { name: string }).name
+      const change = request.postDataJSON() as { name?: string; trashed?: boolean }
+      if (change.trashed !== undefined) file.trashed = change.trashed
+      if (change.name !== undefined) file.name = change.name
       file.version += 1
       return route.fulfill({ json: this.meta(file) })
     }

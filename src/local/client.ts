@@ -188,6 +188,15 @@ export function createLocalDriveClient(): LocalDriveClient {
       }))
     },
 
+    async trash(id) {
+      await requireDb()
+      await runTx('readwrite', async ({ meta, content }) => {
+        if ((await request(meta.get(id))) === undefined) throw notFound()
+        await request(meta.delete(id))
+        await request(content.delete(id))
+      })
+    },
+
     async createSibling(name, content, mimeType, nearFileId) {
       await requireDb()
       const stored = await toStoredContent(content, mimeType)

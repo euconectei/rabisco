@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { DriveFileMeta } from '../drive/client'
+import { Dialog } from '../editor/Dialog'
+import { deleteDraft } from '../editor/drafts'
 import { format } from '../i18n/format'
 import { formatRelativeTime } from '../i18n/relativeTime'
 import { useI18n } from '../i18n/useI18n'
+import { isLocalId } from '../local/ids'
 
 // One tint per file, always the same for the same id, so the grid has some rhythm without a thumbnail.
 const TINTS = ['#6965db', '#1971c2', '#e8590c', '#2b8a3e', '#9c36b5']
@@ -42,12 +45,45 @@ function PlaceholderArt() {
   )
 }
 
-export function FileCard({ file }: { file: DriveFileMeta }) {
+function TrashIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" />
+    </svg>
+  )
+}
+
+/** `onDelete` makes the card deletable, after a confirmation; it resolves when the file is gone and rejects if it could not be. */
+export function FileCard({ file, onDelete }: { file: DriveFileMeta; onDelete?: (file: DriveFileMeta) => Promise<void> }) {
   const { lang, t } = useI18n()
   const [broken, setBroken] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [failed, setFailed] = useState(false)
   const name = file.name.replace(/\.excalidraw$/i, '')
+
+  function close() {
+    setConfirming(false)
+    setFailed(false)
+  }
+
+  async function confirmDelete() {
+    if (!onDelete) return
+    setDeleting(true)
+    setFailed(false)
+    try {
+      await onDelete(file)
+      await deleteDraft(file.id)
+      setConfirming(false)
+    } catch {
+      setFailed(true)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
-    <li>
+    <li className="file-item">
       <Link className="file-card" to={`/edit/${encodeURIComponent(file.id)}`} state={{ name }}>
         <span className="file-preview" style={{ '--tint': tintOf(file.id) } as React.CSSProperties}>
           {file.thumbnailLink && !broken ? (
@@ -61,6 +97,25 @@ export function FileCard({ file }: { file: DriveFileMeta }) {
           <span className="file-date">{format(t.files.edited, { time: formatRelativeTime(file.modifiedTime, lang) })}</span>
         </span>
       </Link>
+      {onDelete ? (
+        <button type="button" className="file-delete" aria-label={format(t.files.delete, { name })} title={format(t.files.delete, { name })} onClick={() => setConfirming(true)}>
+          <TrashIcon />
+        </button>
+      ) : null}
+      {confirming ? (
+        <Dialog title={t.files.deleteTitle} onClose={deleting ? undefined : close} closeLabel={t.files.deleteClose}>
+          <p>{format(isLocalId(file.id) ? t.files.deleteInBrowser : t.files.deleteInDrive, { name })}</p>
+          {failed ? <p role="alert">{t.files.deleteFailed}</p> : null}
+          <div className="dialog-actions">
+            <button type="button" className="button-secondary" disabled={deleting} onClick={close}>
+              {t.files.deleteCancel}
+            </button>
+            <button type="button" className="button button-danger" disabled={deleting} onClick={() => void confirmDelete()}>
+              {deleting ? t.files.deleting : t.files.deleteConfirm}
+            </button>
+          </div>
+        </Dialog>
+      ) : null}
     </li>
   )
 }

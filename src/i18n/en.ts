@@ -109,6 +109,15 @@ export const en: Messages = {
     emptyTextLocal: 'Drawings stay only in this browser. Start from scratch or bring a Markdown file you already have.',
     localLoadFailed: "Could not open this browser's storage. Check that it allows the site to store data, then try again.",
     importHint: 'Import accepts Markdown and PNG or SVG files exported from Rabisco with editable data. For Mermaid, use "Import Mermaid".',
+    delete: 'Delete “{name}”',
+    deleteTitle: 'Delete this drawing?',
+    deleteInDrive: '“{name}” goes to the trash of your Google Drive. If you change your mind, you can recover it there.',
+    deleteInBrowser: '“{name}” will be deleted from this browser. This cannot be undone.',
+    deleteConfirm: 'Delete',
+    deleteCancel: 'Cancel',
+    deleteClose: 'Close',
+    deleting: 'Deleting…',
+    deleteFailed: 'Could not delete. Try again.',
     importTitle: 'Markdown, or a PNG/SVG exported from Rabisco with editable data',
   },
   loading: {
@@ -397,6 +406,13 @@ After the block, tell me to save its content to a .md file and import it in Rabi
     menuItem: 'News ({version})',
     close: 'Close',
     sections: {
+      deleteFiles: {
+        title: 'Delete drawings',
+        items: [
+          'You can now delete a drawing from the files list, with the trash button on the corner of its card.',
+          'Rabisco asks first. In Google Drive the file goes to the trash and can be recovered; drawings kept only in this browser are deleted for good.',
+        ],
+      },
       waitingScreens: {
         title: 'Clearer waiting screens',
         items: [
