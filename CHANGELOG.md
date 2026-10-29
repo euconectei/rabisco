@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.12.0](https://github.com/euconectei/rabisco/compare/v0.11.0...v0.12.0) (2026-10-29)
+
+
+### Features
+
+* **files:** delete a drawing from the files list, after asking ([f52a885](https://github.com/euconectei/rabisco/commit/f52a88584d619ac2e075d45c84f8a6800fd2e936))
+* template pages and anonymous usage count ([#40](https://github.com/euconectei/rabisco/issues/40)) ([05bddad](https://github.com/euconectei/rabisco/commit/05bddadcce65c0b8f13fd940b640a5f6bebdf2d1))
+* **ui:** clearer waiting screens when creating and opening a drawing ([0028827](https://github.com/euconectei/rabisco/commit/0028827816b838e6990f8bb4c737c46eb3f21565))
+* **whats-new:** open What's new as a modal over the current screen ([#37](https://github.com/euconectei/rabisco/issues/37)) ([632fad3](https://github.com/euconectei/rabisco/commit/632fad3bee8adfcc2e32541cc53928dc6cc5580c))
+
+
+### Bug Fixes
+
+* **seo:** fix Google indexing issues reported by Search Console ([#39](https://github.com/euconectei/rabisco/issues/39)) ([11dc41a](https://github.com/euconectei/rabisco/commit/11dc41ab938b93eb43f2baaa5ac541504f0c7d40))
+* **templates:** style the logo link on the template pages like the rest of the app ([cb8d2cf](https://github.com/euconectei/rabisco/commit/cb8d2cfdd82f268ca5449d9036795ec3a52c68f2))
+
 ## [0.11.0](https://github.com/euconectei/rabisco/compare/v0.10.0...v0.11.0) (2026-10-21)
 
 
